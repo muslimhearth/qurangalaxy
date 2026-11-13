@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import type { PerspectiveCamera } from 'three';
 import type { Vec3 } from '../data/types';
 import { useGalaxyStore } from '../state/store';
-import { damp, fitDistance, flyToPose, focusSphere, idleRotation } from './camera';
+import { damp, fitDistance, flyToPose, focusSphere, idleRotation, START_IDLE } from './camera';
 import { viewFrame, type Inset } from './inset';
 import type { SceneModel } from './model';
 import { createWheelClassifier } from './wheel';
@@ -22,7 +22,8 @@ export function CameraRig({ model, inset }: { model: SceneModel; inset: Inset })
   const roots = useGalaxyStore((s) => s.galaxy!.roots);
   const selectedId = useGalaxyStore((s) => s.selectedId);
   const interacting = useRef(false);
-  const lastInteraction = useRef(0);
+  // Start as if long idle, so the galaxy turns from the first frame.
+  const lastInteraction = useRef(START_IDLE);
   const clock = useThree((s) => s.clock);
   const size = useThree((s) => s.size);
   const offset = useRef({ x: 0, y: 0 });

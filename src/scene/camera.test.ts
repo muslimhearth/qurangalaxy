@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fixtureGalaxy } from '../data/fixture';
 import { buildAdjacency } from './neighbors';
-import { damp, fitDistance, focusSphere, flyToPose, idleRotation } from './camera';
+import { damp, fitDistance, focusSphere, flyToPose, IDLE_DELAY, IDLE_RAMP, IDLE_SPEED, idleRotation, START_IDLE } from './camera';
 
 const adj = buildAdjacency(fixtureGalaxy.roots.length, fixtureGalaxy.edges);
 
@@ -43,6 +43,15 @@ describe('idleRotation', () => {
   });
   it('is zero shortly after the last interaction', () => {
     expect(idleRotation(false, 1, 0, 0.016)).toBe(0);
+  });
+  it('eases in instead of starting at full speed', () => {
+    const early = idleRotation(false, IDLE_DELAY + 0.1, 0, 1);
+    const full = idleRotation(false, IDLE_DELAY + IDLE_RAMP + 1, 0, 1);
+    expect(early).toBeGreaterThan(0);
+    expect(early).toBeLessThan(full / 4);
+  });
+  it('rotates from app start when the last interaction is set to START_IDLE', () => {
+    expect(idleRotation(false, 0, START_IDLE, 1)).toBeCloseTo(IDLE_SPEED);
   });
   it('turns slowly once idle', () => {
     const a = idleRotation(false, 100, 0, 1);

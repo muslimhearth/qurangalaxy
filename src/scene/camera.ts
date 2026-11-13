@@ -67,14 +67,18 @@ export function flyToPose(
   };
 }
 
-/** Idle auto-rotate speed in radians per second (one turn in about 3.5 minutes). */
-export const IDLE_SPEED = 0.03;
-/** Seconds without interaction before auto-rotate starts. */
+/** Idle auto-rotate speed in radians per second (one turn in about 2 minutes). */
+export const IDLE_SPEED = 0.05;
+/** Seconds without interaction before auto-rotate starts again. */
 export const IDLE_DELAY = 4;
+/** Seconds over which auto-rotate eases up to full speed. */
+export const IDLE_RAMP = 2;
+/** Initial "last interaction" time that makes the galaxy rotate from the first frame. */
+export const START_IDLE = -(IDLE_DELAY + IDLE_RAMP);
 
 /**
  * Azimuth angle to add this frame for the idle auto-rotate.
- * Zero while the user interacts and for `IDLE_DELAY` seconds after.
+ * Zero while the user interacts and for `IDLE_DELAY` seconds after; then it eases in over `IDLE_RAMP`.
  */
 export function idleRotation(
   interacting: boolean,
@@ -82,8 +86,11 @@ export function idleRotation(
   lastInteraction: number,
   dt: number,
 ): number {
-  if (interacting || now - lastInteraction < IDLE_DELAY) return 0;
-  return IDLE_SPEED * dt;
+  const idle = now - lastInteraction - IDLE_DELAY;
+  if (interacting || idle <= 0) return 0;
+  // Smoothstep ramp, so the motion starts gently after the user lets go.
+  const t = Math.min(1, idle / IDLE_RAMP);
+  return IDLE_SPEED * t * t * (3 - 2 * t) * dt;
 }
 
 /**
