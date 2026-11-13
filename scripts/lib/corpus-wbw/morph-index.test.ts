@@ -29,6 +29,7 @@ describe('indexMorphology', () => {
       lemma: 'اسْم',
       root: 'سمو',
       properNoun: false,
+      verb: false,
       prepPrefix: true,
       pronSuffix: false,
     });
@@ -36,7 +37,7 @@ describe('indexMorphology', () => {
   });
 
   it('marks pronoun suffixes', () => {
-    expect(index.words.get('2:255:9')).toMatchObject({ lemma: 'أَخَذَ', pronSuffix: true, prepPrefix: false });
+    expect(index.words.get('2:255:9')).toMatchObject({ lemma: 'أَخَذَ', verb: true, pronSuffix: true, prepPrefix: false });
   });
 
   it('uses the first non-prefix lemma for a word without a root', () => {

@@ -4,6 +4,8 @@ import type { MorphWord } from './morph-index';
 const LEADING = new Set(['and', 'so', 'then', 'but', 'or', 'the', 'a', 'an', 'his', 'her', 'its', 'their', 'your', 'our', 'my']);
 /** Leading prepositions. Dropped only when the word has a prefixed preposition (bi, li, ka). */
 const PREPOSITIONS = new Set(['by', 'with', 'for', 'to', 'in', 'of', 'from', 'on', 'like', 'as', 'at', 'upon', 'about']);
+/** Leading subject pronouns. Dropped only for verbs ("they believe" → "believe"). */
+const SUBJECTS = new Set(['i', 'you', 'he', 'she', 'it', 'we', 'they']);
 /** Trailing object pronouns. Dropped only when the word has a suffixed pronoun. */
 const OBJECTS = new Set(['him', 'them', 'her', 'it', 'you', 'us', 'me']);
 
@@ -18,7 +20,7 @@ function dropBrackets(text: string): string {
 /**
  * Normalizes a raw corpus gloss to a head form for its lemma, e.g. `(is) the Most High,` → `most high`.
  * Steps: drop helper words in brackets, trim punctuation and quotes, drop leading
- * conjunctions/articles/possessives (and prepositions or trailing object pronouns when the
+ * conjunctions/articles/possessives (and subject pronouns of verbs, prepositions or trailing object pronouns when the
  * morphology shows the matching prefix or suffix), lowercase except proper nouns and "Allah".
  * Never strips the gloss to nothing.
  */
@@ -31,7 +33,9 @@ export function normalizeGloss(raw: string, word: MorphWord): string {
   const lower = (t: string) => t.toLowerCase();
   while (tokens.length > 1) {
     const first = lower(tokens[0]!);
-    if (LEADING.has(first) || (word.prepPrefix && PREPOSITIONS.has(first))) tokens.shift();
+    const drop =
+      LEADING.has(first) || (word.prepPrefix && PREPOSITIONS.has(first)) || (word.verb && SUBJECTS.has(first));
+    if (drop) tokens.shift();
     else break;
   }
   if (word.pronSuffix && tokens.length > 1 && OBJECTS.has(lower(tokens.at(-1)!))) tokens.pop();

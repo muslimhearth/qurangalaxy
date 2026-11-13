@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { MorphWord } from './morph-index';
 import { normalizeGloss } from './normalize';
 
-const plain: MorphWord = { lemma: 'x', root: 'y', properNoun: false, prepPrefix: false, pronSuffix: false };
+const plain: MorphWord = { lemma: 'x', root: 'y', properNoun: false, verb: false, prepPrefix: false, pronSuffix: false };
 const n = (gloss: string, word: Partial<MorphWord> = {}) => normalizeGloss(gloss, { ...plain, ...word });
 
 describe('normalizeGloss', () => {
@@ -42,6 +42,14 @@ describe('normalizeGloss', () => {
   it('drops a trailing object pronoun only when the word has a pronoun suffix', () => {
     expect(n('overtakes Him', { pronSuffix: true })).toBe('overtakes');
     expect(n('fear Him')).toBe('fear him');
+  });
+
+  it('drops a leading subject pronoun of a verb', () => {
+    expect(n('they believe', { verb: true })).toBe('believe');
+    expect(n('He said', { verb: true })).toBe('said');
+    expect(n('we gave', { verb: true })).toBe('gave');
+    expect(n('they', { verb: true })).toBe('they');
+    expect(n('they believers')).toBe('they believers');
   });
 
   it('never strips a gloss to nothing', () => {

@@ -6,6 +6,8 @@ export interface MorphWord {
   root: string | undefined;
   /** True when the main segment is a proper noun (tag `PN`). */
   properNoun: boolean;
+  /** True when the main segment is a verb (part of speech `V`). */
+  verb: boolean;
   /** True when the word has a prefixed preposition (bi, li, ka, ...). */
   prepPrefix: boolean;
   /** True when the word has a suffixed pronoun. */
@@ -23,6 +25,8 @@ export interface MorphIndex {
 }
 
 interface Segment {
+  /** Part of speech column: N, V or P. */
+  pos: string;
   tags: string[];
 }
 
@@ -38,6 +42,7 @@ function toWord(segments: Segment[]): MorphWord {
     lemma: main && feature(main.tags, 'LEM:'),
     root: main && feature(main.tags, 'ROOT:'),
     properNoun: main?.tags.includes('PN') ?? false,
+    verb: main?.pos === 'V',
     prepPrefix: segments.some((s) => isPrefix(s) && s.tags[0] === 'P'),
     pronSuffix: segments.some((s) => s.tags.includes('SUFF') && s.tags.includes('PRON')),
   };
@@ -53,7 +58,7 @@ export function indexMorphology(text: string): MorphIndex {
   const segmentsByWord = new Map<string, Segment[]>();
   text.split('\n').forEach((line, i) => {
     if (line.trim() === '') return;
-    const [location, , , features] = line.split('\t');
+    const [location, , pos, features] = line.split('\t');
     const parts = location?.split(':') ?? [];
     if (features === undefined || parts.length !== 4 || parts.some((p) => !/^\d+$/.test(p))) {
       throw new Error(`Malformed morphology line ${i + 1}: ${line.slice(0, 60)}`);
@@ -64,7 +69,7 @@ export function indexMorphology(text: string): MorphIndex {
     verseWordCounts.set(verse, Math.max(verseWordCounts.get(verse) ?? 0, Number(w)));
     const key = `${verse}:${w}`;
     const list = segmentsByWord.get(key) ?? [];
-    list.push({ tags: features.split('|') });
+    list.push({ pos: pos ?? '', tags: features.split('|') });
     segmentsByWord.set(key, list);
   });
   const words = new Map<string, MorphWord>();
