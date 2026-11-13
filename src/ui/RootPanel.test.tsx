@@ -39,6 +39,27 @@ describe('RootPanel', () => {
     expect(await screen.findByText('1:3')).toBeInTheDocument();
   });
 
+  it('shows the root meanings and the first meaning of each lemma', () => {
+    useGalaxyStore.getState().select(0);
+    render(<RootPanel />);
+    const panel = screen.getByRole('complementary', { name: /root details/i });
+    expect(within(panel).getByLabelText('Meanings')).toHaveTextContent('name, sky');
+    const chips = within(within(panel).getByRole('list', { name: 'Lemmas' })).getAllByRole('listitem');
+    expect(chips[0]).toHaveTextContent('name');
+    expect(chips[1]).toHaveTextContent('sky');
+    expect(chips[1]).not.toHaveTextContent('heaven');
+  });
+
+  it('hides the meanings line when a root has none', () => {
+    useGalaxyStore.getState().setGalaxy({
+      ...fixtureGalaxy,
+      roots: fixtureGalaxy.roots.map((r) => ({ ...r, en: [], lemmas: r.lemmas.map((l) => ({ ...l, en: [] })) })),
+    });
+    useGalaxyStore.getState().select(0);
+    render(<RootPanel />);
+    expect(screen.queryByLabelText('Meanings')).toBeNull();
+  });
+
   it('selects a connected root on click', () => {
     useGalaxyStore.getState().select(2);
     render(<RootPanel />);
