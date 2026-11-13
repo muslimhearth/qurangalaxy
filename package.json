@@ -13,7 +13,9 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test --project=desktop --project=android",
     "test:e2e:iphone": "podman run --rm --ipc=host --security-opt label=disable -v \"$PWD\":/work -w /work mcr.microsoft.com/playwright:v1.65.0-noble npx playwright test --project=iphone",
-    "data": "tsx scripts/build-data.ts"
+    "data": "tsx scripts/build-data.ts",
+    "corpus:wbw": "tsx scripts/corpus-wbw.ts",
+    "corpus:glosses": "tsx scripts/corpus-glosses.ts"
   },
   "dependencies": {
     "@fontsource/amiri-quran": "5.3.0",

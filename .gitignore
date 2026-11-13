@@ -1,6 +1,7 @@
 node_modules/
 dist/
 data/raw/
+data/derived/
 test-results/
 playwright-report/
 .claude/worktrees/
