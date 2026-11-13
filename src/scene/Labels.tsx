@@ -3,7 +3,7 @@ import { useLayoutEffect, type CSSProperties } from 'react';
 import { Vector3 } from 'three';
 import { useGalaxyStore } from '../state/store';
 import { blockedBoxes, type Inset } from './inset';
-import { declutter, labelBox, labelIds, ndcToScreen, type Box } from './labels';
+import { declutter, LABEL_LIFT, labelBox, labelIds, ndcToScreen, type Box } from './labels';
 import type { FocusState } from './focus/state';
 import type { IntroState } from './intro/state';
 import type { SceneModel } from './model';
@@ -123,7 +123,7 @@ export function LabelTracker({
         continue;
       }
       // Anchor just above the star's top edge.
-      v.set(pos[id * 3]!, pos[id * 3 + 1]! + model.radii[id]! * 1.2, pos[id * 3 + 2]!).project(camera);
+      v.set(pos[id * 3]!, pos[id * 3 + 1]! + model.radii[id]! * LABEL_LIFT, pos[id * 3 + 2]!).project(camera);
       const p = ndcToScreen(v.x, v.y, v.z, size.width, size.height);
       el.style.transform = `translate(${p.x}px, ${p.y}px) translate(-50%, -100%)`;
       boxes.push(p.visible ? labelBox(p, labelSize(el)) : null);

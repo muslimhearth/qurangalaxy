@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { Vec3 } from '../../data/types';
 import { TOP_LINKS } from '../neighbors';
-import { RING_FRAME, ringAspect, ringDistance, ringLayout, ringRadius, ringTargets, viewBasis } from './ring';
+import { ringLayout, ringRadius, ringTargets, ringView, viewBasis } from './ring';
 
 const dot = (a: Vec3, b: Vec3) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 
@@ -14,19 +14,22 @@ interface Box {
 
 /**
  * Screen boxes of the ring labels (30 x 20 px, as measured in the app), then the selected root's
- * label and star, for a ring of vertical radius `px` pixels and stretch `aspect`.
+ * label and star (radius `rootPx`), for a ring of vertical radius `px` pixels and stretch `aspect`.
+ * Ring labels sit 1.2 largest-star radii above their ring point (focusPlan lifts small stars to
+ * keep it so); the largest star radius is `px / 12` (see ringRadius).
  */
-function labelBoxes(px: number, aspect: number): Box[] {
+function labelBoxes(px: number, aspect: number, rootPx: number): Box[] {
   const ring = ringLayout(TOP_LINKS, aspect);
+  const lift = (1.2 * px) / 12;
   const boxes: Box[] = [];
   for (let k = 0; k < TOP_LINKS; k++) {
-    // Screen y grows downward; labels sit 8 px above their star.
+    // Screen y grows downward.
     const x = ring[k * 2]! * px;
     const y = -ring[k * 2 + 1]! * px;
-    boxes.push({ x: x - 15, y: y - 8 - 20, w: 30, h: 20 });
+    boxes.push({ x: x - 15, y: y - lift - 20, w: 30, h: 20 });
   }
-  boxes.push({ x: -18, y: -12 - 28, w: 36, h: 28 }); // selected root label (bigger font)
-  boxes.push({ x: -14, y: -14, w: 28, h: 28 }); // selected star
+  boxes.push({ x: -18, y: -1.2 * rootPx - 28, w: 36, h: 28 }); // selected root label (bigger font)
+  boxes.push({ x: -rootPx, y: -rootPx, w: 2 * rootPx, h: 2 * rootPx }); // selected star
   return boxes;
 }
 const overlap = (a: Box, b: Box, gap: number) =>
@@ -47,19 +50,24 @@ describe('ringLayout', () => {
   });
 
   it('leaves labels apart on a phone (short, wide free area) and on desktop', () => {
-    // [vertical ring radius in px, stretch]: phone above the sheet, desktop, square, extremes.
+    // [vertical ring radius in px, stretch] as ringView makes them: desktop 1280 x 720, Pixel 7 and
+    // iPhone 15 above the sheet, a narrow window, and two in-between frames.
     for (const [px, aspect] of [
-      [100, 1.57],
-      [250, 1.28],
+      [309, 1.29],
+      [110, 1.68],
+      [75, 2.2],
       [150, 1],
-      [100, 1.8],
-      [120, 1.2],
+      [100, 1.57],
+      [90, 2.2],
     ] as const) {
-      const boxes = labelBoxes(px, aspect);
-      for (let i = 0; i < boxes.length; i++) {
-        for (let j = i + 1; j < boxes.length; j++) {
-          if (i === TOP_LINKS && j === TOP_LINKS + 1) continue; // selected label sits on its own star
-          expect(overlap(boxes[i]!, boxes[j]!, 4), `${px}px x${aspect}: ${i} and ${j}`).toBe(false);
+      // The selected root may be the smallest or the largest star.
+      for (const rootPx of [1.5, px / 12]) {
+        const boxes = labelBoxes(px, aspect, rootPx);
+        for (let i = 0; i < boxes.length; i++) {
+          for (let j = i + 1; j < boxes.length; j++) {
+            if (i === TOP_LINKS && j === TOP_LINKS + 1) continue; // selected label sits on its own star
+            expect(overlap(boxes[i]!, boxes[j]!, 3), `${px}px x${aspect}: ${i} and ${j}`).toBe(false);
+          }
         }
       }
     }
@@ -106,24 +114,40 @@ describe('ringTargets', () => {
   });
 });
 
-describe('ringAspect', () => {
-  it('follows the free area, never narrower than a circle nor wider than 1.8', () => {
-    expect(ringAspect(0.5)).toBe(1);
-    expect(ringAspect(1.3)).toBe(1.3);
-    expect(ringAspect(4)).toBe(1.8);
-  });
-});
-
-describe('ringRadius and ringDistance', () => {
+describe('ringRadius', () => {
   it('scales with the largest star', () => {
     expect(ringRadius(2)).toBeCloseTo(2 * ringRadius(1));
   });
+});
 
-  it('fits the ring plus label room in the free area', () => {
-    const tan25 = Math.tan((25 * Math.PI) / 180);
-    // Wide free area: the height limits.
-    expect(ringDistance(1, 50, 1.6, 1.6)).toBeCloseTo(RING_FRAME / tan25);
-    // Tall free area: the width limits.
-    expect(ringDistance(1, 50, 0.5, 1)).toBeCloseTo(RING_FRAME / (tan25 * 0.5));
+describe('ringView', () => {
+  const fov = 50;
+  /** On-screen vertical ring radius in px for a view, from its distance. */
+  const px = (v: { distance: number }, freeH: number) => (freeH / 2) * (1 / (Math.tan((fov * Math.PI) / 360) * v.distance));
+
+  it('fills a phone free area: room for the top labels, oval up to 2.2', () => {
+    // iPhone 15 above the sheet: 393 x 192 px.
+    const v = ringView(1, fov, 393, 192);
+    expect(px(v, 192)).toBeCloseTo(75);
+    expect(v.aspect).toBe(2.2);
+    // The camera looks a bit above the root, so the root sits 11 px below the middle.
+    expect(v.lift * px(v, 192)).toBeCloseTo(11);
+  });
+
+  it('uses a wide desktop free area with a mild oval', () => {
+    const v = ringView(1, fov, 842, 660);
+    expect(px(v, 660)).toBeCloseTo(309);
+    expect(v.aspect).toBeCloseTo((421 - 21) / 309);
+  });
+
+  it('keeps a circle that fits the width in a tall free area', () => {
+    const v = ringView(1, fov, 400, 900);
+    expect(px(v, 900)).toBeCloseTo(200 - 21);
+    expect(v.aspect).toBe(1);
+  });
+
+  it('scales the distance and lift with the ring radius', () => {
+    expect(ringView(3, fov, 393, 192).distance).toBeCloseTo(3 * ringView(1, fov, 393, 192).distance);
+    expect(ringView(3, fov, 393, 192).lift).toBeCloseTo(3 * ringView(1, fov, 393, 192).lift);
   });
 });

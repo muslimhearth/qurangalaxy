@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fixtureGalaxy } from '../data/fixture';
 import { buildAdjacency, topByCount, TOP_LINKS } from './neighbors';
-import { declutter, labelBox, labelIds, ndcToScreen } from './labels';
+import { declutter, LABEL_LIFT, labelBox, labelIds, ndcToScreen } from './labels';
 
 const adj = buildAdjacency(fixtureGalaxy.roots.length, fixtureGalaxy.edges);
 const top = topByCount(fixtureGalaxy.roots, 1); // [1]
@@ -76,5 +76,12 @@ describe('declutter', () => {
   it('leaves a small gap between labels', () => {
     // Touching boxes count as overlapping because of the gap.
     expect(declutter([box(0, 0), box(41, 0)], [])).toEqual([true, false]);
+  });
+});
+
+describe('LABEL_LIFT', () => {
+  it('puts a label just above the top edge of its star', () => {
+    expect(LABEL_LIFT).toBeGreaterThan(1);
+    expect(LABEL_LIFT).toBeLessThan(1.5);
   });
 });

@@ -5,23 +5,21 @@ import { TOP_LINKS } from '../neighbors';
  * Shape of the focus ring, as a share of its vertical radius: a spiral of about one and a half
  * turns. `inner` is the radius of the strongest link, `step` the on-screen arc length between
  * neighbors (constant, so labels are evenly spaced) and `start` the angle of the first star.
- * Tuned so 20 labels do not touch on a phone or on desktop (see ring.test.ts).
+ * Tuned so 20 labels do not touch on desktop, Pixel 7 and iPhone 15 (see ring.test.ts).
  */
-const SPIRAL = { inner: 0.45, step: 0.42, start: (110 * Math.PI) / 180 };
+const SPIRAL = { inner: 0.475, step: 0.51, start: Math.PI / 2 };
 
-/** Widest ring stretch: wide screens get an oval ring, so it fits a short free area. */
-const MAX_ASPECT = 1.8;
+/** Widest ring stretch: a short, wide free area (phone above the sheet) gets an oval ring. */
+const MAX_ASPECT = 2.2;
 
 /** Ring vertical radius in largest-star radii: big stars stay small next to their labels. */
 const RING_SIZE = 12;
 
-/** Camera frame size as a share of the ring radius: leaves room for the outer labels. */
-export const RING_FRAME = 1.3;
-
-/** Horizontal stretch of the ring for a free screen area of width / height `freeAspect`. */
-export function ringAspect(freeAspect: number): number {
-  return Math.min(MAX_ASPECT, Math.max(1, freeAspect));
-}
+/**
+ * Screen room in px around the ring: `above` for the labels over the top stars, `below` for the
+ * bottom stars, `side` for half a label plus a margin.
+ */
+const ROOM = { above: 32, below: 10, side: 21 };
 
 /**
  * 2D ring positions (x right, y up; 2 floats per star) for the `count` strongest links in rank
@@ -84,12 +82,34 @@ export function ringRadius(maxStarRadius: number): number {
   return maxStarRadius * RING_SIZE;
 }
 
+/** How the camera shows the ring: oval stretch, distance from its target, and target lift. */
+export interface RingView {
+  /** Horizontal stretch of the ring (1 = circle). */
+  aspect: number;
+  /** Camera distance from its target, in scene units. */
+  distance: number;
+  /**
+   * How far (scene units, along the screen's up axis) the camera target sits above the selected
+   * root: the labels above the ring need more room than the stars below it.
+   */
+  lift: number;
+}
+
 /**
- * Camera distance that shows a ring of vertical radius `radius` and stretch `aspect`, plus room
- * for its labels, in a free area of vertical field of view `fovDeg` and width / height `freeAspect`.
+ * Fits a ring of vertical radius `radius` (scene units) into a free screen area of `freeW` x
+ * `freeH` px whose vertical field of view is `fovDeg`, with room for the labels. The ring is as
+ * tall as the area allows and stretched sideways to use a wide area.
  */
-export function ringDistance(radius: number, fovDeg: number, freeAspect: number, aspect: number): number {
-  const tanV = Math.tan((fovDeg * Math.PI) / 360);
-  // The ring lies in the plane through the target, facing the camera: a plain tangent fit.
-  return (radius * RING_FRAME) / Math.min(tanV, (tanV * freeAspect) / aspect);
+export function ringView(radius: number, fovDeg: number, freeW: number, freeH: number): RingView {
+  // On-screen vertical ring radius in px; never below 20 px, even in a tiny area.
+  const ry = Math.max(20, Math.min((freeH - ROOM.above - ROOM.below) / 2, freeW / 2 - ROOM.side));
+  const aspect = Math.min(MAX_ASPECT, Math.max(1, (freeW / 2 - ROOM.side) / ry));
+  const pxPerUnit = ry / radius;
+  const tanHalf = Math.tan((fovDeg * Math.PI) / 360);
+  return {
+    aspect,
+    // At this distance the plane through the target shows freeH / 2 px per tanHalf · distance units.
+    distance: freeH / 2 / (tanHalf * pxPerUnit),
+    lift: (ROOM.above - ROOM.below) / 2 / pxPerUnit,
+  };
 }

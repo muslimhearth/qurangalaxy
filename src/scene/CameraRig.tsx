@@ -18,7 +18,7 @@ import {
   zoomToward,
 } from './camera';
 import { focusPlan } from './focus/plan';
-import { ringAspect, ringDistance, ringRadius } from './focus/ring';
+import { ringRadius, ringView, viewBasis } from './focus/ring';
 import type { FocusState } from './focus/state';
 import type { IntroState } from './intro/state';
 import { viewFrame, type Inset } from './inset';
@@ -164,12 +164,18 @@ export function CameraRig({
     const pos = c.getPosition(camera.position.clone()).toArray() as Vec3;
     const target = c.getTarget(camera.position.clone()).toArray() as Vec3;
     const frame = viewFrame(camera.fov, size.width, size.height, inset);
-    const aspect = ringAspect(frame.aspect);
-    const maxStar = model.radiusRange.max;
-    const plan = focusPlan(roots, model.adjacency, selectedId, viewDirection(pos, target), aspect, maxStar);
+    const freeW = size.width - inset.right;
+    const freeH = size.height - inset.bottom - inset.top;
+    const radius = ringRadius(model.radiusRange.max);
+    const view = ringView(radius, frame.fov, freeW, freeH);
+    const dir = viewDirection(pos, target);
+    const plan = focusPlan(roots, model.adjacency, selectedId, dir, view.aspect, model.radii);
     focus.glide.setTargets(plan.ids, plan.targets);
-    const distance = ringDistance(ringRadius(maxStar), frame.fov, frame.aspect, aspect);
-    const pose = poseAt(roots[selectedId].pos, pos, target, distance);
+    // Look a little above the root: the labels over the ring need more room than the stars below.
+    const root = roots[selectedId].pos;
+    const { up } = viewBasis(dir);
+    const center: Vec3 = [root[0] + up[0] * view.lift, root[1] + up[1] * view.lift, root[2] + up[2] * view.lift];
+    const pose = poseAt(center, pos, target, view.distance);
     c.smoothTime = FLY_SMOOTH;
     void c.setLookAt(...pose.position, ...pose.target, true);
     lastInteraction.current = clock.elapsedTime;

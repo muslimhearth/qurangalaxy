@@ -21,6 +21,9 @@ export function labelIds(
   return [...ids];
 }
 
+/** Height of a label's anchor above its star's center, in star radii: just above the top edge. */
+export const LABEL_LIFT = 1.2;
+
 /** A screen rectangle in CSS pixels; x and y are the top-left corner. */
 export interface Box {
   x: number;
