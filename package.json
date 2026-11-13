@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test --project=desktop --project=android",
+    "test:e2e:iphone": "podman run --rm --ipc=host --security-opt label=disable -v \"$PWD\":/work -w /work mcr.microsoft.com/playwright:v1.65.0-noble npx playwright test --project=iphone",
     "data": "tsx scripts/build-data.ts"
   },
   "dependencies": {
@@ -27,6 +28,7 @@
     "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/react": "^16.3.3",
     "@types/node": "^26.6.6",
+    "@types/pngjs": "^6.0.5",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@types/three": "^0.187.0",
@@ -36,6 +38,7 @@
     "graphology-communities-louvain": "^2.0.2",
     "graphology-types": "^0.24.8",
     "jsdom": "^31.0.0",
+    "pngjs": "^7.0.0",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2",
     "vite": "^8.3.8",
