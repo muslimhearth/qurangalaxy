@@ -19,7 +19,7 @@ export interface SearchOptions {
 }
 
 /** Number of top verses used by default; tuned with `pnpm eval:semantic`. */
-export const TOP_VERSES = 40;
+export const TOP_VERSES = 20;
 
 /** Joins the verse matrix with the root occurrences. */
 export function buildIndex(meta: EmbeddingsMeta, matrix: Int8Array, occurrences: Occurrences): SemanticIndex {

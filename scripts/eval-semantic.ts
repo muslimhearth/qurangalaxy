@@ -6,13 +6,13 @@
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import type { EmbeddingsMeta, Galaxy, Occurrences } from '../src/data/types';
 import { MODELS, type ModelSpec } from '../src/semantic/models';
-import { buildIndex, searchIndex } from '../src/semantic/verseIndex';
+import { buildIndex, searchIndex, TOP_VERSES } from '../src/semantic/verseIndex';
 import { embedVerses, nodeEmbedder, readVerses } from './semantic/embed-verses';
 import { EVAL_SET } from './semantic/eval-set';
 import { firstHitRank, summarize } from './semantic/metrics';
 
 const CACHE = 'data/raw/embeddings';
-const TOP_VERSE_OPTIONS = [10, 20, 40, 80];
+const TOP_VERSE_OPTIONS = [10, 20, 40];
 
 const readJson = <T>(path: string): T => JSON.parse(readFileSync(path, 'utf8')) as T;
 
@@ -47,7 +47,7 @@ async function evalModel(spec: ModelSpec, galaxy: Galaxy, occurrences: Occurrenc
         .slice(0, 10)
         .map((m) => galaxy.roots[m.id]!.ar);
       const rank = firstHitRank(ranked, e.expect);
-      if (verbose && topVerses === 40) console.log(`    ${rank ?? '-'}\t${e.query}: ${ranked.slice(0, 5).join(' ')}`);
+      if (verbose && topVerses === TOP_VERSES) console.log(`    ${rank ?? '-'}\t${e.query}: ${ranked.slice(0, 5).join(' ')}`);
       return rank;
     });
     const s = summarize(ranks);

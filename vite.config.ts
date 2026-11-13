@@ -5,6 +5,8 @@ export default defineConfig({
   plugins: [react()],
   // The lazy 3D chunk (three.js + R3F) is large by nature; warn only above 2 MB.
   build: { chunkSizeWarningLimit: 2000 },
+  // The embedding worker lazy-loads transformers.js, which needs code splitting (ES workers).
+  worker: { format: 'es' },
   test: {
     // jsdom covers React components; pure-logic tests run fine in it too.
     environment: 'jsdom',

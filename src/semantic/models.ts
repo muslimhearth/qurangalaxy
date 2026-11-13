@@ -56,4 +56,4 @@ export const MODELS: Record<string, ModelSpec> = {
 };
 
 /** The model the app ships with. */
-export const MODEL: ModelSpec = MODELS['Xenova/bge-small-en-v1.5']!;
+export const MODEL: ModelSpec = MODELS['Xenova/all-MiniLM-L6-v2']!;
