@@ -16,8 +16,15 @@ export function parseTanzil(text: string): Map<VerseKey, string> {
   return verses;
 }
 
-// Tanzil spells the first word بِسْمِ, or بِّسْمِ in surahs 95 and 97.
-const BASMALA_PREFIX = /^بِّ?سْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ /;
+// The basmala exactly as Tanzil encodes it, written as escapes because diacritic order
+// matters (Tanzil puts shadda U+0651 before the vowel mark). Surahs 95 and 97 add a
+// shadda on the first letter, so it is optional.
+const BASMALA_PREFIX = new RegExp(
+  '^بّ?ِسْمِ ' + // bismi
+    'ٱللَّهِ ' + // allahi
+    'ٱلرَّحْمَٰنِ ' + // al-rahmani
+    'ٱلرَّحِيمِ ', // al-rahimi
+);
 
 /**
  * Removes the basmala that Tanzil puts before verse 1 of each surah (except 1 and 9),

@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { parseTanzil, stripBasmala } from './tanzil';
 
-const BASMALA = 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ';
+// Escapes copy Tanzil's exact code points (shadda before the vowel mark).
+const ALLAH_RAHMAN_RAHIM =
+  'ٱللَّهِ ' +
+  'ٱلرَّحْمَٰنِ ' +
+  'ٱلرَّحِيمِ';
+const BASMALA = `بِسْمِ ${ALLAH_RAHMAN_RAHIM}`;
+// Surahs 95 and 97: shadda on the first letter.
+const BASMALA_95 = `بِّسْمِ ${ALLAH_RAHMAN_RAHIM}`;
 
 describe('parseTanzil', () => {
   it('reads surah|ayah|text lines and skips comments and blank lines', () => {
@@ -26,7 +33,12 @@ describe('stripBasmala', () => {
   });
 
   it('removes the variant spelling with shadda (surahs 95, 97)', () => {
-    expect(stripBasmala('95:1', 'بِّسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ وَٱلتِّينِ')).toBe('وَٱلتِّينِ');
+    expect(stripBasmala('95:1', `${BASMALA_95} وَٱلتِّينِ`)).toBe('وَٱلتِّينِ');
+  });
+
+  it('does not accept the same words with a different diacritic order', () => {
+    const swapped = BASMALA.replace('َّ', 'َّ');
+    expect(() => stripBasmala('2:1', `${swapped} الٓمٓ`)).toThrow(/2:1/);
   });
 
   it('keeps 1:1, surah 9 and every other verse as is', () => {
