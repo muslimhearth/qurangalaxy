@@ -22,7 +22,7 @@ If you need a change there, stop and report it to the main session.
 ## Git rules
 - Commits are the user's own. Author is the user. No `Co-Authored-By` or other trailers.
 - One-line commit message, imperative mood (e.g. "Add morphology parser"). No body unless really needed.
-- Commit small, working steps. Never push. Never rewrite main.
+- Commit small, working steps. Never rewrite main. Only the main session pushes, and only when the user asks.
 - Before you finish, check `git log --format='%h %s%n%(trailers)'` and remove any trailers.
 
 ## Progress

@@ -60,8 +60,6 @@
       "Bash(find *)"
     ],
     "deny": [
-      "Bash(git push*)",
-      "Bash(git remote add*)",
       "Bash(rm -rf /*)",
       "Bash(rm -rf ~*)",
       "Bash(rm -rf ..*)"
