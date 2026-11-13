@@ -121,3 +121,52 @@ test('title bar hides behind the open sheet on phones', async ({ page, isMobile 
   await page.getByRole('button', { name: 'Close root details' }).tap();
   await expect(page.locator('.about')).toBeVisible();
 });
+
+/** Screen boxes of the labels the declutter step currently shows. */
+async function shownLabels(page: Page) {
+  return page.locator('.label-layer > div').evaluateAll((els) =>
+    els
+      .filter((el) => (el as HTMLElement).style.opacity === '1')
+      .map((el) => {
+        const r = el.getBoundingClientRect();
+        return { text: el.textContent ?? '', x: r.x, y: r.y, w: r.width, h: r.height };
+      }),
+  );
+}
+
+test('visible labels never overlap', async ({ page }) => {
+  await page.goto('/');
+  await expect.poll(async () => (await shownLabels(page)).length, { timeout: 15_000 }).toBeGreaterThan(5);
+  const labels = await shownLabels(page);
+  for (const [i, a] of labels.entries()) {
+    for (const b of labels.slice(i + 1)) {
+      const overlap = a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
+      expect(overlap, `${a.text} overlaps ${b.text}`).toBe(false);
+    }
+  }
+});
+
+test('selected root stays in view beside the panel, not under it', async ({ page }) => {
+  await page.goto('/#/root/' + encodeURIComponent('رحم'));
+  const panel = (await page.getByLabel('Root details', { exact: true }).boundingBox())!;
+  // The camera eases in, so poll until the selected label is shown in the free area.
+  await expect
+    .poll(
+      async () => {
+        const label = (await shownLabels(page)).find((l) => l.text === 'رحم');
+        if (!label) return false;
+        // Side panel (desktop): left of it. Bottom sheet (phones): above it.
+        return panel.x > 0 ? label.x + label.w < panel.x : label.y + label.h < panel.y;
+      },
+      { timeout: 20_000 },
+    )
+    .toBe(true);
+});
+
+test('connected roots show the strongest first, the rest on demand', async ({ page }) => {
+  await page.goto('/#/root/' + encodeURIComponent('رحم'));
+  const list = page.getByRole('list', { name: 'Connected roots' }).getByRole('button');
+  await expect(list).toHaveCount(12);
+  await page.getByRole('button', { name: /^Show all [\d,]+ connected roots$/ }).click();
+  expect(await list.count()).toBeGreaterThan(12);
+});
