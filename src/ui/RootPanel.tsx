@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { useGalaxyStore } from '../state/store';
+import { ConnectedRoots } from './ConnectedRoots';
 import { neighbors } from './helpers';
 import { useRootDetails } from './useRootDetails';
 import { VerseList } from './VerseList';
@@ -58,28 +59,7 @@ export function RootPanel() {
           </ul>
         </section>
 
-        {links.length > 0 && (
-          <section>
-            <h3>Connected roots</h3>
-            <ul className="chips" aria-label="Connected roots">
-              {links.map(({ root: other, weight }) => (
-                <li key={other.id}>
-                  <button
-                    type="button"
-                    className="chip chip-link"
-                    title={`${other.tr}: shares ${weight} verses`}
-                    onClick={() => select(other.id)}
-                  >
-                    <span lang="ar" dir="rtl">
-                      {other.ar}
-                    </span>
-                    <span className="count">{fmt(weight)}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
+        {links.length > 0 && <ConnectedRoots key={root.id} links={links} />}
 
         <section>
           <h3>Verses</h3>

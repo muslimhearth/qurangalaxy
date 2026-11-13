@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { RootPanel } from './RootPanel';
+import { CONNECTED_PREVIEW } from './ConnectedRoots';
 import { useGalaxyStore } from '../state/store';
 import { resetLoadCache } from '../data/load';
 import { fixtureGalaxy } from '../data/fixture';
@@ -53,5 +54,42 @@ describe('RootPanel', () => {
     act(() => useGalaxyStore.getState().select(3));
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(useGalaxyStore.getState().selectedId).toBeNull();
+  });
+
+  it('shows the strongest connected roots first and the rest on demand', () => {
+    // Give root 2 (رحم) 16 extra weak neighbors: 18 in total.
+    const extra = Array.from({ length: 16 }, (_, i) => ({
+      ...fixtureGalaxy.roots[3]!,
+      id: 6 + i,
+      ar: `ج${i}`,
+    }));
+    useGalaxyStore.getState().setGalaxy({
+      ...fixtureGalaxy,
+      roots: [...fixtureGalaxy.roots, ...extra],
+      edges: [...fixtureGalaxy.edges, ...extra.map((r) => ({ source: 2, target: r.id, weight: 1 }))],
+    });
+    useGalaxyStore.getState().select(2);
+    render(<RootPanel />);
+    const list = () => within(screen.getByRole('list', { name: /connected roots/i })).getAllByRole('button');
+    expect(list()).toHaveLength(CONNECTED_PREVIEW);
+    expect(list()[0]).toHaveTextContent('أله');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show all 18 connected roots' }));
+    expect(list()).toHaveLength(18);
+    expect(screen.queryByRole('button', { name: /show all/i })).toBeNull();
+  });
+
+  it('shows the full list again collapsed for the next root', () => {
+    const many = Array.from({ length: 20 }, (_, i) => ({ ...fixtureGalaxy.roots[3]!, id: 6 + i, ar: `ج${i}` }));
+    const edges = many.flatMap((r) => [
+      { source: 1, target: r.id, weight: 1 },
+      { source: 2, target: r.id, weight: 1 },
+    ]);
+    useGalaxyStore.getState().setGalaxy({ ...fixtureGalaxy, roots: [...fixtureGalaxy.roots, ...many], edges: [...fixtureGalaxy.edges, ...edges] });
+    useGalaxyStore.getState().select(2);
+    render(<RootPanel />);
+    fireEvent.click(screen.getByRole('button', { name: /show all/i }));
+    act(() => useGalaxyStore.getState().select(1));
+    expect(within(screen.getByRole('list', { name: /connected roots/i })).getAllByRole('button')).toHaveLength(CONNECTED_PREVIEW);
   });
 });
