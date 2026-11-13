@@ -65,7 +65,6 @@ export function CameraRig({ model, inset, intro }: { model: SceneModel; inset: I
     const d = fitDistance(radius, camera.fov, camera.aspect) * START_FIT;
     // Slightly above the equator looks more like a galaxy than a flat side view.
     const c = controls.current!;
-    // The intro writes its words on a plane facing this view (see intro/frame.ts).
     c.setLookAt(center[0], center[1] + d * START_ELEVATION, center[2] + d, ...center, false);
     c.minDistance = model.radiusRange.max * 2;
     c.maxDistance = d * 3;
@@ -155,6 +154,22 @@ export function CameraRig({ model, inset, intro }: { model: SceneModel; inset: I
     void c.setLookAt(...pose.position, ...pose.target, true);
     lastInteraction.current = clock.elapsedTime;
   }, [selectedId, recenterTick, roots, model, camera, clock, size, inset]);
+
+  // Closing the panel flies back out to the whole galaxy, keeping the current viewing direction.
+  const lastSelected = useRef<number | null>(null);
+  useEffect(() => {
+    const was = lastSelected.current;
+    lastSelected.current = selectedId;
+    if (selectedId !== null || was === null) return;
+    const c = controls.current!;
+    const pos = c.getPosition(camera.position.clone()).toArray() as Vec3;
+    const target = c.getTarget(camera.position.clone()).toArray() as Vec3;
+    const whole = { center: model.bounds.center, radius: model.bounds.radius * START_FIT };
+    const pose = flyToPose(whole, pos, target, camera.fov, camera.aspect);
+    c.smoothTime = FLY_SMOOTH;
+    void c.setLookAt(...pose.position, ...pose.target, true);
+    lastInteraction.current = clock.elapsedTime;
+  }, [selectedId, model, camera, clock]);
 
   useFrame((_, dt) => {
     // Slide the view center toward the middle of the free area.
