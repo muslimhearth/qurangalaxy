@@ -37,8 +37,19 @@ describe('usePanelInset', () => {
     const { result } = renderHook(() => usePanelInset());
     addPanel(624, 16);
     act(() => useGalaxyStore.getState().select(2));
-    await vi.waitFor(() => expect(result.current).toEqual({ right: 400, bottom: 0 }));
+    await vi.waitFor(() => expect(result.current).toEqual({ right: 400, bottom: 0, top: 0 }));
     act(() => useGalaxyStore.getState().select(null));
     expect(result.current).toEqual(NO_INSET);
+  });
+
+  it('adds the search bar as a top inset while a root is selected', async () => {
+    const { result } = renderHook(() => usePanelInset());
+    addPanel(624, 16);
+    const bar = document.createElement('div');
+    bar.className = 'search-row';
+    bar.getBoundingClientRect = () => ({ left: 300, top: 16, right: 700, bottom: 60 }) as DOMRect;
+    document.body.append(bar);
+    act(() => useGalaxyStore.getState().select(2));
+    await vi.waitFor(() => expect(result.current).toEqual({ right: 400, bottom: 0, top: 60 }));
   });
 });
