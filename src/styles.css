@@ -387,3 +387,13 @@ a { color: var(--accent); }
   .mushaf-toggle { left: auto; right: var(--gap); bottom: auto; top: 66px; }
   .mushaf-toggle button { min-width: 0; padding: 0 14px; font-size: 0.85rem; }
 }
+
+/* A verse opened from the Mushaf mosaic flashes once in the verse list. */
+.verse.flash { animation: verse-flash 1.8s ease-out; border-radius: 8px; }
+@keyframes verse-flash {
+  0%, 30% { background: rgba(255, 195, 90, 0.16); box-shadow: 0 0 0 1px rgba(255, 195, 90, 0.5); }
+  100% { background: transparent; box-shadow: 0 0 0 1px transparent; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .verse.flash { animation: none; background: rgba(255, 195, 90, 0.12); }
+}
