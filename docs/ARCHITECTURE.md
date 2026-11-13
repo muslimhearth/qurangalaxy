@@ -52,4 +52,7 @@ Headless browsers have no GPU: Chromium and WebKit run the WebGL 2 fallback in s
 - **WebGPU first.** three.js `WebGPURenderer` falls back to WebGL 2 automatically.
 - **One store.** Scene and UI talk only through the Zustand store.
 - **Lazy 3D chunk.** `App` loads `GalaxyScene` with `React.lazy`: the UI (74 kB gzip) paints first, three.js (461 kB gzip) follows.
+- **Labels without overlap.** Each frame, `LabelTracker` projects the candidate labels and `declutter` keeps them greedily in priority order (selection, hover, neighbors, frequent roots). It also skips the screen area under the root panel.
+- **Panel-aware camera.** `usePanelInset` measures the root panel. `viewFrame` turns that into a view offset and a smaller field of view, so the selection is framed in the free area.
+- **Self-hosted fonts.** Amiri Quran (verses) and Noto Naskh Arabic (labels) ship with the app through Fontsource: no third-party requests.
 - **Tanzil word positions.** `Occurrence.w` indexes `Verse.ar` split on spaces; `scripts/lib/wordmap.ts` maps the 4 verses where the corpus joins two Tanzil words.
