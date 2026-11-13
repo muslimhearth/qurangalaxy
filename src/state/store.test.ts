@@ -41,4 +41,19 @@ describe('galaxy store', () => {
     useGalaxyStore.getState().setSemanticWeight(-1);
     expect(useGalaxyStore.getState().semanticWeight).toBe(0);
   });
+
+  it('tracks when the view moved away from the selection and asks to fly back', () => {
+    const s = useGalaxyStore.getState;
+    s().select(2);
+    expect(s().awayFromSelection).toBe(false);
+    s().setAwayFromSelection(true);
+    expect(s().awayFromSelection).toBe(true);
+    const tick = s().recenterTick;
+    s().recenter();
+    expect(s().recenterTick).toBe(tick + 1);
+    // A new selection starts framed again.
+    s().setAwayFromSelection(true);
+    s().select(3);
+    expect(s().awayFromSelection).toBe(false);
+  });
 });

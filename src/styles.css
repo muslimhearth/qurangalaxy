@@ -279,6 +279,18 @@ a { color: var(--accent); }
 }
 .hover-hint .ar { font-size: 1.3rem; color: var(--accent); }
 
+/* "Back to …": bottom of the free area, left of the desktop side panel. */
+.recenter {
+  position: absolute;
+  bottom: calc(var(--gap) * 2);
+  right: calc(min(420px, 38vw) + var(--gap) * 2);
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 14px; border-radius: 999px;
+  color: var(--accent); font-size: 0.9rem;
+}
+.recenter [lang='ar'] { font-size: 1.2rem; line-height: 1; }
+.recenter:hover { border-color: var(--accent); }
+
 /* Phones: bottom sheet instead of side panel; about collapses under the search. */
 @media (max-width: 720px) {
   .about { top: auto; bottom: var(--gap); left: var(--gap); right: var(--gap); max-width: none; }
@@ -304,5 +316,7 @@ a { color: var(--accent); }
     width: 36px; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.18);
   }
   .search { top: 10px; }
+  /* Under the search field, clear of the bottom sheet at any size but maximized. */
+  .recenter { bottom: auto; top: 74px; right: var(--gap); }
   .hover-hint { bottom: auto; top: 76px; }
 }

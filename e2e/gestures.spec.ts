@@ -99,3 +99,21 @@ test('pinch zooms toward the word under the pointer', async ({ page }) => {
   // The word stays near the pointer (it may hide if a closer label now overlaps it).
   if (after) expect(Math.hypot(after.x - start.x, after.y - start.y)).toBeLessThan(40);
 });
+
+test('after moving away from a selected root, a button flies back to it', async ({ page }) => {
+  await page.goto('/#/root/' + encodeURIComponent('رحم'));
+  await expect(page.getByLabel('Root details', { exact: true })).toBeVisible();
+  const back = page.getByRole('button', { name: 'Back to رحم' });
+  await expect(back).toHaveCount(0);
+  // The 3D scene loads lazily: wait for its labels before swiping.
+  await expect.poll(async () => (await labelCenters(page)).size, { timeout: 20_000 }).toBeGreaterThan(0);
+  // Swipe the view away from the selected root.
+  await wheel(page, 10, { deltaX: 30, deltaY: 2 });
+  await expect(back).toBeVisible();
+  await back.click();
+  await expect(back).toHaveCount(0);
+  // The selected root's label is shown again once the camera is back.
+  await expect
+    .poll(async () => (await labelCenters(page)).has('رحم'), { timeout: 20_000 })
+    .toBe(true);
+});

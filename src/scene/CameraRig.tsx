@@ -21,6 +21,12 @@ import { viewFrame, type Inset } from './inset';
 import type { SceneModel } from './model';
 import { createWheelClassifier } from './wheel';
 
+/** The user moved the view: with a root selected, offer "Back to …". */
+function markAway() {
+  const s = useGalaxyStore.getState();
+  if (s.selectedId !== null && !s.awayFromSelection) s.setAwayFromSelection(true);
+}
+
 /** How fast the view slides aside for the panel (per second). */
 const OFFSET_RATE = 6;
 
@@ -33,6 +39,8 @@ export function CameraRig({ model, inset, intro }: { model: SceneModel; inset: I
   const camera = useThree((s) => s.camera) as PerspectiveCamera;
   const roots = useGalaxyStore((s) => s.galaxy!.roots);
   const selectedId = useGalaxyStore((s) => s.selectedId);
+  // "Back to …" bumps this to replay the fly-to.
+  const recenterTick = useGalaxyStore((s) => s.recenterTick);
   const interacting = useRef(false);
   // Start as if long idle, so the galaxy turns from the first frame.
   const lastInteraction = useRef(START_IDLE);
@@ -94,6 +102,7 @@ export function CameraRig({ model, inset, intro }: { model: SceneModel; inset: I
         void c.rotate(intent.dx * turn, intent.dy * turn, false);
       }
       lastInteraction.current = clock.elapsedTime;
+      markAway();
     };
     // Safari reports trackpad pinches as gesture events with a running scale.
     let lastScale = 1;
@@ -108,6 +117,7 @@ export function CameraRig({ model, inset, intro }: { model: SceneModel; inset: I
       zoom(lastScale / scale, false, g.clientX, g.clientY);
       lastScale = scale;
       lastInteraction.current = clock.elapsedTime;
+      markAway();
     };
     canvas.addEventListener('wheel', onWheel, { passive: false });
     canvas.addEventListener('gesturestart', onGestureStart);
@@ -131,7 +141,7 @@ export function CameraRig({ model, inset, intro }: { model: SceneModel; inset: I
     const pose = flyToPose(sphere, pos, target, frame.fov, frame.aspect);
     void c.setLookAt(...pose.position, ...pose.target, true);
     lastInteraction.current = clock.elapsedTime;
-  }, [selectedId, roots, model, camera, clock, size, inset]);
+  }, [selectedId, recenterTick, roots, model, camera, clock, size, inset]);
 
   useFrame((_, dt) => {
     // Slide the view center toward the middle of the free area.
@@ -159,6 +169,8 @@ export function CameraRig({ model, inset, intro }: { model: SceneModel; inset: I
       makeDefault
       smoothTime={0.6}
       onControlStart={() => (interacting.current = true)}
+      // Only real movement (not a plain tap) counts as moving away from the selection.
+      onControl={markAway}
       onControlEnd={() => {
         interacting.current = false;
         lastInteraction.current = clock.elapsedTime;
