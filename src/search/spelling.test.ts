@@ -116,6 +116,11 @@ describe('spellingMatcher on the real galaxy', () => {
     if (lemma) expect(best(q)!.reason.text.normalize('NFC')).toBe(lemma.normalize('NFC'));
   });
 
+  it('is part of the full search', () => {
+    expect(searchRoots(roots, 'noor')[0]!.reason).toEqual({ kind: 'latin', text: 'نُور' });
+    expect(roots[searchRoots(roots, 'rhm')[0]!.id]!.ar).toBe('رحم');
+  });
+
   it('uses the latin reason kind', () => {
     expect(best('noor')!.reason.kind).toBe('latin');
   });
