@@ -24,7 +24,8 @@ export function usePanelInset(): Inset {
     const measure = () => {
       const el = document.querySelector(PANEL);
       const panel = panelInset(el?.getBoundingClientRect() ?? null, innerWidth, innerHeight);
-      const next = { ...panel, top: barInset(document.querySelector(BAR)?.getBoundingClientRect() ?? null) };
+      const bar = document.querySelector(BAR)?.getBoundingClientRect() ?? null;
+      const next = { ...panel, top: barInset(bar, panel, innerHeight) };
       // Keep the old object when nothing changed, so consumers do not re-run.
       setInset((old) =>
         old.right === next.right && old.bottom === next.bottom && old.top === next.top ? old : next,

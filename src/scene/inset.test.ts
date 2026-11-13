@@ -48,8 +48,13 @@ describe('viewFrame with a top bar', () => {
 
 describe('barInset', () => {
   it('reads the bottom edge of the top bar', () => {
-    expect(barInset(rect(20, 10, 400, 54.4))).toBe(54);
-    expect(barInset(null)).toBe(0);
+    expect(barInset(rect(20, 10, 400, 54.4), NO_INSET, 800)).toBe(54);
+    expect(barInset(null, NO_INSET, 800)).toBe(0);
+  });
+
+  it('ignores the bar when the panel leaves too little room below it (maximized sheet)', () => {
+    expect(barInset(rect(20, 10, 400, 54), { right: 0, bottom: 300, top: 0 }, 839)).toBe(54);
+    expect(barInset(rect(20, 10, 400, 54), { right: 0, bottom: 759, top: 0 }, 839)).toBe(0);
   });
 });
 

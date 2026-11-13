@@ -27,9 +27,18 @@ export function panelInset(rect: Rect | null, width: number, height: number): In
   return NO_INSET;
 }
 
-/** Top inset for a bar at the top of the screen (the search bar): its bottom edge, or 0. */
-export function barInset(rect: Rect | null): number {
-  return rect ? Math.round(rect.bottom) : 0;
+/** Least free height (share of the view) that the top bar must leave below it to count. */
+const MIN_FREE = 0.2;
+
+/**
+ * Top inset for a bar at the top of the screen (the search bar): its bottom edge, or 0.
+ * Also 0 when the bar and the `panel` inset would leave less than a fifth of the `height`
+ * (a maximized sheet): framing a sliver would push the camera to extremes.
+ */
+export function barInset(rect: Rect | null, panel: Inset, height: number): number {
+  if (!rect) return 0;
+  const top = Math.round(rect.bottom);
+  return height - panel.bottom - top >= height * MIN_FREE ? top : 0;
 }
 
 /** Camera settings for the part of the screen that the panel leaves free. */
