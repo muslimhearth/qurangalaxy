@@ -40,6 +40,7 @@ Raw downloads are cached in `data/raw/` (gitignored). Generated JSON in `public/
 | `src/search/spelling.ts` | G7 | Latin spelling ("noor", "3ilm") → cheapest Arabic spelling of each lemma, vowels checked against diacritics |
 | `scripts/lib/glosses/*`, `scripts/fetch-glosses.ts`, `src/search/english.ts` | G8 | English meanings from Wiktionary (cached) with a translation fallback; English search |
 | `src/semantic/*`, `src/search/blend.ts`, `scripts/models.ts`, `scripts/build-embeddings.ts`, `scripts/eval-semantic.ts` | G9 | Meaning search: worker, int8 cosine search, verse→root scores, blend |
+| `src/scene/intro/*` | G11 | Opening: stars partly pulled toward «القرآن الكريم» with faint calligraphy dust, then the real layout. Skips: deep link, reduced motion, `?nointro`, automated browsers (`?intro` forces it) |
 | `deploy/Caddyfile.site`, `scripts/ship.sh` | main | Deploy |
 
 ## Testing

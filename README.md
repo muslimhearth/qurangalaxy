@@ -18,7 +18,7 @@ pnpm dev       # open http://localhost:5173
 | Command | Job |
 |---|---|
 | `pnpm dev` | Dev server |
-| `pnpm test` | Unit tests (406) |
+| `pnpm test` | Unit tests (448) |
 | `pnpm test:e2e` | Browser tests: desktop Chromium and Android (Pixel 7) |
 | `pnpm test:e2e:iphone` | Browser tests on iPhone 15 (WebKit), in the official Playwright container (needs podman) |
 | `pnpm data` | Rebuild `public/data/` from the sources (Wiktionary responses are cached in `data/raw/`) |
@@ -30,6 +30,7 @@ pnpm dev       # open http://localhost:5173
 | `pnpm build` | Typecheck and production build |
 
 ## Features
+- Opening: the galaxy forms with a faint calligraphy of «القرآن الكريم» inside it (skipped for deep links and reduced motion; tap to skip).
 - 1,651 roots as stars in 10 theme clusters; star size = word count; links = shared verses.
 - Search in Arabic (diacritics ignored), root letters (`rhm`), Latin spelling (`noor`, `rahmaan`, `salah`, chat digits `3ilm`) or English (`light`, `sea`, `mother`).
 - Search by meaning: move the *Exact ↔ Meaning* slider and type a phrase ("patience in hardship"). The first use downloads a small English model (23 MB) from this site; it runs in your browser.

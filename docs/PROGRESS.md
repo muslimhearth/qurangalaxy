@@ -13,7 +13,7 @@
 | G8 English meanings (Wiktionary + translation fallback) | merged | Done: 90% of Quran words via Wiktionary, 4.5% fallback |
 | G9 Semantic search + exact↔meaning slider | merged | Done: MiniLM in a worker, hit@5 94% on 35 phrases |
 | G10 Corpus word-by-word glosses (local evaluation only) | agent worktree | In progress |
-| G11 Hint of «القرآن الكريم» in the galaxy intro | agent worktree | In progress |
+| G11 Hint of «القرآن الكريم» in the galaxy intro | merged | Done: faint calligraphy dust + partial star pull, skips on deep link / reduced motion / input |
 | Deploy | main | Live at https://quranic.space (Caddy, `pnpm ship`) |
 
 Per-goal detail: `docs/progress/`.
