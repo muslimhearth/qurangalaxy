@@ -11,6 +11,7 @@ import { Links } from './Links';
 import { buildSceneModel } from './model';
 import { createRenderer } from './renderer';
 import { Stars } from './Stars';
+import { TapPicker, type PickFn } from './TapPicker';
 import { usePanelInset } from './usePanelInset';
 
 if (import.meta.env.DEV) void import('./devSynthetic').then((m) => m.installSyntheticGalaxy());
@@ -28,6 +29,8 @@ export function GalaxyScene() {
   const intro = useMemo(() => (model ? introForPageLoad() : null), [model]);
   const anchors = useRef<LabelAnchors>({ ids: [], els: new Map() }).current;
   const inset = usePanelInset();
+  // Filled by <TapPicker> inside the canvas: finds the star nearest to a tap that hit nothing.
+  const pick = useRef<PickFn | null>(null);
 
   const clearHover = () => {
     if (useGalaxyStore.getState().hoveredId !== null) hover(null);
@@ -42,9 +45,10 @@ export function GalaxyScene() {
         flat // no tone mapping: keep the palette colors true
         dpr={[1, 2]}
         camera={{ fov: 50, position: [0, 0, 100] }}
-        onPointerMissed={() => {
+        onPointerMissed={(e) => {
           clearHover();
-          select(null);
+          // Stars are tiny at full view: a tap near one (finger-sized radius) still selects it.
+          select(pick.current?.(e) ?? null);
         }}
         onPointerLeave={clearHover}
       >
@@ -55,6 +59,7 @@ export function GalaxyScene() {
             <IntroDriver model={model} intro={intro} />
             <Links model={model} intro={intro} />
             <Stars model={model} intro={intro} />
+            <TapPicker model={model} intro={intro} pick={pick} />
             <LabelTracker model={model} anchors={anchors} inset={inset} intro={intro} />
             <CameraRig model={model} inset={inset} intro={intro} />
           </>
