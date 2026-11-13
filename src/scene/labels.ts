@@ -1,8 +1,9 @@
-import type { Adjacency } from './neighbors';
+import { TOP_LINKS, type Adjacency } from './neighbors';
 
 /**
  * Ids of roots that may get a text label, highest priority first: the selected root,
- * the hovered root, up to `maxNeighbors` strongest neighbors of each, then the `top` roots.
+ * the hovered root, up to `maxNeighbors` strongest neighbors of each (by default the lit
+ * links, `TOP_LINKS`), then the `top` roots (only when nothing is selected).
  * No duplicates. `declutter` later hides the ones that collide.
  */
 export function labelIds(
@@ -10,14 +11,18 @@ export function labelIds(
   top: readonly number[],
   selectedId: number | null,
   hoveredId: number | null,
-  maxNeighbors = 30,
+  maxNeighbors = TOP_LINKS,
 ): number[] {
   const focus = [selectedId, hoveredId].filter((id) => id !== null);
   const ids = new Set<number>(focus);
   for (const f of focus) for (const n of (adj[f] ?? []).slice(0, maxNeighbors)) ids.add(n.id);
-  for (const id of top) ids.add(id);
+  // A selection shows its focus ring only: frequent roots elsewhere would crowd the ring's gaps.
+  if (selectedId === null) for (const id of top) ids.add(id);
   return [...ids];
 }
+
+/** Height of a label's anchor above its star's center, in star radii: just above the top edge. */
+export const LABEL_LIFT = 1.2;
 
 /** A screen rectangle in CSS pixels; x and y are the top-left corner. */
 export interface Box {

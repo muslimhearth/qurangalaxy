@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createWheelClassifier, LATCH_MS } from './wheel';
+import { createWheelClassifier, FAST_RATE, LATCH_MS, MAX_GAIN, SLOW_RATE, zoomGain } from './wheel';
 
 const ev = (deltaY: number, o: Partial<{ deltaX: number; deltaMode: number; ctrlKey: boolean }> = {}) => ({
   deltaX: 0,
@@ -50,5 +50,60 @@ describe('wheel classifier', () => {
     const zout = c(ev(100), 1000);
     expect(zin.kind === 'zoom' && zin.factor < 1).toBe(true);
     expect(zout.kind === 'zoom' && zout.factor > 1).toBe(true);
+  });
+});
+
+describe('zoomGain', () => {
+  it('is 1 for slow gestures and grows for fast ones, up to a cap', () => {
+    expect(zoomGain(0)).toBe(1);
+    expect(zoomGain(SLOW_RATE)).toBe(1);
+    expect(zoomGain((SLOW_RATE + FAST_RATE) / 2)).toBeGreaterThan(1);
+    expect(zoomGain(FAST_RATE)).toBeCloseTo(MAX_GAIN);
+    expect(zoomGain(FAST_RATE * 10)).toBeCloseTo(MAX_GAIN);
+  });
+});
+
+describe('flick acceleration', () => {
+  /** Log-zoom per event for a pinch of `n` events, `px` each, every `ms`. */
+  const pinch = (px: number, ms: number, n = 8) => {
+    const c = createWheelClassifier();
+    let last = 0;
+    for (let i = 0; i < n; i++) {
+      const out = c(ev(-px, { ctrlKey: true }), 1000 + i * ms);
+      if (out.kind === 'zoom') last = -Math.log(out.factor);
+    }
+    return last;
+  };
+
+  it('zooms more per pixel for a hard flick than for a slow pinch', () => {
+    const slow = pinch(1, 16) / 1;
+    const fast = pinch(12, 16) / 12;
+    expect(fast).toBeGreaterThan(slow * 1.5);
+  });
+
+  it('keeps a slow pinch at the base speed', () => {
+    const c = createWheelClassifier();
+    const out = c(ev(-1, { ctrlKey: true }), 0);
+    if (out.kind === 'zoom') expect(-Math.log(out.factor)).toBeCloseTo(0.012);
+  });
+
+  it('starts each new gesture from the base speed after a pause', () => {
+    const c = createWheelClassifier();
+    for (let i = 0; i < 8; i++) c(ev(-12, { ctrlKey: true }), 1000 + i * 16);
+    const out = c(ev(-1, { ctrlKey: true }), 3000);
+    if (out.kind === 'zoom') expect(-Math.log(out.factor)).toBeCloseTo(0.012);
+  });
+
+  it('accelerates fast mouse-wheel spins too', () => {
+    const spin = (ms: number) => {
+      const c = createWheelClassifier();
+      let last = 0;
+      for (let i = 0; i < 6; i++) {
+        const out = c(ev(100), 1000 + i * ms);
+        if (out.kind === 'zoom') last = Math.log(out.factor);
+      }
+      return last;
+    };
+    expect(spin(15)).toBeGreaterThan(spin(200) * 1.5);
   });
 });

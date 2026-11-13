@@ -8,14 +8,18 @@ import {
   damp,
   fitDistance,
   flyToPose,
-  focusSphere,
   IDLE_DELAY,
   idleRotation,
+  poseAt,
   START_ELEVATION,
   START_FIT,
   START_IDLE,
+  viewDirection,
   zoomToward,
 } from './camera';
+import { focusPlan } from './focus/plan';
+import { ringRadius, ringView, viewBasis } from './focus/ring';
+import type { FocusState } from './focus/state';
 import type { IntroState } from './intro/state';
 import { viewFrame, type Inset } from './inset';
 import type { SceneModel } from './model';
@@ -41,8 +45,19 @@ const OFFSET_RATE = 6;
 /**
  * Orbit/zoom controls, fly-to on selection and slow idle auto-rotate.
  * `inset` is the screen area under the root panel: the view centers in the free area instead.
+ * On selection it also lays out the focus ring, facing the camera, and frames it.
  */
-export function CameraRig({ model, inset, intro }: { model: SceneModel; inset: Inset; intro: IntroState }) {
+export function CameraRig({
+  model,
+  inset,
+  intro,
+  focus,
+}: {
+  model: SceneModel;
+  inset: Inset;
+  intro: IntroState;
+  focus: FocusState;
+}) {
   const controls = useRef<CameraControls>(null);
   const camera = useThree((s) => s.camera) as PerspectiveCamera;
   const roots = useGalaxyStore((s) => s.galaxy!.roots);
@@ -140,20 +155,31 @@ export function CameraRig({ model, inset, intro }: { model: SceneModel; inset: I
     };
   }, [canvas, clock, camera]);
 
-  // Fly to the selected root, framing all its neighbors around it.
+  // Fly to the selected root while its strongest neighbors glide into a ring around it.
+  // The ring faces the camera's (kept) viewing direction and fills the free area beside the panel.
   useEffect(() => {
     if (selectedId === null || !roots[selectedId]) return;
     const c = controls.current!;
-    const sphere = focusSphere(roots, model.adjacency, selectedId, model.radiusRange.max * 6);
+    // End values of any running ease: the direction the camera will look from.
     const pos = c.getPosition(camera.position.clone()).toArray() as Vec3;
     const target = c.getTarget(camera.position.clone()).toArray() as Vec3;
-    // Fit the free area next to (or above) the panel, not the whole canvas.
     const frame = viewFrame(camera.fov, size.width, size.height, inset);
-    const pose = flyToPose(sphere, pos, target, frame.fov, frame.aspect);
+    const freeW = size.width - inset.right;
+    const freeH = size.height - inset.bottom - inset.top;
+    const radius = ringRadius(model.radiusRange.max);
+    const view = ringView(radius, frame.fov, freeW, freeH);
+    const dir = viewDirection(pos, target);
+    const plan = focusPlan(roots, model.adjacency, selectedId, dir, view.aspect, model.radii);
+    focus.glide.setTargets(plan.ids, plan.targets);
+    // Look a little above the root: the labels over the ring need more room than the stars below.
+    const root = roots[selectedId].pos;
+    const { up } = viewBasis(dir);
+    const center: Vec3 = [root[0] + up[0] * view.lift, root[1] + up[1] * view.lift, root[2] + up[2] * view.lift];
+    const pose = poseAt(center, pos, target, view.distance);
     c.smoothTime = FLY_SMOOTH;
     void c.setLookAt(...pose.position, ...pose.target, true);
     lastInteraction.current = clock.elapsedTime;
-  }, [selectedId, recenterTick, roots, model, camera, clock, size, inset]);
+  }, [selectedId, recenterTick, roots, model, camera, clock, size, inset, focus]);
 
   // Closing the panel flies back out to the whole galaxy, keeping the current viewing direction.
   const lastSelected = useRef<number | null>(null);
@@ -161,6 +187,8 @@ export function CameraRig({ model, inset, intro }: { model: SceneModel; inset: I
     const was = lastSelected.current;
     lastSelected.current = selectedId;
     if (selectedId !== null || was === null) return;
+    // The ring stars glide back to their galaxy places.
+    focus.glide.setTargets([], new Float32Array(0));
     const c = controls.current!;
     const pos = c.getPosition(camera.position.clone()).toArray() as Vec3;
     const target = c.getTarget(camera.position.clone()).toArray() as Vec3;
@@ -169,7 +197,7 @@ export function CameraRig({ model, inset, intro }: { model: SceneModel; inset: I
     c.smoothTime = FLY_SMOOTH;
     void c.setLookAt(...pose.position, ...pose.target, true);
     lastInteraction.current = clock.elapsedTime;
-  }, [selectedId, model, camera, clock]);
+  }, [selectedId, model, camera, clock, focus]);
 
   useFrame((_, dt) => {
     // Slide the view center toward the middle of the free area.
@@ -187,7 +215,9 @@ export function CameraRig({ model, inset, intro }: { model: SceneModel; inset: I
 
     // Hold still while the intro words face the camera; the rotation eases in after it.
     if (!intro.clock.done) lastInteraction.current = clock.elapsedTime - IDLE_DELAY;
-    const angle = idleRotation(interacting.current, clock.elapsedTime, lastInteraction.current, dt);
+    // No auto-rotate while a root is selected: the focus ring faces the camera and must stay readable.
+    const hold = interacting.current || useGalaxyStore.getState().selectedId !== null;
+    const angle = idleRotation(hold, clock.elapsedTime, lastInteraction.current, dt);
     if (angle) void controls.current?.rotate(angle, 0, false);
   });
 
