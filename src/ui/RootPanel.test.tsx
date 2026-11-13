@@ -5,6 +5,7 @@ import { CONNECTED_PREVIEW } from './ConnectedRoots';
 import { useGalaxyStore } from '../state/store';
 import { resetLoadCache } from '../data/load';
 import { fixtureGalaxy } from '../data/fixture';
+import { useVerseFocus } from './verseFocus';
 
 describe('RootPanel', () => {
   beforeEach(() => {
@@ -152,6 +153,17 @@ describe('RootPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Minimize root details' }));
     fireEvent.click(screen.getByRole('heading', { level: 2 }));
     expect(screen.getByRole('list', { name: 'Lemmas' })).toBeVisible();
+  });
+
+  it('opens a minimized sheet on a verse focus request, and stays minimized after', () => {
+    useGalaxyStore.getState().select(2);
+    render(<RootPanel />);
+    fireEvent.click(screen.getByRole('button', { name: 'Minimize root details' }));
+    act(() => useVerseFocus.getState().focusVerse('1:3'));
+    expect(screen.getByRole('list', { name: 'Lemmas' })).toBeVisible();
+    // The same request does not reopen the sheet when the user minimizes it again.
+    fireEvent.click(screen.getByRole('button', { name: 'Minimize root details' }));
+    expect(screen.queryByRole('list', { name: 'Lemmas' })).toBeNull();
   });
 
   it('does not close or resize when the header is tapped while open', () => {

@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useGalaxyStore } from '../state/store';
 import { ConnectedRoots } from './ConnectedRoots';
 import { RecenterButton } from './RecenterButton';
 import { neighbors } from './helpers';
 import { useRootDetails } from './useRootDetails';
 import { VerseList } from './VerseList';
+import { useVerseFocus } from './verseFocus';
 
 const fmt = (n: number) => n.toLocaleString('en');
 
@@ -40,6 +41,15 @@ export function RootPanel() {
   const size: SheetSize = root && sized?.id === root.id ? sized.size : 'normal';
   const resize = (next: SheetSize) => root && setSized({ id: root.id, size: next });
   const collapsed = size === 'min';
+
+  // A verse focus request (e.g. a tap on the Mushaf mosaic) opens a minimized sheet.
+  const focus = useVerseFocus((s) => s.request);
+  const seenFocus = useRef(focus?.tick ?? 0);
+  useEffect(() => {
+    if (!focus || focus.tick <= seenFocus.current) return;
+    seenFocus.current = focus.tick;
+    if (collapsed && root) setSized({ id: root.id, size: 'normal' });
+  }, [focus, collapsed, root]);
 
   useEffect(() => {
     if (!root) return;
