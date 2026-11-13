@@ -1,16 +1,14 @@
-/** Intro phase lengths in seconds. `wave` is the largest per-star delay (right edge first). */
-export const INTRO = { appear: 1.6, hold: 2.5, morph: 3.2, wave: 1.1 } as const;
+/**
+ * Intro timing in seconds. Everything starts at once: each star fades in over `appear` while it
+ * flies out; the whole spread takes `morph`; `wave` is the largest per-star delay (outermost star).
+ */
+export const INTRO = { appear: 1.2, morph: 2.4, wave: 0.6 } as const;
 
 /** Total intro length in seconds. */
-export const introLength = INTRO.appear + INTRO.hold + INTRO.morph;
+export const introLength = INTRO.morph;
 
-/** Time-scale of the morph after the user asks to skip: about one second left. */
+/** Time-scale after the user asks to skip: what is left plays in about one second. */
 const SKIP_SPEED = INTRO.morph;
-
-/** Strongest pull of a star toward its glyph point (smallest star); the galaxy stays a galaxy. */
-export const MAX_PULL = 0.55;
-/** Weakest pull (largest star): big stars keep almost their real place as landmarks. */
-export const MIN_PULL = 0.2;
 
 const clamp01 = (t: number) => Math.min(1, Math.max(0, t));
 
@@ -20,34 +18,25 @@ export function easeInOutCubic(t: number): number {
   return x < 0.5 ? 4 * x * x * x : 1 - (-2 * x + 2) ** 3 / 2;
 }
 
-/** Soft ease-out for things that light up. Clamped to [0, 1]. */
-export function easeOutCubic(t: number): number {
-  return 1 - (1 - clamp01(t)) ** 3;
-}
-
 /**
- * Per-star delay in seconds from its horizontal place in the text (0 = left edge, 1 = right edge).
- * Arabic reads right to left, so the wave starts at the right.
+ * The opening's easing: starts very slowly, keeps speeding up, and only settles a little at
+ * the very end (x³ / (x³ + (1−x)^1.4)). Monotone, clamped to [0, 1].
  */
-export function starDelay(xNorm: number): number {
-  return INTRO.wave * (1 - clamp01(xNorm));
+export function easeOpen(t: number): number {
+  const x = clamp01(t);
+  const a = x ** 3;
+  const b = (1 - x) ** 1.4;
+  return a + b === 0 ? 1 : a / (a + b);
 }
 
-/** How far a star has lit up (0..1) at time `t`; the wave runs over the first part of the phase. */
+/** How far a star has faded in (0..1) at time `t`. */
 export function appearProgress(t: number, delay: number): number {
-  const span = INTRO.appear * 0.5;
-  return easeOutCubic((t - (delay / INTRO.wave) * (INTRO.appear - span)) / span);
+  return easeOpen((t - delay) / INTRO.appear);
 }
 
-/** How far a star has moved from the word toward its galaxy place (0..1) at time `t`. */
+/** How far a star has moved from the core toward its galaxy place (0..1) at time `t`. */
 export function morphProgress(t: number, delay: number): number {
-  const span = INTRO.morph - INTRO.wave;
-  return easeInOutCubic((t - INTRO.appear - INTRO.hold - delay) / span);
-}
-
-/** Pull toward the glyph point for a star of relative size `sizeRank` (0 smallest .. 1 largest). */
-export function pullAmount(sizeRank: number): number {
-  return MAX_PULL - (MAX_PULL - MIN_PULL) * clamp01(sizeRank);
+  return easeOpen((t - delay) / (INTRO.morph - INTRO.wave));
 }
 
 /** Gentle brightness/size factor around 1 for a star with phase `phase` at time `t`. */
@@ -56,13 +45,12 @@ export function twinkle(t: number, phase: number): number {
 }
 
 /** Intro phase names, for the page's `data-intro` attribute (used by browser tests). */
-export type IntroPhase = 'appear' | 'words' | 'morph' | 'done';
+export type IntroPhase = 'appear' | 'morph' | 'done';
 
 /** The phase at intro time `t`. */
 export function introPhase(t: number): IntroPhase {
   if (t >= introLength) return 'done';
-  if (t >= INTRO.appear + INTRO.hold) return 'morph';
-  return t >= INTRO.appear ? 'words' : 'appear';
+  return t >= INTRO.appear ? 'morph' : 'appear';
 }
 
 /** What the skip rule looks at, read from the browser at start-up. */
@@ -95,7 +83,7 @@ export function frozenIntroTime(search: string): number | null {
   return Number.isFinite(t) ? Math.min(introLength, Math.max(0, t)) : null;
 }
 
-/** Intro time that only moves forward. A skip jumps to the morph and plays it fast. */
+/** Intro time that only moves forward. A skip plays the rest fast. */
 export class IntroClock {
   /** Seconds since the intro started, 0..introLength. */
   t: number;
@@ -124,14 +112,13 @@ export class IntroClock {
     this.frozen = true;
   }
 
-  /** Finish quickly: skip the rest of the hold and speed up the morph. */
+  /** Finish quickly: play the rest of the spread at high speed. */
   skip(): void {
     this.frozen = false;
-    this.t = Math.max(this.t, INTRO.appear + INTRO.hold);
     this.speed = SKIP_SPEED;
   }
 
-  /** Jump straight to the end (nothing to show, e.g. the font did not load). */
+  /** Jump straight to the end (nothing to show). */
   finish(): void {
     this.t = introLength;
   }

@@ -4,17 +4,15 @@ import {
   IntroClock,
   appearProgress,
   easeInOutCubic,
+  easeOpen,
   frozenIntroTime,
   introPhase,
   introLength,
   morphProgress,
-  pullAmount,
   shouldSkipIntro,
-  starDelay,
   twinkle,
 } from './timeline';
 
-const morphStart = INTRO.appear + INTRO.hold;
 
 describe('easeInOutCubic', () => {
   it('starts at 0, ends at 1, is symmetric and monotone', () => {
@@ -34,40 +32,34 @@ describe('easeInOutCubic', () => {
   });
 });
 
-describe('starDelay', () => {
-  it('starts at the right edge (Arabic reading order) and ends at the left', () => {
-    expect(starDelay(1)).toBe(0);
-    expect(starDelay(0)).toBe(INTRO.wave);
-    expect(starDelay(0.5)).toBeCloseTo(INTRO.wave / 2);
+describe('easeOpen', () => {
+  it('starts slowly, keeps speeding up, and ends at 1', () => {
+    expect(easeOpen(0)).toBe(0);
+    expect(easeOpen(1)).toBe(1);
+    // Slow start: the first fifth of the time covers only a tiny part of the way.
+    expect(easeOpen(0.2)).toBeLessThan(0.02);
+    // Speeds up: the step from 0.5 to 0.7 is bigger than the step from 0.3 to 0.5.
+    expect(easeOpen(0.7) - easeOpen(0.5)).toBeGreaterThan(easeOpen(0.5) - easeOpen(0.3));
+    let prev = 0;
+    for (let t = 0; t <= 1.0001; t += 0.02) {
+      expect(easeOpen(t)).toBeGreaterThanOrEqual(prev);
+      prev = easeOpen(t);
+    }
   });
 });
 
-describe('appearProgress', () => {
-  it('rises from 0 to 1 during the appear phase', () => {
-    expect(appearProgress(0, 0)).toBe(0);
-    expect(appearProgress(INTRO.appear, 0)).toBe(1);
-    expect(appearProgress(INTRO.appear, starDelay(0))).toBe(1);
+describe('appearProgress and morphProgress', () => {
+  it('both start at app open (t = 0) with no pause', () => {
+    expect(appearProgress(0.3, 0)).toBeGreaterThan(0);
+    expect(morphProgress(0.5, 0)).toBeGreaterThan(0);
   });
-});
-
-describe('morphProgress', () => {
-  it('is 0 through the hold and 1 at the end of the intro for every delay', () => {
-    expect(morphProgress(0, 0)).toBe(0);
-    expect(morphProgress(morphStart, 0)).toBe(0);
+  it('are complete at the end for every delay', () => {
+    expect(appearProgress(introLength, INTRO.wave)).toBe(1);
     expect(morphProgress(introLength, 0)).toBe(1);
     expect(morphProgress(introLength, INTRO.wave)).toBe(1);
   });
-  it('lets right-side stars move first', () => {
-    const t = morphStart + 1;
-    expect(morphProgress(t, starDelay(1))).toBeGreaterThan(morphProgress(t, starDelay(0)));
-  });
-});
-
-describe('pullAmount', () => {
-  it('pulls small stars more than big ones, and never fully', () => {
-    expect(pullAmount(0)).toBeGreaterThan(pullAmount(1));
-    expect(pullAmount(0)).toBeLessThan(1);
-    expect(pullAmount(1)).toBeGreaterThan(0);
+  it('let inner stars (smaller delay) go first', () => {
+    expect(morphProgress(1, 0)).toBeGreaterThan(morphProgress(1, INTRO.wave));
   });
 });
 
@@ -110,20 +102,13 @@ describe('IntroClock', () => {
     expect(c.done).toBe(true);
     expect(c.t).toBe(introLength);
   });
-  it('a skip jumps to the morph and finishes it in about a second', () => {
+  it('a skip keeps the current position and finishes in about a second', () => {
     const c = new IntroClock();
     c.advance(0.5);
     c.skip();
-    expect(c.t).toBe(morphStart);
+    expect(c.t).toBe(0.5);
     c.advance(1.1);
     expect(c.done).toBe(true);
-  });
-  it('a skip during the morph keeps the current position', () => {
-    const c = new IntroClock();
-    c.advance(morphStart + 1);
-    const t = c.t;
-    c.skip();
-    expect(c.t).toBe(t);
   });
   it('can finish at once', () => {
     const c = new IntroClock();
@@ -140,8 +125,7 @@ describe('IntroClock', () => {
 describe('introPhase', () => {
   it('names each phase in order', () => {
     expect(introPhase(0)).toBe('appear');
-    expect(introPhase(INTRO.appear)).toBe('words');
-    expect(introPhase(morphStart)).toBe('morph');
+    expect(introPhase(INTRO.appear)).toBe('morph');
     expect(introPhase(introLength)).toBe('done');
   });
 });
@@ -149,7 +133,7 @@ describe('introPhase', () => {
 describe('frozenIntroTime', () => {
   it('reads ?introAt and clamps it', () => {
     expect(frozenIntroTime('')).toBeNull();
-    expect(frozenIntroTime('?introAt=3')).toBe(3);
+    expect(frozenIntroTime('?introAt=1.5')).toBe(1.5);
     expect(frozenIntroTime('?introAt=99')).toBe(introLength);
     expect(frozenIntroTime('?introAt=x')).toBeNull();
   });

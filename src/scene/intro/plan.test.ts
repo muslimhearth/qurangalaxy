@@ -1,12 +1,10 @@
 import { describe, expect, it } from 'vitest';
+import type { Vec3 } from '../../data/types';
 import { seededRandom } from '../random';
-import { textFrame } from './frame';
-import { buildDustPlan, buildIntroPlan, writeIntroMatrices } from './plan';
+import { buildBurstPlan, writeIntroMatrices } from './plan';
 import { INTRO, introLength } from './timeline';
 
-const frame = textFrame({ center: [0, 0, 0], radius: 50 }, 50, 16 / 9);
-
-/** Galaxy matrices for `n` random stars with radii 0.5..1.5. */
+/** Galaxy matrices for `n` random stars with radii 0.5..1.5 around the origin. */
 function galaxy(n: number): Float32Array {
   const r = seededRandom(9);
   const m = new Float32Array(n * 16);
@@ -16,55 +14,52 @@ function galaxy(n: number): Float32Array {
   }
   return m;
 }
-const glyphs = (n: number) => {
-  const r = seededRandom(4);
-  return Float32Array.from({ length: n * 3 }, (_, k) => (k % 3 === 2 ? 0 : r() * 40 - 20));
-};
+const center: Vec3 = [0, 0, 0];
+const dist = (a: ArrayLike<number>, i: number) => Math.hypot(a[i]!, a[i + 1]!, a[i + 2]!);
 
-describe('buildIntroPlan', () => {
+describe('buildBurstPlan', () => {
   const base = galaxy(200);
-  const plan = buildIntroPlan(base, glyphs(200), frame);
+  const plan = buildBurstPlan(base, center, 5);
 
-  it('uses every glyph point once', () => {
-    const keys = new Set<string>();
-    for (let i = 0; i < 200; i++) keys.add([...plan.target.subarray(i * 3, i * 3 + 3)].join());
-    expect(keys.size).toBe(200);
+  it('starts every star inside the small core', () => {
+    for (let i = 0; i < 200; i++) expect(dist(plan.target, i * 3)).toBeLessThanOrEqual(5 + 1e-6);
   });
-  it('pulls the biggest star least', () => {
-    let big = 0;
-    for (let i = 1; i < 200; i++) if (base[i * 16]! > base[big * 16]!) big = i;
-    expect(Math.min(...plan.pull)).toBe(plan.pull[big]);
+
+  it('lets inner stars leave first, so the galaxy grows outward', () => {
+    let inner = 0;
+    let outer = 0;
+    for (let i = 1; i < 200; i++) if (dist(base, i * 16 + 12) < dist(base, inner * 16 + 12)) inner = i;
+    for (let i = 1; i < 200; i++) if (dist(base, i * 16 + 12) > dist(base, outer * 16 + 12)) outer = i;
+    expect(plan.delay[inner]!).toBeLessThan(plan.delay[outer]!);
+    expect(Math.max(...plan.delay)).toBeLessThanOrEqual(INTRO.wave + 1e-6);
   });
-  it('is deterministic', () => expect(buildIntroPlan(base, glyphs(200), frame)).toEqual(plan));
+
+  it('is deterministic', () => expect(buildBurstPlan(base, center, 5)).toEqual(plan));
 });
 
 describe('writeIntroMatrices', () => {
   const base = galaxy(50);
-  const plan = buildIntroPlan(base, glyphs(50), frame);
+  const plan = buildBurstPlan(base, center, 5);
 
-  it('ends exactly at the galaxy matrices', () => {
-    const out = base.slice();
-    writeIntroMatrices(out, base, plan, introLength);
-    expect(out).toEqual(base);
-  });
-  it('starts invisible and leans toward the glyphs during the hold', () => {
+  it('starts invisible in the core and ends exactly at the galaxy matrices', () => {
     const out = base.slice();
     writeIntroMatrices(out, base, plan, 0);
     expect(out[0]).toBe(0);
-    writeIntroMatrices(out, base, plan, INTRO.appear + 0.5);
-    for (const k of [0, 1, 2]) {
-      const g = base[12 + k]!;
-      expect(out[12 + k]).toBeCloseTo(g + (plan.target[k]! - g) * plan.pull[0]!, 4);
-    }
-    expect(out[0]).toBeGreaterThan(base[0]! * 0.8);
+    expect(dist(out, 12)).toBeLessThanOrEqual(5 + 1e-6);
+    writeIntroMatrices(out, base, plan, introLength);
+    expect(out).toEqual(base);
   });
-});
 
-describe('buildDustPlan', () => {
-  it('gives one drift and timing per particle', () => {
-    const d = buildDustPlan(glyphs(100), frame, 10);
-    expect(d.drift.length).toBe(300);
-    expect(d.timing.length).toBe(200);
-    for (let i = 0; i < 100; i++) expect(d.timing[i * 2]).toBeLessThanOrEqual(INTRO.wave + 1e-6);
+  it('barely moves at first, then speeds up', () => {
+    const out = base.slice();
+    // Find the star that travels farthest and track its distance from its start point.
+    const travel = (t: number) => {
+      writeIntroMatrices(out, base, plan, t);
+      return Math.hypot(out[12]! - plan.target[0]!, out[13]! - plan.target[1]!, out[14]! - plan.target[2]!);
+    };
+    const total = travel(introLength);
+    expect(travel(0.3)).toBeLessThan(total * 0.02);
+    expect(travel(1.4) - travel(1.0)).toBeGreaterThan(travel(1.0) - travel(0.6));
+    expect(INTRO.morph).toBeLessThanOrEqual(2.5);
   });
 });

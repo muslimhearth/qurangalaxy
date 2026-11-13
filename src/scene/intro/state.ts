@@ -1,4 +1,4 @@
-import type { DustPlan, IntroPlan } from './plan';
+import type { IntroPlan } from './plan';
 import { IntroClock, shouldSkipIntro, type SkipContext } from './timeline';
 
 /**
@@ -9,17 +9,15 @@ export interface IntroState {
   clock: IntroClock;
   /** False when the intro was skipped at start-up. */
   played: boolean;
-  /** Star plan; null until the font is loaded and the words are sampled. */
+  /** Star plan; null until the driver builds it. */
   plan: IntroPlan | null;
-  /** Calligraphy dust plan; null like `plan`. */
-  dust: DustPlan | null;
   /** True once the clock may run (plans built, or nothing to play). */
   ready: boolean;
 }
 
 /** Fresh intro state. `skip` starts it finished: the galaxy shows at once. */
 export function createIntroState(skip: boolean): IntroState {
-  return { clock: new IntroClock(skip), played: !skip, plan: null, dust: null, ready: skip };
+  return { clock: new IntroClock(skip), played: !skip, plan: null, ready: skip };
 }
 
 /** The skip inputs from the browser: reduced-motion setting and the URL. */

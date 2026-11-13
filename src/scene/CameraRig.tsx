@@ -4,8 +4,18 @@ import { useEffect, useRef } from 'react';
 import { Plane, Raycaster, Vector2, Vector3, type PerspectiveCamera } from 'three';
 import type { Vec3 } from '../data/types';
 import { useGalaxyStore } from '../state/store';
-import { damp, fitDistance, flyToPose, focusSphere, IDLE_DELAY, idleRotation, START_IDLE, zoomToward } from './camera';
-import { START_ELEVATION, START_FIT } from './intro/frame';
+import {
+  damp,
+  fitDistance,
+  flyToPose,
+  focusSphere,
+  IDLE_DELAY,
+  idleRotation,
+  START_ELEVATION,
+  START_FIT,
+  START_IDLE,
+  zoomToward,
+} from './camera';
 import type { IntroState } from './intro/state';
 import { viewFrame, type Inset } from './inset';
 import type { SceneModel } from './model';

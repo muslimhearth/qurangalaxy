@@ -2,6 +2,11 @@ import type { Root, Vec3 } from '../data/types';
 import type { Sphere } from './bounds';
 import type { Adjacency } from './neighbors';
 
+/** Start view: camera height above the galaxy plane, as a share of its distance. */
+export const START_ELEVATION = 0.35;
+/** Start view: distance as a share of the distance that fits the whole galaxy. */
+export const START_FIT = 0.9;
+
 /** Camera position and look-at target. */
 export interface Pose {
   position: Vec3;

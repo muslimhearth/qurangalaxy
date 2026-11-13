@@ -1,7 +1,7 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import { PNG } from 'pngjs';
 
-/** Screenshot path per project, e.g. test-results/android-intro-words.png. */
+/** Screenshot path per project, e.g. test-results/android-intro-core.png. */
 const shot = (info: TestInfo, name: string) => `test-results/${info.project.name}-${name}.png`;
 
 /** The intro phase the scene writes on <body data-intro>. */
@@ -31,13 +31,13 @@ const shownLabels = (page: Page) =>
 
 // Automated browsers skip the intro (so other tests need not wait); `?intro` turns it back on.
 // The software renderer in headless browsers draws a frame in about a second: poll, never assume timing.
-test('the words show inside the galaxy, then the galaxy settles with labels', async ({ page, isMobile }, info) => {
+test('the stars glow in a core, then spread into the galaxy with labels', async ({ page, isMobile }, info) => {
   test.setTimeout(90_000);
-  // ?introAt freezes the intro in the middle of the hold, so the screenshot is reliable on slow renderers.
-  await page.goto('/?intro&introAt=3');
-  await expect.poll(() => phase(page), { timeout: 30_000 }).toBe('words');
-  await expect.poll(() => captureLit(page, shot(info, 'intro-words')), { timeout: 20_000 }).toBeGreaterThan(500);
-  // No labels while the words show.
+  // ?introAt freezes the intro while the stars glow in the core, so the screenshot is reliable on slow renderers.
+  await page.goto('/?intro&introAt=0.9');
+  await expect.poll(() => phase(page), { timeout: 30_000 }).toBe('appear');
+  await expect.poll(() => captureLit(page, shot(info, 'intro-core')), { timeout: 20_000 }).toBeGreaterThan(100);
+  // No labels while the stars gather.
   expect(await shownLabels(page)).toBe(0);
 
   // Any input releases it; it then settles into the galaxy.
@@ -53,7 +53,7 @@ test('the words show inside the galaxy, then the galaxy settles with labels', as
 test('the intro plays through on its own with labels hidden until the end', async ({ page }) => {
   test.setTimeout(90_000);
   await page.goto('/?intro');
-  await expect.poll(() => phase(page), { timeout: 30_000, intervals: [100] }).toMatch(/words|morph/);
+  await expect.poll(() => phase(page), { timeout: 30_000, intervals: [100] }).toMatch(/appear|hold|morph/);
   expect(await shownLabels(page)).toBe(0);
   await expect.poll(() => phase(page), { timeout: 45_000 }).toBe('done');
   await expect.poll(() => shownLabels(page), { timeout: 15_000 }).toBeGreaterThan(5);
@@ -61,7 +61,7 @@ test('the intro plays through on its own with labels hidden until the end', asyn
 
 test('a tap or click during the intro finishes it quickly', async ({ page, isMobile }) => {
   await page.goto('/?intro');
-  await expect.poll(() => phase(page), { timeout: 30_000, intervals: [100] }).toMatch(/appear|words/);
+  await expect.poll(() => phase(page), { timeout: 30_000, intervals: [100] }).toMatch(/appear|morph/);
   const vp = page.viewportSize()!;
   if (isMobile) await page.touchscreen.tap(vp.width / 2, vp.height / 2);
   else await page.mouse.click(vp.width / 2, vp.height / 2);
@@ -75,7 +75,7 @@ test('a deep link skips the intro', async ({ page }) => {
   await expect(page.getByLabel('Root details', { exact: true }).locator('.root-ar')).toHaveText('رحم');
   await expect.poll(() => phase(page), { timeout: 15_000 }).toBe('done');
   await expect.poll(() => shownLabels(page), { timeout: 15_000 }).toBeGreaterThan(0);
-  // It never showed the words.
+  // It went straight to the finished galaxy.
   expect(await page.evaluate(() => document.body.dataset.intro)).toBe('done');
 });
 
