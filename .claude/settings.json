@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
+  },
+  "worktree": {
+    "baseRef": "head"
+  },
+  "permissions": {
+    "allow": [
+      "Bash(pnpm install*)",
+      "Bash(pnpm add *)",
+      "Bash(pnpm remove *)",
+      "Bash(pnpm run *)",
+      "Bash(pnpm test*)",
+      "Bash(pnpm exec *)",
+      "Bash(pnpm build*)",
+      "Bash(pnpm dev*)",
+      "Bash(pnpm preview*)",
+      "Bash(pnpm typecheck*)",
+      "Bash(pnpm data*)",
+      "Bash(pnpm vitest *)",
+      "Bash(pnpm playwright *)",
+      "Bash(pnpm tsx *)",
+      "Bash(pnpm tsc*)",
+      "Bash(npx vitest *)",
+      "Bash(npx playwright *)",
+      "Bash(npx tsc*)",
+      "Bash(npx tsx *)",
+      "Bash(node scripts/*)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git branch*)",
+      "Bash(git checkout *)",
+      "Bash(git switch *)",
+      "Bash(git merge *)",
+      "Bash(git worktree *)",
+      "Bash(git show*)",
+      "Bash(git rev-parse *)",
+      "Bash(git stash*)",
+      "Bash(git rm *)",
+      "Bash(git mv *)",
+      "Bash(git restore *)",
+      "Bash(curl -s https://raw.githubusercontent.com/*)",
+      "Bash(curl -sL https://raw.githubusercontent.com/*)",
+      "Bash(curl -s https://tanzil.net/*)",
+      "Bash(curl -sL https://tanzil.net/*)",
+      "Bash(ls*)",
+      "Bash(cat *)",
+      "Bash(mkdir *)",
+      "Bash(head *)",
+      "Bash(tail *)",
+      "Bash(wc *)",
+      "Bash(grep *)",
+      "Bash(find *)"
+    ],
+    "deny": [
+      "Bash(git push*)",
+      "Bash(git remote add*)",
+      "Bash(rm -rf /*)",
+      "Bash(rm -rf ~*)",
+      "Bash(rm -rf ..*)"
+    ]
+  }
+}
