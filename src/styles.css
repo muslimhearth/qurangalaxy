@@ -212,17 +212,18 @@ a { color: var(--accent); }
 }
 .root-stats { margin: 2px 0 0; color: var(--muted); font-size: 0.85rem; }
 .head-buttons { margin-left: auto; align-self: flex-start; display: flex; gap: 8px; flex: none; }
-.close, .minimize {
+.close, .sheet-size {
   flex: none; /* keep the 32 px tap size when the title is long */
+  display: inline-flex; align-items: center; justify-content: center;
   width: 32px; height: 32px;
   border-radius: 50%;
   border: 1px solid var(--border);
   background: transparent;
   font-size: 1.2rem; line-height: 1;
 }
-.close:hover, .minimize:hover { border-color: var(--accent); color: var(--accent); }
-/* Minimize is for the phone bottom sheet only; the desktop side panel leaves room anyway. */
-.minimize { display: none; }
+.close:hover, .sheet-size:hover { border-color: var(--accent); color: var(--accent); }
+/* Sheet sizes are for the phone bottom sheet only; the desktop side panel is full height. */
+.sheet-size { display: none; }
 .root-body[hidden] { display: none; }
 .root-body { overflow-y: auto; padding: 4px 18px 18px; overscroll-behavior: contain; }
 .root-body h3 {
@@ -289,8 +290,15 @@ a { color: var(--accent); }
     border-radius: var(--radius) var(--radius) 0 0;
   }
   .root-ar { font-size: 2.4rem; }
-  .minimize { display: inline-flex; align-items: center; justify-content: center; }
-  .root-panel.collapsed .root-head { border-bottom: none; }
+  .sheet-size { display: inline-flex; }
+  .root-panel.collapsed .root-head { border-bottom: none; cursor: pointer; }
+  /* Maximized: up to just below the search field. */
+  .root-panel.max { max-height: none; top: 74px; }
+  /* Grab bar: shows the sheet can change size. */
+  .root-panel::before {
+    content: ''; position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
+    width: 36px; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.18);
+  }
   .search { top: 10px; }
   .hover-hint { bottom: auto; top: 76px; }
 }

@@ -118,7 +118,6 @@ describe('RootPanel', () => {
     useGalaxyStore.getState().select(2);
     render(<RootPanel />);
     const toggle = screen.getByRole('button', { name: 'Minimize root details' });
-    expect(toggle).toHaveAttribute('aria-expanded', 'true');
     fireEvent.click(toggle);
     expect(screen.getByRole('list', { name: 'Lemmas', hidden: true })).not.toBeVisible();
     expect(screen.getByRole('heading', { level: 2 })).toBeVisible();
@@ -132,5 +131,34 @@ describe('RootPanel', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Minimize root details' }));
     act(() => useGalaxyStore.getState().select(1));
     expect(screen.getByRole('list', { name: 'Lemmas' })).toBeVisible();
+  });
+
+  it('maximizes and restores the sheet', () => {
+    useGalaxyStore.getState().select(2);
+    render(<RootPanel />);
+    const panel = screen.getByRole('complementary', { name: /root details/i });
+    fireEvent.click(screen.getByRole('button', { name: 'Maximize root details' }));
+    expect(panel).toHaveClass('max');
+    // At full size there is nothing bigger: only "restore" goes back down.
+    expect(screen.queryByRole('button', { name: 'Maximize root details' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Restore root details' }));
+    expect(panel).not.toHaveClass('max');
+    expect(panel).not.toHaveClass('collapsed');
+  });
+
+  it('opens a minimized sheet when its header is tapped', () => {
+    useGalaxyStore.getState().select(2);
+    render(<RootPanel />);
+    fireEvent.click(screen.getByRole('button', { name: 'Minimize root details' }));
+    fireEvent.click(screen.getByRole('heading', { level: 2 }));
+    expect(screen.getByRole('list', { name: 'Lemmas' })).toBeVisible();
+  });
+
+  it('does not close or resize when the header is tapped while open', () => {
+    useGalaxyStore.getState().select(2);
+    render(<RootPanel />);
+    fireEvent.click(screen.getByRole('heading', { level: 2 }));
+    expect(screen.getByRole('list', { name: 'Lemmas' })).toBeVisible();
+    expect(useGalaxyStore.getState().selectedId).toBe(2);
   });
 });

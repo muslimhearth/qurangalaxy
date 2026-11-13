@@ -7,6 +7,25 @@ import { VerseList } from './VerseList';
 
 const fmt = (n: number) => n.toLocaleString('en');
 
+/** Bottom-sheet size on phones: header only, normal, or nearly full screen. */
+type SheetSize = 'min' | 'normal' | 'max';
+const UP: Record<SheetSize, SheetSize> = { min: 'normal', normal: 'max', max: 'max' };
+const DOWN: Record<SheetSize, SheetSize> = { min: 'min', normal: 'min', max: 'normal' };
+
+/** Chevron icon pointing up or down. */
+const Chevron = ({ up }: { up: boolean }) => (
+  <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+    <path
+      d={up ? 'M4 10l4-4 4 4' : 'M4 6l4 4 4-4'}
+      stroke="currentColor"
+      strokeWidth="1.8"
+      fill="none"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+
 /** Side panel (bottom sheet on phones) with the selected root's lemmas, links and verses. */
 export function RootPanel() {
   const galaxy = useGalaxyStore((s) => s.galaxy);
@@ -15,9 +34,11 @@ export function RootPanel() {
   const details = useRootDetails(selectedId);
   const root = selectedId === null ? undefined : galaxy?.roots[selectedId];
   const links = useMemo(() => (galaxy && root ? neighbors(galaxy, root.id) : []), [galaxy, root]);
-  // Phones: the sheet can shrink to its header. Stored per root, so a new root opens expanded.
-  const [collapsedId, setCollapsedId] = useState<number | null>(null);
-  const collapsed = root !== undefined && collapsedId === root.id;
+  // Phones: the sheet has three sizes. Stored per root, so a new root opens at normal size.
+  const [sized, setSized] = useState<{ id: number; size: SheetSize } | null>(null);
+  const size: SheetSize = root && sized?.id === root.id ? sized.size : 'normal';
+  const resize = (next: SheetSize) => root && setSized({ id: root.id, size: next });
+  const collapsed = size === 'min';
 
   useEffect(() => {
     if (!root) return;
@@ -31,8 +52,17 @@ export function RootPanel() {
   if (!root) return null;
 
   return (
-    <aside className={`root-panel panel${collapsed ? ' collapsed' : ''}`} aria-label="Root details">
-      <header className="root-head">
+    <aside
+      className={`root-panel panel${collapsed ? ' collapsed' : ''}${size === 'max' ? ' max' : ''}`}
+      aria-label="Root details"
+    >
+      {/* A tap anywhere on a minimized sheet's header opens it (the buttons keep their own job). */}
+      <header
+        className="root-head"
+        onClick={(e) => {
+          if (collapsed && !(e.target as HTMLElement).closest('button')) resize('normal');
+        }}
+      >
         <h2 className="root-ar" lang="ar" dir="rtl">
           {root.ar}
         </h2>
@@ -48,15 +78,26 @@ export function RootPanel() {
           </p>
         </div>
         <div className="head-buttons">
-          <button
-            type="button"
-            className="minimize"
-            aria-expanded={!collapsed}
-            aria-label={collapsed ? 'Expand root details' : 'Minimize root details'}
-            onClick={() => setCollapsedId(collapsed ? null : root.id)}
-          >
-            {collapsed ? '⌃' : '⌄'}
-          </button>
+          {size !== 'max' && (
+            <button
+              type="button"
+              className="sheet-size"
+              aria-label={collapsed ? 'Expand root details' : 'Maximize root details'}
+              onClick={() => resize(UP[size])}
+            >
+              <Chevron up />
+            </button>
+          )}
+          {size !== 'min' && (
+            <button
+              type="button"
+              className="sheet-size"
+              aria-label={size === 'max' ? 'Restore root details' : 'Minimize root details'}
+              onClick={() => resize(DOWN[size])}
+            >
+              <Chevron up={false} />
+            </button>
+          )}
           <button type="button" className="close" aria-label="Close root details" onClick={() => select(null)}>
             ×
           </button>
