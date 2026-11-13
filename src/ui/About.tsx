@@ -23,7 +23,6 @@ export function About() {
           <ul>
             <li>Drag or two-finger swipe to turn; pinch or scroll to zoom.</li>
             <li>Tap a star, or search: رحم, noor, light. Use the slider for semantic search.</li>
-            <li>Moved away? Tap “Back to” to return to the selected root.</li>
           </ul>
           <p className="sources">
             Sources: <a href="https://corpus.quran.com/" target="_blank" rel="noreferrer">Quranic Arabic Corpus</a>{' '}
