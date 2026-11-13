@@ -113,4 +113,24 @@ describe('RootPanel', () => {
     act(() => useGalaxyStore.getState().select(1));
     expect(within(screen.getByRole('list', { name: /connected roots/i })).getAllByRole('button')).toHaveLength(CONNECTED_PREVIEW);
   });
+
+  it('minimizes to its header and expands again', () => {
+    useGalaxyStore.getState().select(2);
+    render(<RootPanel />);
+    const toggle = screen.getByRole('button', { name: 'Minimize root details' });
+    expect(toggle).toHaveAttribute('aria-expanded', 'true');
+    fireEvent.click(toggle);
+    expect(screen.getByRole('list', { name: 'Lemmas', hidden: true })).not.toBeVisible();
+    expect(screen.getByRole('heading', { level: 2 })).toBeVisible();
+    fireEvent.click(screen.getByRole('button', { name: 'Expand root details' }));
+    expect(screen.getByRole('list', { name: 'Lemmas' })).toBeVisible();
+  });
+
+  it('opens expanded again when another root is selected', () => {
+    useGalaxyStore.getState().select(2);
+    render(<RootPanel />);
+    fireEvent.click(screen.getByRole('button', { name: 'Minimize root details' }));
+    act(() => useGalaxyStore.getState().select(1));
+    expect(screen.getByRole('list', { name: 'Lemmas' })).toBeVisible();
+  });
 });

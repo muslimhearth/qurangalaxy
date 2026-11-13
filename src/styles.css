@@ -191,16 +191,19 @@ a { color: var(--accent); }
   display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
 }
 .root-stats { margin: 2px 0 0; color: var(--muted); font-size: 0.85rem; }
-.close {
-  margin-left: auto;
-  align-self: flex-start;
+.head-buttons { margin-left: auto; align-self: flex-start; display: flex; gap: 8px; flex: none; }
+.close, .minimize {
+  flex: none; /* keep the 32 px tap size when the title is long */
   width: 32px; height: 32px;
   border-radius: 50%;
   border: 1px solid var(--border);
   background: transparent;
   font-size: 1.2rem; line-height: 1;
 }
-.close:hover { border-color: var(--accent); color: var(--accent); }
+.close:hover, .minimize:hover { border-color: var(--accent); color: var(--accent); }
+/* Minimize is for the phone bottom sheet only; the desktop side panel leaves room anyway. */
+.minimize { display: none; }
+.root-body[hidden] { display: none; }
 .root-body { overflow-y: auto; padding: 4px 18px 18px; overscroll-behavior: contain; }
 .root-body h3 {
   margin: 16px 0 8px; font-size: 0.75rem; font-weight: 600;
@@ -266,6 +269,8 @@ a { color: var(--accent); }
     border-radius: var(--radius) var(--radius) 0 0;
   }
   .root-ar { font-size: 2.4rem; }
+  .minimize { display: inline-flex; align-items: center; justify-content: center; }
+  .root-panel.collapsed .root-head { border-bottom: none; }
   .search { top: 10px; }
   .hover-hint { bottom: auto; top: 76px; }
 }

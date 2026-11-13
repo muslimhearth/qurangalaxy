@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useGalaxyStore } from '../state/store';
 import { ConnectedRoots } from './ConnectedRoots';
 import { neighbors } from './helpers';
@@ -15,6 +15,9 @@ export function RootPanel() {
   const details = useRootDetails(selectedId);
   const root = selectedId === null ? undefined : galaxy?.roots[selectedId];
   const links = useMemo(() => (galaxy && root ? neighbors(galaxy, root.id) : []), [galaxy, root]);
+  // Phones: the sheet can shrink to its header. Stored per root, so a new root opens expanded.
+  const [collapsedId, setCollapsedId] = useState<number | null>(null);
+  const collapsed = root !== undefined && collapsedId === root.id;
 
   useEffect(() => {
     if (!root) return;
@@ -28,7 +31,7 @@ export function RootPanel() {
   if (!root) return null;
 
   return (
-    <aside className="root-panel panel" aria-label="Root details">
+    <aside className={`root-panel panel${collapsed ? ' collapsed' : ''}`} aria-label="Root details">
       <header className="root-head">
         <h2 className="root-ar" lang="ar" dir="rtl">
           {root.ar}
@@ -44,12 +47,24 @@ export function RootPanel() {
             {fmt(root.count)} words · {fmt(root.verseCount)} verses
           </p>
         </div>
-        <button type="button" className="close" aria-label="Close root details" onClick={() => select(null)}>
-          ×
-        </button>
+        <div className="head-buttons">
+          <button
+            type="button"
+            className="minimize"
+            aria-expanded={!collapsed}
+            aria-label={collapsed ? 'Expand root details' : 'Minimize root details'}
+            onClick={() => setCollapsedId(collapsed ? null : root.id)}
+          >
+            {collapsed ? '⌃' : '⌄'}
+          </button>
+          <button type="button" className="close" aria-label="Close root details" onClick={() => select(null)}>
+            ×
+          </button>
+        </div>
       </header>
 
-      <div className="root-body">
+      {/* hidden, not unmounted: "show more" and scroll position survive a minimize. */}
+      <div className="root-body" hidden={collapsed}>
         <section>
           <h3>Words from this root</h3>
           <ul className="chips" aria-label="Lemmas">
