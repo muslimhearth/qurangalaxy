@@ -23,9 +23,12 @@ describe('labelIds', () => {
     expect(labelIds(adj, top, null, null)).toEqual([1]);
   });
 
-  it('adds the selected root, the hovered root and their neighbors, without duplicates', () => {
-    const ids = labelIds(adj, top, 3, 5);
-    expect(ids.sort()).toEqual([1, 3, 4, 5]);
+  it('adds the hovered root, its neighbors and the top roots, without duplicates', () => {
+    expect(labelIds(adj, top, null, 5).sort()).toEqual([1, 4, 5]);
+  });
+
+  it('labels only the focus ring while a root is selected, not the frequent roots', () => {
+    expect(labelIds(adj, top, 3, 5).sort()).toEqual([3, 4, 5]);
   });
 
   it('caps the number of neighbor labels per focus root', () => {

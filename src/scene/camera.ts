@@ -1,6 +1,5 @@
-import type { Root, Vec3 } from '../data/types';
+import type { Vec3 } from '../data/types';
 import type { Sphere } from './bounds';
-import type { Adjacency } from './neighbors';
 
 /** Start view: camera height above the galaxy plane, as a share of its distance. */
 export const START_ELEVATION = 0.35;
@@ -25,25 +24,6 @@ export function fitDistance(radius: number, fovDeg: number, aspect: number): num
 }
 
 /**
- * Sphere centered on a root that reaches its farthest neighbor (at least `minRadius`).
- * Centered on the root itself, so orbit and zoom pivot around the selected word.
- */
-export function focusSphere(
-  roots: readonly Root[],
-  adj: Adjacency,
-  id: number,
-  minRadius: number,
-): Sphere {
-  const p = roots[id]!.pos;
-  let radius = minRadius;
-  for (const n of adj[id] ?? []) {
-    const q = roots[n.id]!.pos;
-    radius = Math.max(radius, Math.hypot(q[0] - p[0], q[1] - p[1], q[2] - p[2]));
-  }
-  return { center: [...p], radius };
-}
-
-/**
  * Zoom toward `point` (the 3D point under the pointer): camera and target both move
  * along their lines to `point`, scaled by `factor` (< 1 zooms in). The pointed point
  * stays under the pointer, as in map apps.
@@ -57,10 +37,24 @@ export function zoomToward(position: Vec3, target: Vec3, point: Vec3, factor: nu
   return { position: toward(position), target: toward(target) };
 }
 
+/** Unit vector from `target` to `cameraPos` (+z when they coincide). */
+export function viewDirection(cameraPos: Vec3, target: Vec3): Vec3 {
+  const d: Vec3 = [cameraPos[0] - target[0], cameraPos[1] - target[1], cameraPos[2] - target[2]];
+  const len = Math.hypot(...d);
+  return len > 1e-6 ? [d[0] / len, d[1] / len, d[2] / len] : [0, 0, 1];
+}
+
 /**
- * Pose that frames `sphere` while keeping the current viewing direction,
+ * Pose that looks at `center` from `distance`, keeping the current viewing direction,
  * so the fly-to feels like a zoom rather than a jump to a new side.
  */
+export function poseAt(center: Vec3, cameraPos: Vec3, currentTarget: Vec3, distance: number): Pose {
+  const d = viewDirection(cameraPos, currentTarget);
+  const c = center;
+  return { target: [...c], position: [c[0] + d[0] * distance, c[1] + d[1] * distance, c[2] + d[2] * distance] };
+}
+
+/** Pose that frames `sphere` while keeping the current viewing direction (see `poseAt`). */
 export function flyToPose(
   sphere: Sphere,
   cameraPos: Vec3,
@@ -68,19 +62,7 @@ export function flyToPose(
   fovDeg: number,
   aspect: number,
 ): Pose {
-  let d: Vec3 = [
-    cameraPos[0] - currentTarget[0],
-    cameraPos[1] - currentTarget[1],
-    cameraPos[2] - currentTarget[2],
-  ];
-  const len = Math.hypot(...d);
-  d = len > 1e-6 ? [d[0] / len, d[1] / len, d[2] / len] : [0, 0, 1];
-  const dist = fitDistance(sphere.radius, fovDeg, aspect);
-  const c = sphere.center;
-  return {
-    target: [...c],
-    position: [c[0] + d[0] * dist, c[1] + d[1] * dist, c[2] + d[2] * dist],
-  };
+  return poseAt(sphere.center, cameraPos, currentTarget, fitDistance(sphere.radius, fovDeg, aspect));
 }
 
 /** Idle auto-rotate speed in radians per second (one turn in about 2 minutes). */

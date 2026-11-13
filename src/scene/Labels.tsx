@@ -4,6 +4,7 @@ import { Vector3 } from 'three';
 import { useGalaxyStore } from '../state/store';
 import { blockedBoxes, type Inset } from './inset';
 import { declutter, labelBox, labelIds, ndcToScreen, type Box } from './labels';
+import type { FocusState } from './focus/state';
 import type { IntroState } from './intro/state';
 import type { SceneModel } from './model';
 
@@ -31,6 +32,8 @@ const base: CSSProperties = {
   transition: 'opacity 0.25s',
   fontFamily: "'Noto Naskh Arabic', 'Amiri', 'Geeza Pro', serif",
   fontSize: 15,
+  // Tight line box: the root letters carry no vowel marks, and smaller boxes let more labels fit.
+  lineHeight: 1.3,
   color: 'rgba(232, 230, 240, 0.85)',
   textShadow: '0 0 6px #04050b, 0 0 2px #04050b',
   whiteSpace: 'nowrap',
@@ -95,30 +98,32 @@ export function LabelTracker({
   anchors,
   inset,
   intro,
+  focus,
 }: {
   model: SceneModel;
   anchors: LabelAnchors;
   inset: Inset;
   intro: IntroState;
+  focus: FocusState;
 }) {
-  const roots = useGalaxyStore((s) => s.galaxy!.roots);
   const size = useThree((s) => s.size);
   useFrame(({ camera }) => {
     // Stars are not at their places yet: keep every label hidden.
     if (!intro.clock.done) return;
     const els: HTMLDivElement[] = [];
     const boxes: (Box | null)[] = [];
+    // Current star positions: the focus ring moves some stars away from their galaxy places.
+    const pos = focus.glide.positions;
     for (const id of anchors.ids) {
       const el = anchors.els.get(id);
-      const r = roots[id];
       if (!el) continue;
       els.push(el);
-      if (!r) {
+      if (id * 3 + 2 >= pos.length) {
         boxes.push(null);
         continue;
       }
       // Anchor just above the star's top edge.
-      v.set(r.pos[0], r.pos[1] + model.radii[id]! * 1.2, r.pos[2]).project(camera);
+      v.set(pos[id * 3]!, pos[id * 3 + 1]! + model.radii[id]! * 1.2, pos[id * 3 + 2]!).project(camera);
       const p = ndcToScreen(v.x, v.y, v.z, size.width, size.height);
       el.style.transform = `translate(${p.x}px, ${p.y}px) translate(-50%, -100%)`;
       boxes.push(p.visible ? labelBox(p, labelSize(el)) : null);

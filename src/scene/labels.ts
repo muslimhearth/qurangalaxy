@@ -3,7 +3,7 @@ import { TOP_LINKS, type Adjacency } from './neighbors';
 /**
  * Ids of roots that may get a text label, highest priority first: the selected root,
  * the hovered root, up to `maxNeighbors` strongest neighbors of each (by default the lit
- * links, `TOP_LINKS`), then the `top` roots.
+ * links, `TOP_LINKS`), then the `top` roots (only when nothing is selected).
  * No duplicates. `declutter` later hides the ones that collide.
  */
 export function labelIds(
@@ -16,7 +16,8 @@ export function labelIds(
   const focus = [selectedId, hoveredId].filter((id) => id !== null);
   const ids = new Set<number>(focus);
   for (const f of focus) for (const n of (adj[f] ?? []).slice(0, maxNeighbors)) ids.add(n.id);
-  for (const id of top) ids.add(id);
+  // A selection shows its focus ring only: frequent roots elsewhere would crowd the ring's gaps.
+  if (selectedId === null) for (const id of top) ids.add(id);
   return [...ids];
 }
 

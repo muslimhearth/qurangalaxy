@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fixtureGalaxy } from '../data/fixture';
-import { buildAdjacency } from './neighbors';
-import { damp, fitDistance, focusSphere, flyToPose, IDLE_DELAY, zoomToward, IDLE_RAMP, IDLE_SPEED, idleRotation, START_IDLE } from './camera';
-
-const adj = buildAdjacency(fixtureGalaxy.roots.length, fixtureGalaxy.edges);
+import { damp, fitDistance, flyToPose, poseAt, viewDirection, IDLE_DELAY, zoomToward, IDLE_RAMP, IDLE_SPEED, idleRotation, START_IDLE } from './camera';
 
 describe('fitDistance', () => {
   it('places the camera so a sphere fills the view angle', () => {
@@ -15,25 +11,20 @@ describe('fitDistance', () => {
   });
 });
 
-describe('focusSphere', () => {
-  it('contains the root and all its neighbors', () => {
-    const s = focusSphere(fixtureGalaxy.roots, adj, 3, 1);
-    for (const id of [3, ...adj[3]!.map((n) => n.id)]) {
-      const p = fixtureGalaxy.roots[id]!.pos;
-      const d = Math.hypot(p[0] - s.center[0], p[1] - s.center[1], p[2] - s.center[2]);
-      expect(d).toBeLessThanOrEqual(s.radius + 1e-9);
-    }
+describe('viewDirection', () => {
+  it('is the unit vector from the target to the camera', () => {
+    expect(viewDirection([0, 3, 4], [0, 0, 0])).toEqual([0, 0.6, 0.8]);
   });
-  it('centers on the selected root, so orbit and zoom pivot around it', () => {
-    const s = focusSphere(fixtureGalaxy.roots, adj, 3, 1);
-    expect(s.center).toEqual([6, -11, 8]);
-    // Reaches its one neighbor, root 4 at [-14,-5,-9].
-    expect(s.radius).toBeCloseTo(Math.hypot(20, 6, 17));
+  it('falls back to +z when camera and target coincide', () => {
+    expect(viewDirection([1, 1, 1], [1, 1, 1])).toEqual([0, 0, 1]);
   });
-  it('uses the minimum radius for a root with no neighbors', () => {
-    const s = focusSphere(fixtureGalaxy.roots, [[], [], [], [], [], []], 0, 4);
-    expect(s.radius).toBe(4);
-    expect(s.center).toEqual([0, 0, 0]);
+});
+
+describe('poseAt', () => {
+  it('looks at the center from the given distance, keeping the view direction', () => {
+    const pose = poseAt([1, 2, 3], [0, 0, 10], [0, 0, 0], 5);
+    expect(pose.target).toEqual([1, 2, 3]);
+    expect(pose.position).toEqual([1, 2, 8]);
   });
 });
 
