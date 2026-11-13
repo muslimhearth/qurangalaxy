@@ -1,14 +1,21 @@
 import { useLayoutEffect, useMemo, useRef } from 'react';
-import type { ThreeEvent } from '@react-three/fiber';
+import { useFrame, type ThreeEvent } from '@react-three/fiber';
 import * as THREE from 'three/webgpu';
 import { float, normalView, positionViewDirection, vec3 } from 'three/tsl';
 import { useGalaxyStore } from '../state/store';
 import { focusOf, starColors } from './highlight';
+import { writeIntroMatrices } from './intro/plan';
+import type { IntroState } from './intro/state';
 import type { SceneModel } from './model';
 
-/** All roots as one instanced mesh of spheres, with picking and highlight colors. */
-export function Stars({ model }: { model: SceneModel }) {
+/**
+ * All roots as one instanced mesh of spheres, with picking and highlight colors.
+ * During the intro the instance matrices animate; picking waits until it ends.
+ */
+export function Stars({ model, intro }: { model: SceneModel; intro: IntroState }) {
   const ref = useRef<THREE.InstancedMesh>(null);
+  // True once the final (galaxy) matrices are in place after the intro.
+  const settled = useRef(false);
   const count = model.radii.length;
   const selectedId = useGalaxyStore((s) => s.selectedId);
   const hoveredId = useGalaxyStore((s) => s.hoveredId);
@@ -32,7 +39,24 @@ export function Stars({ model }: { model: SceneModel }) {
     mesh.instanceColor = new THREE.InstancedBufferAttribute(new Float32Array(model.baseColors), 3);
     // Raycasting uses the bounding sphere; recompute it after moving the instances.
     mesh.computeBoundingSphere();
-  }, [model]);
+    settled.current = intro.clock.done;
+    mesh.visible = intro.clock.done;
+  }, [model, intro]);
+
+  // Intro: write this frame's matrices into the instance buffer (no React render).
+  useFrame(() => {
+    const mesh = ref.current;
+    if (!mesh || settled.current) return;
+    const out = mesh.instanceMatrix.array as Float32Array;
+    if (intro.clock.done) {
+      out.set(model.matrices);
+      settled.current = true;
+    } else if (intro.plan) {
+      writeIntroMatrices(out, model.matrices, intro.plan, intro.clock.t);
+    } else return; // still waiting for the font: stay hidden
+    mesh.visible = true;
+    mesh.instanceMatrix.needsUpdate = true;
+  });
 
   // Colors change only when the focus changes, never per frame.
   useLayoutEffect(() => {
@@ -42,6 +66,7 @@ export function Stars({ model }: { model: SceneModel }) {
   }, [model, selectedId, hoveredId]);
 
   const onMove = (e: ThreeEvent<PointerEvent>) => {
+    if (!intro.clock.done) return;
     e.stopPropagation();
     if (e.instanceId !== undefined && e.instanceId !== useGalaxyStore.getState().hoveredId) {
       hover(e.instanceId);
@@ -53,6 +78,7 @@ export function Stars({ model }: { model: SceneModel }) {
     document.body.style.cursor = '';
   };
   const onClick = (e: ThreeEvent<MouseEvent>) => {
+    if (!intro.clock.done) return;
     e.stopPropagation();
     if (e.instanceId !== undefined) select(e.instanceId);
   };

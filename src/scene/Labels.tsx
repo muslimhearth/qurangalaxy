@@ -4,6 +4,7 @@ import { Vector3 } from 'three';
 import { useGalaxyStore } from '../state/store';
 import { blockedBoxes, type Inset } from './inset';
 import { declutter, labelBox, labelIds, ndcToScreen, type Box } from './labels';
+import type { IntroState } from './intro/state';
 import type { SceneModel } from './model';
 
 /** Shared by the layer (fills it) and the tracker (moves the nodes). */
@@ -89,10 +90,22 @@ function labelSize(el: HTMLElement) {
  * Inside the canvas: moves each label to its star's screen position every frame,
  * then shows only labels that do not collide with a higher-priority label or the panel.
  */
-export function LabelTracker({ model, anchors, inset }: { model: SceneModel; anchors: LabelAnchors; inset: Inset }) {
+export function LabelTracker({
+  model,
+  anchors,
+  inset,
+  intro,
+}: {
+  model: SceneModel;
+  anchors: LabelAnchors;
+  inset: Inset;
+  intro: IntroState;
+}) {
   const roots = useGalaxyStore((s) => s.galaxy!.roots);
   const size = useThree((s) => s.size);
   useFrame(({ camera }) => {
+    // Stars are not at their places yet: keep every label hidden.
+    if (!intro.clock.done) return;
     const els: HTMLDivElement[] = [];
     const boxes: (Box | null)[] = [];
     for (const id of anchors.ids) {

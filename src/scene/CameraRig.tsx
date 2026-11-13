@@ -4,7 +4,9 @@ import { useEffect, useRef } from 'react';
 import { Plane, Raycaster, Vector2, Vector3, type PerspectiveCamera } from 'three';
 import type { Vec3 } from '../data/types';
 import { useGalaxyStore } from '../state/store';
-import { damp, fitDistance, flyToPose, focusSphere, idleRotation, START_IDLE, zoomToward } from './camera';
+import { damp, fitDistance, flyToPose, focusSphere, IDLE_DELAY, idleRotation, START_IDLE, zoomToward } from './camera';
+import { START_ELEVATION, START_FIT } from './intro/frame';
+import type { IntroState } from './intro/state';
 import { viewFrame, type Inset } from './inset';
 import type { SceneModel } from './model';
 import { createWheelClassifier } from './wheel';
@@ -16,7 +18,7 @@ const OFFSET_RATE = 6;
  * Orbit/zoom controls, fly-to on selection and slow idle auto-rotate.
  * `inset` is the screen area under the root panel: the view centers in the free area instead.
  */
-export function CameraRig({ model, inset }: { model: SceneModel; inset: Inset }) {
+export function CameraRig({ model, inset, intro }: { model: SceneModel; inset: Inset; intro: IntroState }) {
   const controls = useRef<CameraControls>(null);
   const camera = useThree((s) => s.camera) as PerspectiveCamera;
   const roots = useGalaxyStore((s) => s.galaxy!.roots);
@@ -34,10 +36,11 @@ export function CameraRig({ model, inset }: { model: SceneModel; inset: Inset })
     camera.near = radius * 0.005;
     camera.far = radius * 30;
     camera.updateProjectionMatrix();
-    const d = fitDistance(radius, camera.fov, camera.aspect) * 0.9;
+    const d = fitDistance(radius, camera.fov, camera.aspect) * START_FIT;
     // Slightly above the equator looks more like a galaxy than a flat side view.
     const c = controls.current!;
-    c.setLookAt(center[0], center[1] + d * 0.35, center[2] + d, ...center, false);
+    // The intro writes its words on a plane facing this view (see intro/frame.ts).
+    c.setLookAt(center[0], center[1] + d * START_ELEVATION, center[2] + d, ...center, false);
     c.minDistance = model.radiusRange.max * 2;
     c.maxDistance = d * 3;
   }, [model, camera]);
@@ -134,6 +137,8 @@ export function CameraRig({ model, inset }: { model: SceneModel; inset: Inset })
       else camera.clearViewOffset();
     }
 
+    // Hold still while the intro words face the camera; the rotation eases in after it.
+    if (!intro.clock.done) lastInteraction.current = clock.elapsedTime - IDLE_DELAY;
     const angle = idleRotation(interacting.current, clock.elapsedTime, lastInteraction.current, dt);
     if (angle) void controls.current?.rotate(angle, 0, false);
   });
