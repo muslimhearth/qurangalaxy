@@ -34,6 +34,15 @@ export function edgeBaseLevel(edgeCount: number): number {
 }
 
 /**
+ * Brightness of the focus root's own edges. A root with a few dozen links shows them at
+ * full strength; a hub such as أله (1,000+ links) fades them (8/sqrt), or the additive
+ * lines merge into one white blob.
+ */
+export function linkedLevel(linkedCount: number): number {
+  return Math.min(1, 8 / Math.sqrt(Math.max(1, linkedCount)));
+}
+
+/**
  * Star colors for a focus: the focus root brightens, its neighbors keep their color,
  * all other stars dim. Returns a new buffer (3 floats per star).
  */
@@ -64,9 +73,10 @@ export function edgeColors(
   const out = new Float32Array(edges.length * 6);
   const f = focus ? (focus.strong ? EDGE.strong : EDGE.soft) : null;
   const base = edgeBaseLevel(edges.length);
+  const touches = (e: Edge) => focus !== null && (e.source === focus.id || e.target === focus.id);
+  const linkedK = f ? f.linked * linkedLevel(edges.filter(touches).length) : 0;
   edges.forEach((e, i) => {
-    const linked = focus !== null && (e.source === focus.id || e.target === focus.id);
-    const k = f ? (linked ? f.linked : f.other * base) : base;
+    const k = f ? (touches(e) ? linkedK : f.other * base) : base;
     for (const [end, root] of [
       [0, e.source],
       [1, e.target],

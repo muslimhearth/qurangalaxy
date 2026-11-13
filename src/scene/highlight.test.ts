@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fixtureGalaxy } from '../data/fixture';
 import { buildAdjacency } from './neighbors';
-import { edgeBaseLevel, edgeColors, focusOf, starColors } from './highlight';
+import { edgeBaseLevel, edgeColors, focusOf, linkedLevel, starColors } from './highlight';
 
 const adj = buildAdjacency(fixtureGalaxy.roots.length, fixtureGalaxy.edges);
 const base = new Float32Array(fixtureGalaxy.roots.length * 3).fill(0.5);
@@ -67,5 +67,15 @@ describe('edgeColors', () => {
     const hov = edgeColors(edges, base, { id: 0, strong: false });
     expect(hov[0]!).toBeLessThan(sel[0]!);
     expect(hov[5 * 6]!).toBeGreaterThan(sel[5 * 6]!);
+  });
+
+  it('dims the focus edges of a hub root, so hundreds of lines do not wash out to white', () => {
+    // Root 0 linked to 400 others, compared with a root that has a single link.
+    const hub = Array.from({ length: 400 }, (_, i) => ({ source: 0, target: 1 + (i % 5), weight: 1 }));
+    const hubColors = edgeColors(hub, base, { id: 0, strong: true });
+    const single = edgeColors([{ source: 0, target: 1, weight: 1 }], base, { id: 0, strong: true });
+    expect(hubColors[0]!).toBeLessThan(single[0]! / 2);
+    expect(linkedLevel(1)).toBe(1);
+    expect(linkedLevel(400)).toBeCloseTo(0.4);
   });
 });
