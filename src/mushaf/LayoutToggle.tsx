@@ -9,12 +9,14 @@ export interface LayoutToggleProps {
   onChange: (layout: Layout) => void;
 }
 
-/** Small line icons: a star with an orbit for the galaxy, a dot grid for the Mushaf mosaic. */
+/** Small icons: a sparkle with stars for the galaxy, a dot grid for the Mushaf mosaic. */
 const ICONS: Record<Layout, ReactElement> = {
   galaxy: (
-    <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.5">
-      <circle cx="10" cy="10" r="2.2" fill="currentColor" stroke="none" />
-      <ellipse cx="10" cy="10" rx="8" ry="3.6" transform="rotate(-25 10 10)" />
+    <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="currentColor">
+      <path d="M8 2.5 9.4 6.6 13.5 8 9.4 9.4 8 13.5 6.6 9.4 2.5 8 6.6 6.6Z" />
+      <circle cx="15" cy="14.5" r="1.6" />
+      <circle cx="4.5" cy="16" r="1.1" />
+      <circle cx="15.5" cy="4" r="1" />
     </svg>
   ),
   mushaf: (
