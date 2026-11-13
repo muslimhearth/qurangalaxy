@@ -40,7 +40,12 @@ export async function createPipelineEmbedder(spec: ModelSpec, opts: PipelineOpti
     env.allowLocalModels = true;
     env.localModelPath = opts.modelPath;
   }
-  if (opts.wasmPaths && env.backends.onnx.wasm) env.backends.onnx.wasm.wasmPaths = opts.wasmPaths;
+  if (opts.wasmPaths && env.backends.onnx.wasm) {
+    env.backends.onnx.wasm.wasmPaths = opts.wasmPaths;
+    // The wasm cache imports the runtime's JS from a blob: URL, which our CSP
+    // (script-src 'self') blocks. The hashed wasm assets are HTTP-cached anyway.
+    env.useWasmCache = false;
+  }
 
   const extractor = await pipeline('feature-extraction', spec.id, {
     dtype: 'q8',
