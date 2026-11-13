@@ -15,7 +15,8 @@
     "test:e2e:iphone": "podman run --rm --ipc=host --security-opt label=disable -v \"$PWD\":/work -w /work mcr.microsoft.com/playwright:v1.65.0-noble npx playwright test --project=iphone",
     "data": "tsx scripts/build-data.ts",
     "ship": "bash scripts/ship.sh",
-    "models": "tsx scripts/models.ts"
+    "models": "tsx scripts/models.ts",
+    "eval:semantic": "tsx scripts/eval-semantic.ts"
   },
   "dependencies": {
     "@fontsource/amiri-quran": "5.3.0",
