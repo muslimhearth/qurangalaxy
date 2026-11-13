@@ -2,10 +2,14 @@ import type { Root } from '../data/types';
 import { ARABIC_LETTER } from './normalize';
 import { TIER, type Match, type Matcher } from './types';
 
-// Small score steps inside a tier: root meanings beat lemma meanings, and a meaning that
-// is exactly the query beats one that only contains it as a word.
-const LEMMA_PENALTY = 0.02;
-const PARTIAL_PENALTY = 0.01;
+// Small score steps inside a tier. A meaning that is exactly the query beats one that only
+// contains it as a word (even a lemma's exact meaning beats a root's longer phrase), root
+// meanings beat lemma meanings, and earlier (main) meanings beat later ones.
+const LEMMA_PENALTY = 0.004;
+const PARTIAL_PENALTY = 0.02;
+const ORDER_STEP = 0.001;
+/** Penalty for the i-th meaning in a list (capped, so it never crosses a step above). */
+const orderPenalty = (i: number) => ORDER_STEP * Math.min(i, 3);
 // Suffixes removed by englishStem, longest first.
 const SUFFIXES = ['fulness', 'fully', 'ings', 'ness', 'ence', 'ance', 'ful', 'ing', 'ies', 'ent', 'ant', 'es', 'ed', 'ly', 'er', 's'];
 
@@ -61,8 +65,8 @@ function bestMatch(root: Root, q: string, qWords: string[], qStems: string[]): M
       best = { id: root.id, score: s - penalty, reason: { kind: 'english', text: meaning } };
     }
   };
-  for (const m of root.en) offer(m, 0);
-  for (const l of root.lemmas) for (const m of l.en) offer(m, LEMMA_PENALTY);
+  root.en.forEach((m, i) => offer(m, orderPenalty(i)));
+  for (const l of root.lemmas) l.en.forEach((m, i) => offer(m, LEMMA_PENALTY + orderPenalty(i)));
   return best;
 }
 

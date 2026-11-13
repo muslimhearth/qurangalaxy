@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { fixtureGalaxy } from '../data/fixture';
 import type { Root } from '../data/types';
-import { exactMatches, searchRoots } from './exact';
+import { exactMatches, rankMatches, searchRoots } from './exact';
+import type { Matcher } from './types';
 
 const ids = (q: string, limit?: number) => searchRoots(fixtureGalaxy.roots, q, limit).map((m) => m.id);
 
@@ -64,5 +65,18 @@ describe('exactMatches', () => {
     const m = exactMatches(fixtureGalaxy.roots, 'سماء').find((x) => x.id === 0)!;
     expect(m.reason.kind).toBe('arabic');
     expect(m.reason.text).toBe('سَمَآء');
+  });
+
+  it('lets a real English meaning beat an accidental Latin spelling of the same word', () => {
+    // "sea" spells an Arabic word by accident; the English meaning must still win.
+    const spelling: Matcher = () => [{ id: 0, score: 1, reason: { kind: 'latin', text: 'ساءَ' } }];
+    const english: Matcher = () => [{ id: 1, score: 0.99, reason: { kind: 'english', text: 'flow of the sea' } }];
+    const ranked = rankMatches(fixtureGalaxy.roots, exactMatches(fixtureGalaxy.roots, 'sea', [spelling, english]), 2);
+    expect(ranked.map((m) => m.id)).toEqual([1, 0]);
+  });
+
+  it('keeps Latin spelling at full strength when no English meaning matches', () => {
+    const spelling: Matcher = () => [{ id: 0, score: 1, reason: { kind: 'latin', text: 'نُور' } }];
+    expect(exactMatches(fixtureGalaxy.roots, 'noor', [spelling])[0]!.score).toBe(1);
   });
 });

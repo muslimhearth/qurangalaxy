@@ -69,4 +69,16 @@ describe('englishMatcher', () => {
     expect(rankMatches(roots, exactMatches(roots, 'light', [englishMatcher]), 8)[0]!.id).toBe(0);
     expect(rankMatches(roots, exactMatches(roots, 'day', [englishMatcher]), 8)[0]!.id).toBe(2);
   });
+
+  it('ranks an exact lemma meaning above a root meaning that only contains the word', () => {
+    const rs = [root(0, ['father and mother'], [], 900), root(1, ['nation'], [['mother']], 10)];
+    const ranked = rankMatches(rs, englishMatcher(rs, 'mother'), 2).map((m) => m.id);
+    expect(ranked).toEqual([1, 0]);
+  });
+
+  it('prefers the root whose earlier meaning matches over a more frequent root', () => {
+    // "heart" is the first meaning of root 1 but only a late meaning of root 0.
+    const rs = [root(0, ['at', 'with', 'heart'], [], 900), root(1, ['heart', 'to turn'], [], 100)];
+    expect(rankMatches(rs, englishMatcher(rs, 'heart'), 2).map((m) => m.id)).toEqual([1, 0]);
+  });
 });
