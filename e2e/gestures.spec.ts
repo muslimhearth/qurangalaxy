@@ -14,18 +14,22 @@ async function labelCenters(page: Page): Promise<Map<string, { x: number; y: num
 }
 
 /** Sends `n` wheel events to the canvas center, as a touchpad would. */
-async function wheel(page: Page, n: number, init: { deltaX?: number; deltaY?: number; ctrlKey?: boolean }) {
+async function wheel(
+  page: Page,
+  n: number,
+  init: { deltaX?: number; deltaY?: number; ctrlKey?: boolean },
+  at?: { x: number; y: number },
+) {
   await page.evaluate(
-    ({ n, init }) => {
+    ({ n, init, at }) => {
       const canvas = document.querySelector('canvas')!;
       const r = canvas.getBoundingClientRect();
+      const { x, y } = at ?? { x: r.width / 2, y: r.height / 2 };
       for (let i = 0; i < n; i++) {
-        canvas.dispatchEvent(
-          new WheelEvent('wheel', { ...init, clientX: r.width / 2, clientY: r.height / 2, bubbles: true, cancelable: true }),
-        );
+        canvas.dispatchEvent(new WheelEvent('wheel', { ...init, clientX: x, clientY: y, bubbles: true, cancelable: true }));
       }
     },
-    { n, init },
+    { n, init, at },
   );
 }
 
@@ -76,4 +80,22 @@ test('two-finger swipe orbits the galaxy', async ({ page }) => {
       { timeout: 10_000 },
     )
     .toBeGreaterThan(40);
+});
+
+test('pinch zooms toward the word under the pointer', async ({ page }) => {
+  await page.goto('/');
+  await expect.poll(async () => (await labelCenters(page)).size, { timeout: 15_000 }).toBeGreaterThan(5);
+  // Pick the shown label farthest from the screen center, so a zoom toward the center would push it away.
+  const vp = page.viewportSize()!;
+  const [name, p] = [...(await labelCenters(page))].sort(
+    (a, b) => Math.hypot(b[1].x - vp.width / 2, b[1].y - vp.height / 2) - Math.hypot(a[1].x - vp.width / 2, a[1].y - vp.height / 2),
+  )[0]!;
+  // Stop the idle rotation first, so only the zoom moves things; then pinch in over the word.
+  await wheel(page, 1, { deltaY: 0, deltaX: 0.01 }, p);
+  const start = (await labelCenters(page)).get(name) ?? p;
+  await wheel(page, 10, { deltaY: -8, ctrlKey: true }, start);
+  await page.waitForTimeout(1500);
+  const after = (await labelCenters(page)).get(name);
+  // The word stays near the pointer (it may hide if a closer label now overlaps it).
+  if (after) expect(Math.hypot(after.x - start.x, after.y - start.y)).toBeLessThan(40);
 });

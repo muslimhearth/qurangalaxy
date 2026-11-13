@@ -20,8 +20,8 @@ export function fitDistance(radius: number, fovDeg: number, aspect: number): num
 }
 
 /**
- * Sphere around a root and all its neighbors (radius at least `minRadius`).
- * Centered on their bounding box, so the whole constellation fills the view.
+ * Sphere centered on a root that reaches its farthest neighbor (at least `minRadius`).
+ * Centered on the root itself, so orbit and zoom pivot around the selected word.
  */
 export function focusSphere(
   roots: readonly Root[],
@@ -29,16 +29,27 @@ export function focusSphere(
   id: number,
   minRadius: number,
 ): Sphere {
-  const points = [id, ...(adj[id] ?? []).map((n) => n.id)].map((i) => roots[i]!.pos);
-  const center = [0, 1, 2].map((k) => {
-    const values = points.map((p) => p[k]!);
-    return (Math.min(...values) + Math.max(...values)) / 2;
-  }) as Vec3;
+  const p = roots[id]!.pos;
   let radius = minRadius;
-  for (const p of points) {
-    radius = Math.max(radius, Math.hypot(p[0] - center[0], p[1] - center[1], p[2] - center[2]));
+  for (const n of adj[id] ?? []) {
+    const q = roots[n.id]!.pos;
+    radius = Math.max(radius, Math.hypot(q[0] - p[0], q[1] - p[1], q[2] - p[2]));
   }
-  return { center, radius };
+  return { center: [...p], radius };
+}
+
+/**
+ * Zoom toward `point` (the 3D point under the pointer): camera and target both move
+ * along their lines to `point`, scaled by `factor` (< 1 zooms in). The pointed point
+ * stays under the pointer, as in map apps.
+ */
+export function zoomToward(position: Vec3, target: Vec3, point: Vec3, factor: number): Pose {
+  const toward = (a: Vec3): Vec3 => [
+    point[0] + (a[0] - point[0]) * factor,
+    point[1] + (a[1] - point[1]) * factor,
+    point[2] + (a[2] - point[2]) * factor,
+  ];
+  return { position: toward(position), target: toward(target) };
 }
 
 /**
@@ -70,7 +81,7 @@ export function flyToPose(
 /** Idle auto-rotate speed in radians per second (one turn in about 2 minutes). */
 export const IDLE_SPEED = 0.05;
 /** Seconds without interaction before auto-rotate starts again. */
-export const IDLE_DELAY = 4;
+export const IDLE_DELAY = 3;
 /** Seconds over which auto-rotate eases up to full speed. */
 export const IDLE_RAMP = 2;
 /** Initial "last interaction" time that makes the galaxy rotate from the first frame. */

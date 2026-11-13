@@ -1,10 +1,10 @@
 import { CameraControls, CameraControlsImpl } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useRef } from 'react';
-import type { PerspectiveCamera } from 'three';
+import { Plane, Raycaster, Vector2, Vector3, type PerspectiveCamera } from 'three';
 import type { Vec3 } from '../data/types';
 import { useGalaxyStore } from '../state/store';
-import { damp, fitDistance, flyToPose, focusSphere, idleRotation, START_IDLE } from './camera';
+import { damp, fitDistance, flyToPose, focusSphere, idleRotation, START_IDLE, zoomToward } from './camera';
 import { viewFrame, type Inset } from './inset';
 import type { SceneModel } from './model';
 import { createWheelClassifier } from './wheel';
@@ -47,15 +47,34 @@ export function CameraRig({ model, inset }: { model: SceneModel; inset: Inset })
   useEffect(() => {
     const c = controls.current!;
     c.mouseButtons.wheel = CameraControlsImpl.ACTION.NONE; // we handle the wheel ourselves
+    c.dollyToCursor = true; // touch pinch zooms toward the fingers
     const classify = createWheelClassifier();
-    const zoom = (factor: number, smooth: boolean) => {
+    const ray = new Raycaster();
+    const ndc = new Vector2();
+    const plane = new Plane();
+    const hit = new Vector3();
+    const pos = new Vector3();
+    const target = new Vector3();
+    /** Zooms by `factor` toward the scene point under the screen point (clientX, clientY). */
+    const zoom = (factor: number, smooth: boolean, clientX: number, clientY: number) => {
+      // Respect min/max distance by limiting the factor.
       const d = Math.min(c.maxDistance, Math.max(c.minDistance, c.distance * factor));
-      void c.dollyTo(d, smooth);
+      const f = d / c.distance;
+      c.getPosition(pos);
+      c.getTarget(target);
+      // The pointed point: where the pointer ray meets the plane through the target, facing the camera.
+      const r = canvas.getBoundingClientRect();
+      ndc.set(((clientX - r.left) / r.width) * 2 - 1, -((clientY - r.top) / r.height) * 2 + 1);
+      ray.setFromCamera(ndc, camera);
+      plane.setFromNormalAndCoplanarPoint(camera.getWorldDirection(hit), target);
+      const point = ray.ray.intersectPlane(plane, hit) ?? target;
+      const pose = zoomToward(pos.toArray() as Vec3, target.toArray() as Vec3, point.toArray() as Vec3, f);
+      void c.setLookAt(...pose.position, ...pose.target, smooth);
     };
     const onWheel = (e: WheelEvent) => {
       e.preventDefault(); // stop page zoom on ctrl + wheel and page scroll
       const intent = classify(e, e.timeStamp);
-      if (intent.kind === 'zoom') zoom(intent.factor, !e.ctrlKey);
+      if (intent.kind === 'zoom') zoom(intent.factor, !e.ctrlKey, e.clientX, e.clientY);
       else {
         // Same feel as dragging: one canvas height of swipe is one full turn.
         const turn = (2 * Math.PI) / canvas.clientHeight;
@@ -71,8 +90,9 @@ export function CameraRig({ model, inset }: { model: SceneModel; inset: Inset })
     };
     const onGestureChange = (e: Event) => {
       e.preventDefault();
-      const scale = (e as Event & { scale: number }).scale;
-      zoom(lastScale / scale, false);
+      const g = e as Event & { scale: number; clientX: number; clientY: number };
+      const scale = g.scale;
+      zoom(lastScale / scale, false, g.clientX, g.clientY);
       lastScale = scale;
       lastInteraction.current = clock.elapsedTime;
     };
@@ -84,9 +104,9 @@ export function CameraRig({ model, inset }: { model: SceneModel; inset: Inset })
       canvas.removeEventListener('gesturestart', onGestureStart);
       canvas.removeEventListener('gesturechange', onGestureChange);
     };
-  }, [canvas, clock]);
+  }, [canvas, clock, camera]);
 
-  // Fly to the selected root and its neighbors.
+  // Fly to the selected root, framing all its neighbors around it.
   useEffect(() => {
     if (selectedId === null || !roots[selectedId]) return;
     const c = controls.current!;

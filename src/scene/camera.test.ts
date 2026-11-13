@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fixtureGalaxy } from '../data/fixture';
 import { buildAdjacency } from './neighbors';
-import { damp, fitDistance, focusSphere, flyToPose, IDLE_DELAY, IDLE_RAMP, IDLE_SPEED, idleRotation, START_IDLE } from './camera';
+import { damp, fitDistance, focusSphere, flyToPose, IDLE_DELAY, zoomToward, IDLE_RAMP, IDLE_SPEED, idleRotation, START_IDLE } from './camera';
 
 const adj = buildAdjacency(fixtureGalaxy.roots.length, fixtureGalaxy.edges);
 
@@ -24,11 +24,11 @@ describe('focusSphere', () => {
       expect(d).toBeLessThanOrEqual(s.radius + 1e-9);
     }
   });
-  it('centers between the root and its neighbors, so the whole group fills the view', () => {
-    // Root 3 at [6,-11,8] has one neighbor, root 4 at [-14,-5,-9]: the center is the midpoint.
+  it('centers on the selected root, so orbit and zoom pivot around it', () => {
     const s = focusSphere(fixtureGalaxy.roots, adj, 3, 1);
-    expect(s.center).toEqual([-4, -8, -0.5]);
-    expect(s.radius).toBeCloseTo(Math.hypot(20, 6, 17) / 2);
+    expect(s.center).toEqual([6, -11, 8]);
+    // Reaches its one neighbor, root 4 at [-14,-5,-9].
+    expect(s.radius).toBeCloseTo(Math.hypot(20, 6, 17));
   });
   it('uses the minimum radius for a root with no neighbors', () => {
     const s = focusSphere(fixtureGalaxy.roots, [[], [], [], [], [], []], 0, 4);
@@ -81,5 +81,29 @@ describe('damp', () => {
   });
   it('snaps to the target once close enough', () => {
     expect(damp(99.7, 100, 8, 1 / 60)).toBe(100);
+  });
+});
+
+describe('zoomToward', () => {
+  const pos: [number, number, number] = [0, 0, 100];
+  const target: [number, number, number] = [0, 0, 0];
+
+  it('is a plain dolly when the pointer is on the target', () => {
+    const p = zoomToward(pos, target, [0, 0, 0], 0.5);
+    expect(p.position).toEqual([0, 0, 50]);
+    expect(p.target).toEqual([0, 0, 0]);
+  });
+
+  it('moves toward the point under the pointer, which stays fixed on screen', () => {
+    const p = zoomToward(pos, target, [40, 0, 0], 0.5);
+    // Halfway closer, and the view shifts halfway toward the pointed point.
+    expect(p.target).toEqual([20, 0, 0]);
+    expect(p.position).toEqual([20, 0, 50]);
+  });
+
+  it('zooms out away from the point for factors above 1', () => {
+    const p = zoomToward(pos, target, [40, 0, 0], 2);
+    expect(p.target).toEqual([-40, 0, 0]);
+    expect(p.position).toEqual([-40, 0, 200]);
   });
 });
