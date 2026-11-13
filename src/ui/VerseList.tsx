@@ -26,8 +26,12 @@ export function VerseList({ occurrences, verses }: VerseListProps) {
   useEffect(() => {
     if (!flash) return;
     const el = listRef.current?.querySelector(`[data-verse="${flash.key}"]`);
-    const smooth = !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    el?.scrollIntoView?.({ block: 'center', behavior: smooth ? 'smooth' : 'auto' });
+    if (!el) return;
+    // Glide to near verses; jump to far ones (a long smooth scroll over a list that just grew
+    // can be cut short while the new verses lay out).
+    const near = Math.abs(el.getBoundingClientRect().top - window.innerHeight / 2) < window.innerHeight;
+    const smooth = near && !window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    el.scrollIntoView?.({ block: 'center', behavior: smooth ? 'smooth' : 'auto' });
   }, [flash]);
 
   return (
