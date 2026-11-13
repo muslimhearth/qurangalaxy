@@ -1,0 +1,30 @@
+# Caddy site block for the app. Append to /etc/caddy/Caddyfile on the server, then:
+#   sudo caddy validate --config /etc/caddy/Caddyfile && sudo systemctl reload caddy
+# The site files live in ~tux/qurangalaxy/web (uploaded by `pnpm ship`). TLS is automatic.
+quranic.space {
+	root * /home/tux/qurangalaxy/web
+	file_server
+	encode zstd gzip
+
+	header {
+		Strict-Transport-Security "max-age=31536000"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		# Everything is self-hosted: scripts, fonts, data and (later) the search model.
+		# wasm-unsafe-eval and blob: workers are for the in-browser search model.
+		Content-Security-Policy "default-src 'self'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'"
+		-Server
+	}
+
+	# Hashed build files never change; data and HTML are rechecked.
+	@hashed path /assets/*
+	header @hashed Cache-Control "public, max-age=31536000, immutable"
+	@data path /data/* /models/*
+	header @data Cache-Control "public, max-age=3600"
+	@html path / /index.html
+	header @html Cache-Control "no-cache"
+}
+
+www.quranic.space {
+	redir https://quranic.space{uri} permanent
+}
