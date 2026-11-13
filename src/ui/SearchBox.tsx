@@ -7,7 +7,7 @@ import type { Verses } from '../data/types';
 import type { SemanticService } from '../semantic/service';
 import { useSemanticSearch } from '../semantic/useSemanticSearch';
 import { getWorkerService } from '../semantic/workerService';
-import { SemanticSlider } from './SemanticSlider';
+import { SearchSettings } from './SearchSettings';
 import { snippet } from './snippet';
 import { useVerseTexts } from './useVerseTexts';
 
@@ -16,7 +16,7 @@ const LIMIT = 8;
 
 /**
  * Search field at the top: find a root by Arabic letters, transliteration or lemma, or by
- * meaning (a phrase matched against the English verses). The slider mixes the two.
+ * topic (a phrase matched against the English verses). The search-mode slider mixes the two.
  */
 export function SearchBox({ semanticService = getWorkerService }: { semanticService?: () => SemanticService }) {
   const galaxy = useGalaxyStore((s) => s.galaxy);
@@ -65,29 +65,31 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
       <label htmlFor="root-search" className="sr-only">
         Search roots
       </label>
-      <input
-        id="root-search"
-        type="search"
-        role="combobox"
-        aria-expanded={open && results.length > 0}
-        aria-controls="root-search-results"
-        aria-autocomplete="list"
-        aria-activedescendant={open && results[active] ? `root-option-${results[active].id}` : undefined}
-        placeholder={weight > 0 ? 'Search a root or a phrase: patience…' : 'Search a root: رحم, rhm, رحمن…'}
-        autoComplete="off"
-        spellCheck={false}
-        value={query}
-        onChange={(e) => {
-          setQuery(e.target.value);
-          setActive(0);
-        }}
-        onKeyDown={onKeyDown}
-      />
-      <SemanticSlider status={semantic.status} progress={semantic.progress} error={semantic.error} />
+      <div className="search-row">
+        <input
+          id="root-search"
+          type="search"
+          role="combobox"
+          aria-expanded={open && results.length > 0}
+          aria-controls="root-search-results"
+          aria-autocomplete="list"
+          aria-activedescendant={open && results[active] ? `root-option-${results[active].id}` : undefined}
+          placeholder={weight > 0 ? 'Search a topic: patience…' : 'Search: رحم, noor, light…'}
+          autoComplete="off"
+          spellCheck={false}
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setActive(0);
+          }}
+          onKeyDown={onKeyDown}
+        />
+        <SearchSettings status={semantic.status} progress={semantic.progress} error={semantic.error} />
+      </div>
       {open && (
         <ul id="root-search-results" role="listbox" className="search-results" aria-label="Matching roots">
           {results.length === 0 && (
-            <li className="search-empty">{pending ? 'Searching by meaning…' : 'No roots match.'}</li>
+            <li className="search-empty">{pending ? 'Searching by topic…' : 'No roots match.'}</li>
           )}
           {results.map((match, i) => {
             const root = roots[match.id]!;

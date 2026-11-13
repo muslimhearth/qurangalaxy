@@ -109,7 +109,11 @@ describe('SearchBox', () => {
       window.history.replaceState(null, '', '/');
     });
 
-    const slider = () => screen.getByRole('slider', { name: /exact ↔ meaning/i });
+    /** Opens the search-mode popover (if closed) and returns its slider. */
+    const slider = () => {
+      if (!screen.queryByRole('slider')) fireEvent.click(screen.getByRole('button', { name: /search mode/i }));
+      return screen.getByRole('slider', { name: /exact ↔ topic/i });
+    };
 
     it('does not touch the model while the slider is at exact', async () => {
       const service = fakeService();

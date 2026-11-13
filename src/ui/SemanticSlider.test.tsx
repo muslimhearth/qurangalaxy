@@ -6,8 +6,8 @@ import { useGalaxyStore } from '../state/store';
 describe('sliderText', () => {
   it('names the ends and the mix in between', () => {
     expect(sliderText(0)).toBe('Exact only');
-    expect(sliderText(1)).toBe('Meaning only');
-    expect(sliderText(0.25)).toBe('25% meaning');
+    expect(sliderText(1)).toBe('Topic only');
+    expect(sliderText(0.25)).toBe('25% topic');
   });
 });
 
@@ -15,7 +15,7 @@ describe('SemanticSlider', () => {
   beforeEach(() => useGalaxyStore.setState(useGalaxyStore.getInitialState()));
   afterEach(cleanup);
 
-  const slider = () => screen.getByRole('slider', { name: /exact ↔ meaning/i });
+  const slider = () => screen.getByRole('slider', { name: /exact ↔ topic/i });
 
   it('starts at exact only', () => {
     render(<SemanticSlider status="off" progress={0} />);
@@ -27,17 +27,17 @@ describe('SemanticSlider', () => {
     render(<SemanticSlider status="off" progress={0} />);
     fireEvent.change(slider(), { target: { value: '0.75' } });
     expect(useGalaxyStore.getState().semanticWeight).toBe(0.75);
-    expect(slider()).toHaveAttribute('aria-valuetext', '75% meaning');
+    expect(slider()).toHaveAttribute('aria-valuetext', '75% topic');
   });
 
   it('shows model download progress', () => {
     render(<SemanticSlider status="loading" progress={0.42} />);
     expect(screen.getByRole('progressbar')).toHaveAttribute('value', '0.42');
-    expect(screen.getByText(/loading meaning model.*42%/i)).toBeInTheDocument();
+    expect(screen.getByText(/loading topic model.*42%/i)).toBeInTheDocument();
   });
 
   it('says when the model could not load', () => {
     render(<SemanticSlider status="error" progress={0} error="HTTP 404" />);
-    expect(screen.getByText(/meaning search is unavailable/i)).toHaveTextContent('HTTP 404');
+    expect(screen.getByText(/topic search is unavailable/i)).toHaveTextContent('HTTP 404');
   });
 });

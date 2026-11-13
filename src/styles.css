@@ -147,6 +147,26 @@ a { color: var(--accent); }
 .search-option .verse-note .refs { color: var(--accent); }
 
 /* Exact <-> Meaning slider under the search field */
+.search-row { display: flex; align-items: center; gap: 6px; padding-right: 8px; }
+.search-row input { flex: 1; min-width: 0; }
+/* Search mode: a small chip in the search field; the slider opens in a popover below. */
+.search-settings { position: relative; flex: none; }
+.mode-chip {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 9px; border-radius: 999px;
+  border: 1px solid var(--border); background: rgba(255, 255, 255, 0.03);
+  font-size: 0.76rem; color: var(--muted);
+}
+.mode-chip:hover, .mode-chip[aria-expanded='true'] { color: var(--fg); border-color: var(--accent); }
+.mode-chip.on { color: var(--accent); border-color: rgba(242, 199, 110, 0.45); }
+.mode-progress { font-variant-numeric: tabular-nums; }
+.mode-pop {
+  position: absolute; right: -8px; top: calc(100% + 10px); z-index: 2;
+  width: min(320px, calc(100vw - 2 * var(--gap)));
+  padding: 12px 0 4px;
+}
+.mode-help { margin: 0; padding: 0 16px 10px; font-size: 0.78rem; line-height: 1.5; color: var(--muted); }
+.mode-help b { color: var(--fg); font-weight: 600; }
 .semantic {
   display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px;
   padding: 0 16px 8px;

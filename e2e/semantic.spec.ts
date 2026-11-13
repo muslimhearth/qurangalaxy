@@ -20,7 +20,12 @@ test('meaning search finds صبر for "patience" without third-party requests', 
   });
 
   await page.goto('/');
-  const slider = page.getByRole('slider', { name: 'Exact ↔ Meaning' });
+  // The search mode lives behind a small chip in the search field.
+  const chip = page.getByRole('button', { name: /search mode/i });
+  await expect(chip).toHaveText(/Exact/);
+  if (isMobile) await chip.tap();
+  else await chip.click();
+  const slider = page.getByRole('slider', { name: 'Exact ↔ Topic' });
   await expect(slider).toHaveAttribute('aria-valuetext', 'Exact only');
 
   if (isMobile) {
@@ -31,7 +36,9 @@ test('meaning search finds صبر for "patience" without third-party requests', 
     await slider.focus();
     await page.keyboard.press('End');
   }
-  await expect(slider).toHaveAttribute('aria-valuetext', 'Meaning only');
+  await expect(slider).toHaveAttribute('aria-valuetext', 'Topic only');
+  await expect(chip).toHaveText(/Topic/);
+  await page.screenshot({ path: `test-results/${test.info().project.name}-search-mode.png` });
 
   const search = page.getByRole('combobox');
   await search.fill('patience');
