@@ -13,6 +13,8 @@ export interface Lemma {
   ar: string;
   /** Number of words in the Quran with this lemma. */
   count: number;
+  /** Short English meanings, best first (e.g. ["light"]). Empty when no source has one. */
+  en: string[];
 }
 
 /** One Arabic root: a star in the galaxy. */
@@ -23,6 +25,8 @@ export interface Root {
   ar: string;
   /** Latin transliteration of the letters, e.g. "r-ḥ-m". */
   tr: string;
+  /** Short English meanings of the root, best first (e.g. ["light"]). Empty when no source has one. */
+  en: string[];
   /** Total number of words built from this root. Drives star size. */
   count: number;
   /** Number of distinct verses that contain this root. */
@@ -80,3 +84,19 @@ export interface Verse {
 
 /** Contents of public/data/verses.json. Loaded lazily on first selection. */
 export type Verses = Record<VerseKey, Verse>;
+
+/**
+ * Contents of public/data/embeddings.json: describes public/data/embeddings.bin, which holds
+ * one vector per verse (row i belongs to `keys[i]`), for semantic search. Loaded on demand.
+ */
+export interface EmbeddingsMeta {
+  /** Model id used for verses at build time; queries must use the same model. */
+  model: string;
+  /** Vector length. */
+  dims: number;
+  /** Storage of embeddings.bin: signed 8-bit integers, row-major; value = int8 / scale. */
+  encoding: 'int8';
+  scale: number;
+  /** Verse keys in row order. */
+  keys: VerseKey[];
+}

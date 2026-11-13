@@ -11,10 +11,13 @@ export interface GalaxyState {
   hoveredId: number | null;
   /** Current search text. */
   query: string;
+  /** Search mix from 0 (exact only) to 1 (meaning only). Set by the search slider. */
+  semanticWeight: number;
   setGalaxy: (galaxy: Galaxy) => void;
   select: (id: number | null) => void;
   hover: (id: number | null) => void;
   setQuery: (query: string) => void;
+  setSemanticWeight: (weight: number) => void;
 }
 
 export const useGalaxyStore = create<GalaxyState>()((set) => ({
@@ -22,8 +25,10 @@ export const useGalaxyStore = create<GalaxyState>()((set) => ({
   selectedId: null,
   hoveredId: null,
   query: '',
+  semanticWeight: 0,
   setGalaxy: (galaxy) => set({ galaxy }),
   select: (selectedId) => set({ selectedId }),
   hover: (hoveredId) => set({ hoveredId }),
   setQuery: (query) => set({ query }),
+  setSemanticWeight: (w) => set({ semanticWeight: Math.min(1, Math.max(0, w)) }),
 }));

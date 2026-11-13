@@ -31,4 +31,14 @@ describe('galaxy store', () => {
     expect(useGalaxyStore.getState().hoveredId).toBe(4);
     expect(useGalaxyStore.getState().query).toBe('rhm');
   });
+
+  it('keeps the semantic weight between 0 and 1', () => {
+    expect(useGalaxyStore.getState().semanticWeight).toBe(0);
+    useGalaxyStore.getState().setSemanticWeight(0.4);
+    expect(useGalaxyStore.getState().semanticWeight).toBe(0.4);
+    useGalaxyStore.getState().setSemanticWeight(3);
+    expect(useGalaxyStore.getState().semanticWeight).toBe(1);
+    useGalaxyStore.getState().setSemanticWeight(-1);
+    expect(useGalaxyStore.getState().semanticWeight).toBe(0);
+  });
 });

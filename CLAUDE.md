@@ -5,7 +5,8 @@ A 3D web app. Each of the Quran's ~1,700 Arabic roots is a star. Star size = wor
 Lines join roots that share verses. Click a star to see its lemmas and every verse that uses it.
 
 Read `docs/ARCHITECTURE.md` before you change code. The data contract is `src/data/types.ts`.
-Do not change `src/data/types.ts`, `src/state/store.ts` or `src/App.tsx` in a goal branch.
+Do not change `src/data/types.ts`, `src/state/store.ts`, `src/App.tsx`, `src/search/types.ts`
+or `src/search/exact.ts` in a goal branch. In `src/search/matchers.ts`, only add your matcher to the list.
 If you need a change there, stop and report it to the main session.
 
 ## Commands

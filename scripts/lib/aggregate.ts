@@ -46,7 +46,7 @@ export function aggregateRoots(rootWords: RootWord[]): Aggregate {
     count: occ.reduce((sum, o) => sum + o.w.length, 0),
     occ,
     lemmas: [...lemmas]
-      .map(([lemmaAr, count]): Lemma => ({ ar: lemmaAr, count }))
+      .map(([lemmaAr, count]): Lemma => ({ ar: lemmaAr, count, en: [] }))
       .sort((a, b) => b.count - a.count || compare(a.ar, b.ar)),
   }));
   unsorted.sort((a, b) => b.count - a.count || compare(a.ar, b.ar));

@@ -132,6 +132,12 @@ a { color: var(--accent); }
 }
 .search-option[aria-selected='true'] { background: var(--accent-soft); }
 .search-option .ar { font-size: 1.35rem; text-align: right; color: var(--accent); }
+.search-option .tr { display: flex; flex-direction: column; min-width: 0; }
+.search-option .note {
+  color: var(--muted); font-size: 0.82rem;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.search-option .note[lang='ar'] { font-size: 1rem; text-align: left; }
 .search-empty { padding: 10px 12px; color: var(--muted); }
 
 /* Root panel: right-side panel on desktop */

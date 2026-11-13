@@ -75,4 +75,16 @@ describe('SearchBox', () => {
     fireEvent.change(input(), { target: { value: 'zzz' } });
     expect(screen.getByText(/no roots match/i)).toBeInTheDocument();
   });
+
+  it("shows each result's English meaning", () => {
+    render(<SearchBox />);
+    fireEvent.change(input(), { target: { value: 'rhm' } });
+    expect(screen.getByRole('option')).toHaveTextContent('mercy');
+  });
+
+  it('shows the matched lemma when a lemma, not the root, matched', () => {
+    render(<SearchBox />);
+    fireEvent.change(input(), { target: { value: 'سماء' } });
+    expect(screen.getAllByRole('option')[0]).toHaveTextContent('سَمَآء');
+  });
 });

@@ -61,6 +61,7 @@ export function buildDataset(morphText: string, arabicText: string, englishText:
       id: r.id,
       ar: r.ar,
       tr: transliterateRoot(r.ar),
+      en: [], // English meanings: filled by the glosses step
       count: r.count,
       verseCount: r.verseCount,
       lemmas: r.lemmas,

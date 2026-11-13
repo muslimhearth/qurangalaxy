@@ -34,6 +34,7 @@ export function syntheticGalaxy(o: SyntheticOptions): Galaxy {
       id,
       ar: `S${id}`,
       tr: `s-${id}`,
+      en: [],
       count,
       verseCount: count,
       lemmas: [],

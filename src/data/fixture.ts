@@ -2,19 +2,19 @@ import type { Galaxy, Occurrences, Verses } from './types';
 
 /**
  * Small hand-made dataset for tests and for UI/scene work before the real data exists.
- * Arabic text is from Tanzil (Al-Fatiha 1:1-1:4). English strings are placeholders,
- * not a translation.
+ * Arabic text is from Tanzil (Al-Fatiha 1:1-1:4). English strings (verse text and
+ * meanings) are placeholders, not a translation.
  */
 export const fixtureGalaxy: Galaxy = {
   version: 1,
   clusterCount: 2,
   roots: [
-    { id: 0, ar: 'سمو', tr: 's-m-w', count: 381, verseCount: 360, lemmas: [{ ar: 'اسْم', count: 22 }, { ar: 'سَمَآء', count: 310 }], pos: [0, 0, 0], cluster: 0 },
-    { id: 1, ar: 'أله', tr: 'ʾ-l-h', count: 2851, verseCount: 2153, lemmas: [{ ar: 'اللَّه', count: 2699 }, { ar: 'إِلٰه', count: 147 }], pos: [12, 4, -3], cluster: 0 },
-    { id: 2, ar: 'رحم', tr: 'r-ḥ-m', count: 339, verseCount: 300, lemmas: [{ ar: 'رَحِيم', count: 115 }, { ar: 'رَحْمٰن', count: 57 }], pos: [-8, 10, 5], cluster: 1 },
-    { id: 3, ar: 'حمد', tr: 'ḥ-m-d', count: 68, verseCount: 63, lemmas: [{ ar: 'حَمْد', count: 43 }], pos: [6, -11, 8], cluster: 1 },
-    { id: 4, ar: 'ربب', tr: 'r-b-b', count: 980, verseCount: 870, lemmas: [{ ar: 'رَبّ', count: 975 }], pos: [-14, -5, -9], cluster: 0 },
-    { id: 5, ar: 'علم', tr: 'ʿ-l-m', count: 854, verseCount: 700, lemmas: [{ ar: 'عَلِيم', count: 162 }, { ar: 'عَٰلَمِين', count: 73 }], pos: [3, 15, -12], cluster: 1 },
+    { id: 0, ar: 'سمو', tr: 's-m-w', en: ['name', 'sky'], count: 381, verseCount: 360, lemmas: [{ ar: 'اسْم', count: 22, en: ['name'] }, { ar: 'سَمَآء', count: 310, en: ['sky', 'heaven'] }], pos: [0, 0, 0], cluster: 0 },
+    { id: 1, ar: 'أله', tr: 'ʾ-l-h', en: ['god'], count: 2851, verseCount: 2153, lemmas: [{ ar: 'اللَّه', count: 2699, en: ['God'] }, { ar: 'إِلٰه', count: 147, en: ['god', 'deity'] }], pos: [12, 4, -3], cluster: 0 },
+    { id: 2, ar: 'رحم', tr: 'r-ḥ-m', en: ['mercy'], count: 339, verseCount: 300, lemmas: [{ ar: 'رَحِيم', count: 115, en: ['merciful'] }, { ar: 'رَحْمٰن', count: 57, en: ['most merciful'] }], pos: [-8, 10, 5], cluster: 1 },
+    { id: 3, ar: 'حمد', tr: 'ḥ-m-d', en: ['praise'], count: 68, verseCount: 63, lemmas: [{ ar: 'حَمْد', count: 43, en: ['praise'] }], pos: [6, -11, 8], cluster: 1 },
+    { id: 4, ar: 'ربب', tr: 'r-b-b', en: ['lord'], count: 980, verseCount: 870, lemmas: [{ ar: 'رَبّ', count: 975, en: ['lord'] }], pos: [-14, -5, -9], cluster: 0 },
+    { id: 5, ar: 'علم', tr: 'ʿ-l-m', en: ['knowledge'], count: 854, verseCount: 700, lemmas: [{ ar: 'عَلِيم', count: 162, en: ['all-knowing'] }, { ar: 'عَٰلَمِين', count: 73, en: ['worlds'] }], pos: [3, 15, -12], cluster: 1 },
   ],
   edges: [
     { source: 0, target: 1, weight: 3 },

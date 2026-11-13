@@ -32,8 +32,8 @@ describe('aggregateRoots', () => {
 
   it('sorts lemmas by count, highest first', () => {
     expect(roots[0]!.lemmas).toEqual([
-      { ar: 'رَحْمٰن', count: 2 },
-      { ar: 'رَحِيم', count: 1 },
+      { ar: 'رَحْمٰن', count: 2, en: [] },
+      { ar: 'رَحِيم', count: 1, en: [] },
     ]);
   });
 

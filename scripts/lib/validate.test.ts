@@ -6,6 +6,7 @@ const root = (id: number) => ({
   id,
   ar: 'رحم',
   tr: 'r-ḥ-m',
+  en: [],
   count: 1,
   verseCount: 1,
   lemmas: [],

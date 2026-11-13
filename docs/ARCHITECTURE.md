@@ -34,7 +34,9 @@ Raw downloads are cached in `data/raw/` (gitignored). Generated JSON in `public/
 | `scripts/lib/*`, `scripts/build-data.ts` | G1 data | Fetch, parse, aggregate, write JSON |
 | `scripts/lib/layout.ts` | G2 layout | 3D force layout + clusters |
 | `src/scene/*` | G3 scene | 3D rendering and picking |
-| `src/ui/*`, `src/data/load.ts`, `src/data/useLoadGalaxy.ts` | G4 ui | Data loading, search, panels, URL state |
+| `src/ui/*`, `src/data/load.ts`, `src/data/useLoadGalaxy.ts` | G4 ui | Data loading, search box, panels, URL state |
+| `src/search/types.ts`, `exact.ts`, `matchers.ts` | main | Search contract: a `Matcher` returns scored `Match`es (0..1); `exactMatches` keeps the best per root |
+| `src/search/basic.ts` | main | Arabic letters and lemmas, Latin root letters |
 
 ## Testing
 | Layer | Tool | What it covers |
