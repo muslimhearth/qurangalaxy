@@ -15,7 +15,7 @@ declare const self: DedicatedWorkerGlobalScope;
 const handle = createWorkerHandler(
   (onProgress) =>
     createPipelineEmbedder(MODEL, {
-      modelPath: `${import.meta.env.BASE_URL}models/`,
+      modelPath: new URL(`${import.meta.env.BASE_URL}models/`, self.location.href).href,
       // The plain (non-WebGPU) runtime build: the smallest wasm, enough for a 33 MB model.
       wasmPaths: { wasm, mjs },
       device: 'wasm',

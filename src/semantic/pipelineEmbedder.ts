@@ -8,7 +8,10 @@ import type { ModelSpec } from './models';
 
 /** Where the model and the ONNX runtime come from. */
 export interface PipelineOptions {
-  /** Folder or URL that holds `<model id>/…` (e.g. "/models/" or "public/models/"). */
+  /**
+   * Where `<model id>/…` lives: a disk folder in Node ("public/models/") or an absolute
+   * same-origin URL in the browser ("https://our.site/models/").
+   */
   modelPath: string;
   /** ONNX runtime wasm files (browser only); without them transformers.js uses a CDN. */
   wasmPaths?: { mjs: string; wasm: string };
@@ -24,9 +27,19 @@ const BATCH = 32;
 export async function createPipelineEmbedder(spec: ModelSpec, opts: PipelineOptions): Promise<Embedder> {
   // Dynamic import: transformers.js and the ONNX runtime stay out of every chunk but the worker's.
   const { env, pipeline } = await import('@huggingface/transformers');
-  env.allowRemoteModels = false;
-  env.allowLocalModels = true;
-  env.localModelPath = opts.modelPath;
+  if (/^https?:\/\//.test(opts.modelPath)) {
+    // Browser: our own server acts as the model "hub". In this mode transformers.js probes
+    // file sizes with a 1-byte Range request; its local-path mode fetches each file twice.
+    env.allowLocalModels = false;
+    env.allowRemoteModels = true;
+    env.remoteHost = opts.modelPath;
+    env.remotePathTemplate = '{model}/';
+  } else {
+    // Node: read from disk only.
+    env.allowRemoteModels = false;
+    env.allowLocalModels = true;
+    env.localModelPath = opts.modelPath;
+  }
   if (opts.wasmPaths && env.backends.onnx.wasm) env.backends.onnx.wasm.wasmPaths = opts.wasmPaths;
 
   const extractor = await pipeline('feature-extraction', spec.id, {
