@@ -92,6 +92,9 @@ export const IDLE_RAMP = 2;
 /** Initial "last interaction" time that makes the galaxy rotate from the first frame. */
 export const START_IDLE = -(IDLE_DELAY + IDLE_RAMP);
 
+/** Longest frame step (s) the idle rotation uses, so a long pause (hidden tab) does not jump. */
+export const MAX_IDLE_STEP = 0.1;
+
 /**
  * Azimuth angle to add this frame for the idle auto-rotate.
  * Zero while the user interacts and for `IDLE_DELAY` seconds after; then it eases in over `IDLE_RAMP`.
@@ -106,7 +109,8 @@ export function idleRotation(
   if (interacting || idle <= 0) return 0;
   // Smoothstep ramp, so the motion starts gently after the user lets go.
   const t = Math.min(1, idle / IDLE_RAMP);
-  return IDLE_SPEED * t * t * (3 - 2 * t) * dt;
+  // The browser stops frames in a hidden tab; the first frame back carries the whole gap.
+  return IDLE_SPEED * t * t * (3 - 2 * t) * Math.min(dt, MAX_IDLE_STEP);
 }
 
 /**

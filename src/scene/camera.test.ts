@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fixtureGalaxy } from '../data/fixture';
 import { buildAdjacency } from './neighbors';
-import { damp, fitDistance, focusSphere, flyToPose, IDLE_DELAY, zoomToward, IDLE_RAMP, IDLE_SPEED, idleRotation, START_IDLE } from './camera';
+import { damp, fitDistance, focusSphere, flyToPose, IDLE_DELAY, zoomToward, IDLE_RAMP, IDLE_SPEED, idleRotation, MAX_IDLE_STEP, START_IDLE } from './camera';
 
 const adj = buildAdjacency(fixtureGalaxy.roots.length, fixtureGalaxy.edges);
 
@@ -51,7 +51,11 @@ describe('idleRotation', () => {
     expect(early).toBeLessThan(full / 4);
   });
   it('rotates from app start when the last interaction is set to START_IDLE', () => {
-    expect(idleRotation(false, 0, START_IDLE, 1)).toBeCloseTo(IDLE_SPEED);
+    expect(idleRotation(false, 0, START_IDLE, 0.05)).toBeCloseTo(IDLE_SPEED * 0.05);
+  });
+  it('does not jump after the tab was hidden (one long frame)', () => {
+    const normal = idleRotation(false, 100, 0, MAX_IDLE_STEP);
+    expect(idleRotation(false, 100, 0, 60)).toBeCloseTo(normal);
   });
   it('turns slowly once idle', () => {
     const a = idleRotation(false, 100, 0, 1);
