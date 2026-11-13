@@ -38,6 +38,9 @@ Raw downloads are cached in `data/raw/` (gitignored). Generated JSON in `public/
 | `src/search/types.ts`, `exact.ts`, `matchers.ts` | main | Search contract: a `Matcher` returns scored `Match`es (0..1); `exactMatches` keeps the best per root |
 | `src/search/basic.ts` | main | Arabic letters and lemmas, Latin root letters |
 | `src/search/spelling.ts` | G7 | Latin spelling ("noor", "3ilm") → cheapest Arabic spelling of each lemma, vowels checked against diacritics |
+| `scripts/lib/glosses/*`, `scripts/fetch-glosses.ts`, `src/search/english.ts` | G8 | English meanings from Wiktionary (cached) with a translation fallback; English search |
+| `src/semantic/*`, `src/search/blend.ts`, `scripts/models.ts`, `scripts/build-embeddings.ts`, `scripts/eval-semantic.ts` | G9 | Meaning search: worker, int8 cosine search, verse→root scores, blend |
+| `deploy/Caddyfile.site`, `scripts/ship.sh` | main | Deploy |
 
 ## Testing
 | Layer | Tool | What it covers |
@@ -50,6 +53,9 @@ WebKit's Linux build needs Ubuntu libraries, so `pnpm test:e2e:iphone` runs it i
 Headless browsers have no GPU: Chromium and WebKit run the WebGL 2 fallback in software, so the first frame can take seconds; tests poll instead of using fixed waits.
 
 ## Key decisions
+- **Search = scored matchers + blend.** Each matcher (Arabic, root letters, Latin spelling, English) returns scores in 0..1; the best per root wins. Real English meanings outrank accidental Latin spellings. The slider blends: `w × semantic + (1 − w) × exact`.
+- **Meaning search off the main thread.** all-MiniLM-L6-v2 (q8) runs in a Web Worker through transformers.js and loads only when the slider leaves 0. The model, the ONNX runtime wasm and the verse vectors (int8, 2.4 MB) are self-hosted. Root score = sum of the similarities of the top 20 verses × inverse verse frequency.
+- **English meanings from Wiktionary.** Lemmas are matched to entries by root, letters, vowels and word class; the translation only chooses between candidate senses. Fallback: distinctive translation words.
 - **Precomputed layout.** The force layout runs at build time, so the app starts instantly and looks the same for every user.
 - **Lazy detail data.** Only `galaxy.json` loads at startup. Verses and occurrences load on first selection.
 - **WebGPU first.** three.js `WebGPURenderer` falls back to WebGL 2 automatically.
