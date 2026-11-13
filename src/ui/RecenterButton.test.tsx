@@ -27,6 +27,14 @@ describe('RecenterButton', () => {
     expect(useGalaxyStore.getState().recenterTick).toBe(tick + 1);
   });
 
+  it('is hidden in the Mushaf layout, which has no camera', () => {
+    useGalaxyStore.getState().select(2);
+    useGalaxyStore.getState().setAwayFromSelection(true);
+    useGalaxyStore.getState().setLayout('mushaf');
+    render(<RecenterButton />);
+    expect(screen.queryByRole('button')).toBeNull();
+  });
+
   it('is hidden without a selection', () => {
     act(() => useGalaxyStore.getState().setAwayFromSelection(true));
     render(<RecenterButton />);
