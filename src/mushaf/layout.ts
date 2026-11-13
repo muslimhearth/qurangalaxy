@@ -86,9 +86,8 @@ export interface MushafLayout extends DotSize {
   labels: RowLabel[];
 }
 
-/** Largest and smallest dot sizes tried, in CSS pixels. */
-const MAX_DOT = 10;
-const MIN_DOT = 2;
+/** Dot sizes tried, largest first, in CSS pixels. Half steps let small screens fill their space. */
+const DOT_STEPS = [10, 9, 8, 7, 6, 5, 4.5, 4, 3.5, 3, 2.5, 2];
 /** Minimum vertical distance between two row labels (the label font is about 9 px). */
 const LABEL_SPACING = 11;
 
@@ -97,10 +96,10 @@ const LABEL_SPACING = 11;
  * dot size that fits without scrolling, centers the mosaic and labels the rows with surah numbers.
  */
 export function mushafLayout(counts: readonly number[], width: number, height: number): MushafLayout {
-  let size = sizeFor(MIN_DOT);
+  let size = sizeFor(2);
   let gutter = 0;
   let f: Flow | null = null;
-  for (let dot = MAX_DOT; dot >= MIN_DOT; dot--) {
+  for (const dot of DOT_STEPS) {
     size = sizeFor(dot);
     gutter = dot >= 6 ? 26 : 18;
     f = flow(counts, size, width - gutter);
