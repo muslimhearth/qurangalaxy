@@ -43,6 +43,8 @@ Per-goal detail: `docs/progress/`.
 - Later UX from user testing: search mode in a chip (Exact / Hybrid / Semantic slider, no help text), phone sheet with 3 sizes, "Back to" button, map-like gesture easing (0.14 s), About panel refreshed.
 - G10 merged at the user's request (app is personal use for now). Its test fixtures and report quote a few scraped glosses; the full scraped data stays local. Permission from the corpus team is still pending.
 
+- Phone fixes from user testing: a tap selects the nearest star within a finger-sized radius (stars are tiny at full view); closing the panel flies back out to the whole galaxy; "Back to" rides on the panel edge (hidden when the sheet is maximized), so it never covers the sheet buttons or the search slider.
+
 ## Known issues
 - R3F still bundles three's `WebGLRenderer` (unused) and logs two library deprecation warnings (`THREE.Clock`, `PCFSoftShadowMap`). These come from the library and go away when R3F updates.
 - Some Wiktionary senses are wrong or rare (ربب "many a man", شُحُوم "gagea reticulata"); 1,417 lemmas (5.4% of words) have no meaning. See `docs/progress/g8.md`.
