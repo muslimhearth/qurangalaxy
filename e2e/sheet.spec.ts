@@ -49,3 +49,43 @@ test('desktop has no sheet size buttons', async ({ page, isMobile }) => {
   await expect(page.getByRole('button', { name: 'Minimize root details' })).toBeHidden();
   await expect(page.getByRole('button', { name: 'Maximize root details' })).toBeHidden();
 });
+
+test('"Back to" sits above the sheet and never covers the slider or the sheet buttons', async ({ page, isMobile }, info) => {
+  test.skip(!isMobile, 'phone layout');
+  await page.goto('/#/root/' + encodeURIComponent('رحم'));
+  const panel = page.getByLabel('Root details', { exact: true });
+  await expect(panel).toBeVisible();
+  // The 3D scene loads lazily: wait for its labels, then swipe the view away (wheel events).
+  await expect
+    .poll(() => page.locator('.label-layer > div').evaluateAll((els) => els.filter((e) => (e as HTMLElement).style.opacity === '1').length), {
+      timeout: 30_000,
+    })
+    .toBeGreaterThan(0);
+  await page.evaluate(() => {
+    const canvas = document.querySelector('canvas')!;
+    for (let i = 0; i < 8; i++) {
+      canvas.dispatchEvent(new WheelEvent('wheel', { deltaX: 30, deltaY: 2, clientX: 100, clientY: 200, bubbles: true, cancelable: true }));
+    }
+  });
+  const back = page.getByRole('button', { name: 'Back to رحم' });
+  await expect(back).toBeVisible({ timeout: 15_000 });
+  // Above the sheet's top edge.
+  const b = (await back.boundingBox())!;
+  const p = (await panel.boundingBox())!;
+  expect(b.y + b.height).toBeLessThanOrEqual(p.y + 1);
+  await page.screenshot({ path: `test-results/${info.project.name}-back-to.png` });
+
+  // The slider's right end is the slider itself.
+  await page.getByRole('button', { name: /search mode/i }).tap();
+  const slider = page.getByRole('slider', { name: /search mode/i });
+  const box = (await slider.boundingBox())!;
+  const onTop = await page.evaluate(
+    ({ x, y }) => document.elementFromPoint(x, y)?.id ?? '',
+    { x: box.x + box.width - 4, y: box.y + box.height / 2 },
+  );
+  expect(onTop).toBe('semantic-weight');
+
+  // Maximized sheet: no "Back to" over its header buttons.
+  await page.getByRole('button', { name: 'Maximize root details' }).tap();
+  await expect(back).toHaveCount(0);
+});

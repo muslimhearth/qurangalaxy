@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useGalaxyStore } from '../state/store';
 import { ConnectedRoots } from './ConnectedRoots';
+import { RecenterButton } from './RecenterButton';
 import { neighbors } from './helpers';
 import { useRootDetails } from './useRootDetails';
 import { VerseList } from './VerseList';
@@ -103,6 +104,9 @@ export function RootPanel() {
           </button>
         </div>
       </header>
+
+      {/* Rides on the panel's edge, so it never covers the sheet or the search popover. */}
+      {size !== 'max' && <RecenterButton />}
 
       {/* hidden, not unmounted: "show more" and scroll position survive a minimize. */}
       <div className="root-body" hidden={collapsed}>

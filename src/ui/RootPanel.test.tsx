@@ -161,4 +161,13 @@ describe('RootPanel', () => {
     expect(screen.getByRole('list', { name: 'Lemmas' })).toBeVisible();
     expect(useGalaxyStore.getState().selectedId).toBe(2);
   });
+
+  it('shows "Back to" with the panel, but not when the sheet is maximized', () => {
+    useGalaxyStore.getState().select(2);
+    render(<RootPanel />);
+    act(() => useGalaxyStore.getState().setAwayFromSelection(true));
+    expect(screen.getByRole('button', { name: 'Back to رحم' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Maximize root details' }));
+    expect(screen.queryByRole('button', { name: 'Back to رحم' })).toBeNull();
+  });
 });

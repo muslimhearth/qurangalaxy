@@ -96,6 +96,8 @@ a { color: var(--accent); }
 /* Search */
 .search {
   position: absolute;
+  /* Above the other overlay parts (e.g. "Back to"), so its popover is never covered. */
+  z-index: 3;
   top: var(--gap);
   left: 50%;
   transform: translateX(-50%);
@@ -196,7 +198,7 @@ a { color: var(--accent); }
   width: min(420px, 38vw);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  /* No overflow clipping: "Back to" sits outside the panel's edge. The body scrolls itself. */
 }
 .root-head {
   display: flex;
@@ -229,7 +231,7 @@ a { color: var(--accent); }
 /* Sheet sizes are for the phone bottom sheet only; the desktop side panel is full height. */
 .sheet-size { display: none; }
 .root-body[hidden] { display: none; }
-.root-body { overflow-y: auto; padding: 4px 18px 18px; overscroll-behavior: contain; }
+.root-body { overflow-y: auto; min-height: 0; padding: 4px 18px 18px; overscroll-behavior: contain; }
 .root-body h3 {
   margin: 16px 0 8px; font-size: 0.75rem; font-weight: 600;
   text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted);
@@ -279,11 +281,12 @@ a { color: var(--accent); }
 }
 .hover-hint .ar { font-size: 1.3rem; color: var(--accent); }
 
-/* "Back to …": bottom of the free area, left of the desktop side panel. */
+/* "Back to …": on the panel's outer edge — left of the desktop side panel. */
 .recenter {
   position: absolute;
-  bottom: calc(var(--gap) * 2);
-  right: calc(min(420px, 38vw) + var(--gap) * 2);
+  bottom: var(--gap);
+  right: calc(100% + var(--gap));
+  white-space: nowrap;
   display: inline-flex; align-items: center; gap: 8px;
   padding: 8px 14px; border-radius: 999px;
   color: var(--accent); font-size: 0.9rem;
@@ -316,7 +319,7 @@ a { color: var(--accent); }
     width: 36px; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.18);
   }
   .search { top: 10px; }
-  /* Under the search field, clear of the bottom sheet at any size but maximized. */
-  .recenter { bottom: auto; top: 74px; right: var(--gap); }
+  /* Just above the bottom sheet's top edge; it moves with the sheet (hidden when maximized). */
+  .recenter { bottom: calc(100% + 10px); right: var(--gap); }
   .hover-hint { bottom: auto; top: 76px; }
 }

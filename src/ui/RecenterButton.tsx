@@ -3,6 +3,7 @@ import { useGalaxyStore } from '../state/store';
 /**
  * "Back to رحم": shown after the user moves the view away from the selected root,
  * like the re-center button in map apps. A click flies the camera back.
+ * Rendered inside the root panel and placed on its outer edge by CSS.
  */
 export function RecenterButton() {
   const root = useGalaxyStore((s) => (s.selectedId === null ? undefined : s.galaxy?.roots[s.selectedId]));

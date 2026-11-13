@@ -5,7 +5,6 @@ import { About } from './About';
 import { SearchBox } from './SearchBox';
 import { RootPanel } from './RootPanel';
 import { HoverHint } from './HoverHint';
-import { RecenterButton } from './RecenterButton';
 
 /**
  * 2D UI over the full-screen 3D scene. The container lets clicks pass through
@@ -48,7 +47,6 @@ export function Overlay() {
       <SearchBox />
       <RootPanel />
       <HoverHint />
-      <RecenterButton />
     </div>
   );
 }
