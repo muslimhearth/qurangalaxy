@@ -38,6 +38,16 @@ describe('starColors', () => {
     expect(c[3 * 3]).toBeLessThan(0.2); // unrelated root, strong dim
   });
 
+  it('keeps every connected root clearly brighter than unrelated roots', () => {
+    const n = TOP_LINKS + 3;
+    const hub = Array.from({ length: n - 2 }, (_, i) => ({ source: 0, target: i + 1, weight: n - i }));
+    const hubAdj = buildAdjacency(n, hub);
+    const c = starColors(new Float32Array(n * 3).fill(0.5), hubAdj, { id: 0, strong: true });
+    const weakestNeighbor = c[(n - 2) * 3]!; // past the link cap
+    const unrelated = c[(n - 1) * 3]!;
+    expect(weakestNeighbor / unrelated).toBeGreaterThanOrEqual(8);
+  });
+
   it('dims less on hover than on selection', () => {
     const sel = starColors(base, adj, { id: 0, strong: true });
     const hov = starColors(base, adj, { id: 0, strong: false });

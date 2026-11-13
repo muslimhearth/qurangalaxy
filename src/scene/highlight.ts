@@ -16,8 +16,9 @@ export function focusOf(selectedId: number | null, hoveredId: number | null): Fo
 
 // Brightness factors. Values above 1 push the focus star into the bloom.
 // `top`: the strongest neighbors; `rest`: the other neighbors; `other`: unrelated stars.
+// On selection, unrelated stars fade far down so every connected root stands out (8x brighter).
 const STAR = {
-  strong: { focus: 1.8, top: 1, rest: 0.3, other: 0.12 },
+  strong: { focus: 1.8, top: 1, rest: 0.4, other: 0.05 },
   soft: { focus: 1.5, top: 1, rest: 0.6, other: 0.4 },
 };
 // Edge factors: `top` is absolute (scaled by weight); `rest` and `other` are relative to the base level.
