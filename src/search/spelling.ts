@@ -124,7 +124,7 @@ function doubled(token: Token): Token {
 function cleanQuery(query: string): string {
   const q = query
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .toLowerCase()
     .trim();
   // Article: "al-", "el-", or an assimilated one like "ar-r..." / "as-s...", then a hyphen or space.
