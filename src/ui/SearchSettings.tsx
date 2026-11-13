@@ -3,10 +3,10 @@ import { useGalaxyStore } from '../state/store';
 import type { SemanticStatus } from '../semantic/useSemanticSearch';
 import { SemanticSlider } from './SemanticSlider';
 
-/** One-word name of the search mode for a slider weight: Exact, Mixed or Topic. */
+/** One-word name of the search mode for a slider weight: Exact, Hybrid or Semantic. */
 export function modeLabel(weight: number): string {
   if (weight <= 0) return 'Exact';
-  return weight >= 1 ? 'Topic' : 'Mixed';
+  return weight >= 1 ? 'Semantic' : 'Hybrid';
 }
 
 interface Props {
@@ -17,7 +17,7 @@ interface Props {
 
 /**
  * Small button in the search field that shows the current search mode and opens the
- * Exact ↔ Topic slider in a popover. Escape or a click outside closes it.
+ * Exact ↔ Semantic slider in a popover. Escape or a click outside closes it.
  */
 export function SearchSettings({ status, progress, error }: Props) {
   const weight = useGalaxyStore((s) => s.semanticWeight);
@@ -63,17 +63,21 @@ export function SearchSettings({ status, progress, error }: Props) {
           <path d="M2 4h12M2 12h12M5 2v4M11 10v4" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round" />
         </svg>
         {mode}
-        {status === 'loading' && <span className="mode-progress">{Math.round(progress * 100)}%</span>}
+        {/* A small ring while the model downloads; a number here would read like the semantic share. */}
+        {status === 'loading' && (
+          <span
+            className="mode-loading"
+            role="progressbar"
+            aria-label="Loading semantic model"
+            aria-valuenow={Math.round(progress * 100)}
+            aria-valuemin={0}
+            aria-valuemax={100}
+          />
+        )}
       </button>
       {open && (
         <div className="mode-pop panel" role="dialog" aria-label="Search mode">
           <SemanticSlider status={status} progress={progress} error={error} />
-          <p className="mode-help">
-            <b>Exact</b> finds a root by its letters (رحم), spelling (noor) or English word (light).
-            <br />
-            <b>Topic</b> finds roots and verses about a phrase (patience in hardship), using the English
-            translation. The first use downloads a small model (23 MB).
-          </p>
         </div>
       )}
     </div>

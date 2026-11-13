@@ -16,7 +16,7 @@ const LIMIT = 8;
 
 /**
  * Search field at the top: find a root by Arabic letters, transliteration or lemma, or by
- * topic (a phrase matched against the English verses). The search-mode slider mixes the two.
+ * meaning (semantic: a phrase matched against the English verses). The search-mode slider blends the two.
  */
 export function SearchBox({ semanticService = getWorkerService }: { semanticService?: () => SemanticService }) {
   const galaxy = useGalaxyStore((s) => s.galaxy);
@@ -74,7 +74,7 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
           aria-controls="root-search-results"
           aria-autocomplete="list"
           aria-activedescendant={open && results[active] ? `root-option-${results[active].id}` : undefined}
-          placeholder={weight > 0 ? 'Search a topic: patience…' : 'Search: رحم, noor, light…'}
+          placeholder={weight > 0 ? 'Search a phrase: patience…' : 'Search: رحم, noor, light…'}
           autoComplete="off"
           spellCheck={false}
           value={query}
@@ -89,7 +89,7 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
       {open && (
         <ul id="root-search-results" role="listbox" className="search-results" aria-label="Matching roots">
           {results.length === 0 && (
-            <li className="search-empty">{pending ? 'Searching by topic…' : 'No roots match.'}</li>
+            <li className="search-empty">{pending ? 'Searching by meaning…' : 'No roots match.'}</li>
           )}
           {results.map((match, i) => {
             const root = roots[match.id]!;

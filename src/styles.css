@@ -159,27 +159,31 @@ a { color: var(--accent); }
 }
 .mode-chip:hover, .mode-chip[aria-expanded='true'] { color: var(--fg); border-color: var(--accent); }
 .mode-chip.on { color: var(--accent); border-color: rgba(242, 199, 110, 0.45); }
-.mode-progress { font-variant-numeric: tabular-nums; }
+.mode-loading {
+  width: 10px; height: 10px; border-radius: 50%;
+  border: 1.5px solid var(--border); border-top-color: var(--accent);
+  animation: spin 0.9s linear infinite;
+}
 .mode-pop {
   position: absolute; right: -8px; top: calc(100% + 10px); z-index: 2;
   width: min(320px, calc(100vw - 2 * var(--gap)));
   padding: 12px 0 4px;
 }
-.mode-help { margin: 0; padding: 0 16px 10px; font-size: 0.78rem; line-height: 1.5; color: var(--muted); }
-.mode-help b { color: var(--fg); font-weight: 600; }
-.semantic {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px;
-  padding: 0 16px 8px;
-  font-size: 0.78rem; color: var(--muted);
-}
-.semantic label { white-space: nowrap; }
+.semantic { padding: 0 16px 6px; font-size: 0.78rem; color: var(--muted); }
+.semantic-ends { display: flex; justify-content: space-between; }
 .search .semantic input[type='range'] {
-  flex: 1; min-width: 120px; width: auto;
+  display: block; width: 100%;
   /* Taller hit area for touch; the track stays thin. */
   height: 28px; padding: 0; margin: 0;
   accent-color: var(--accent);
 }
-.semantic-status { flex-basis: 100%; display: flex; align-items: center; gap: 8px; }
+/* The value follows the thumb; the inner margin keeps it inside the track at both ends. */
+.semantic-value { position: relative; height: 18px; margin: 0 10px; }
+.semantic-value span {
+  position: absolute; transform: translateX(-50%);
+  color: var(--accent); font-weight: 600; font-variant-numeric: tabular-nums;
+}
+.semantic-status { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
 .semantic-status progress { width: 80px; height: 6px; accent-color: var(--accent); }
 .semantic-status.error { color: #e88; }
 

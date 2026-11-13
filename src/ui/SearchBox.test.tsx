@@ -112,7 +112,7 @@ describe('SearchBox', () => {
     /** Opens the search-mode popover (if closed) and returns its slider. */
     const slider = () => {
       if (!screen.queryByRole('slider')) fireEvent.click(screen.getByRole('button', { name: /search mode/i }));
-      return screen.getByRole('slider', { name: /exact ↔ topic/i });
+      return screen.getByRole('slider', { name: /search mode/i });
     };
 
     it('does not touch the model while the slider is at exact', async () => {

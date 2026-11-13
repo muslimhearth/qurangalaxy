@@ -6,8 +6,8 @@ import { useGalaxyStore } from '../state/store';
 describe('modeLabel', () => {
   it('names the current search mode in one short word', () => {
     expect(modeLabel(0)).toBe('Exact');
-    expect(modeLabel(0.4)).toBe('Mixed');
-    expect(modeLabel(1)).toBe('Topic');
+    expect(modeLabel(0.4)).toBe('Hybrid');
+    expect(modeLabel(1)).toBe('Semantic');
   });
 });
 
@@ -27,9 +27,9 @@ describe('SearchSettings', () => {
   it('opens the slider, updates the hint, and closes with Escape', () => {
     render(<SearchSettings status="off" progress={0} />);
     fireEvent.click(button());
-    const slider = screen.getByRole('slider', { name: /exact ↔ topic/i });
+    const slider = screen.getByRole('slider', { name: /search mode/i });
     fireEvent.change(slider, { target: { value: '1' } });
-    expect(button()).toHaveTextContent('Topic');
+    expect(button()).toHaveTextContent('Semantic');
     fireEvent.keyDown(slider, { key: 'Escape' });
     expect(screen.queryByRole('slider')).toBeNull();
     expect(button()).toHaveAttribute('aria-expanded', 'false');
@@ -56,7 +56,11 @@ describe('SearchSettings', () => {
   it('shows model download progress on the button while the panel is closed', () => {
     useGalaxyStore.getState().setSemanticWeight(1);
     render(<SearchSettings status="loading" progress={0.42} />);
-    expect(button()).toHaveTextContent('42%');
+    const ring = screen.getByRole('progressbar', { name: /loading semantic model/i });
+    expect(button()).toContainElement(ring);
+    expect(ring).toHaveAttribute('aria-valuenow', '42');
+    // No bare number on the chip: it would read like the semantic share.
+    expect(button()).not.toHaveTextContent('%');
   });
 
   it('closes when focus moves outside, e.g. back to the search field', () => {
