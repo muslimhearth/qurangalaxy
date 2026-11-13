@@ -2,6 +2,7 @@ import { useFrame } from '@react-three/fiber';
 import { useLayoutEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three/webgpu';
 import { useGalaxyStore } from '../state/store';
+import { drawnEdges } from './drawnEdges';
 import { writeEdgeEnds } from './focus/apply';
 import type { FocusState } from './focus/state';
 import { edgeColors, focusOf } from './highlight';
@@ -25,6 +26,8 @@ export function Links({ model, intro, focus }: { model: SceneModel; intro: Intro
     // A copy: the glide moves line ends, the model keeps the galaxy positions.
     g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(model.edgePositions), 3));
     g.setAttribute('color', new THREE.BufferAttribute(new Float32Array(model.edgePositions.length), 3));
+    // Which segments to draw: all, or only the selected root's (see drawnEdges).
+    g.setIndex(new THREE.BufferAttribute(new Uint32Array(model.edgePositions.length / 3), 1));
     return g;
   }, [model]);
   useLayoutEffect(() => () => geometry.dispose(), [geometry]);
@@ -41,11 +44,15 @@ export function Links({ model, intro, focus }: { model: SceneModel; intro: Intro
     [],
   );
 
-  // Recolor only when the focus changes.
+  // Recolor and pick the drawn segments only when the focus changes.
   useLayoutEffect(() => {
+    const focus = focusOf(selectedId, hoveredId);
     const attr = geometry.getAttribute('color') as THREE.BufferAttribute;
-    attr.array.set(edgeColors(edges, model.baseColors, model.adjacency, focusOf(selectedId, hoveredId)));
+    attr.array.set(edgeColors(edges, model.baseColors, model.adjacency, focus));
     attr.needsUpdate = true;
+    const index = geometry.getIndex()!;
+    geometry.setDrawRange(0, drawnEdges(edges.length, model.adjacency, focus, index.array as Uint32Array));
+    index.needsUpdate = true;
   }, [geometry, edges, model, selectedId, hoveredId]);
 
   // Keep the line ends on the stars the glide moved this frame.
