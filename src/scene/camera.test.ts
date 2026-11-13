@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fixtureGalaxy } from '../data/fixture';
 import { buildAdjacency } from './neighbors';
-import { fitDistance, focusSphere, flyToPose, idleRotation } from './camera';
+import { damp, fitDistance, focusSphere, flyToPose, idleRotation } from './camera';
 
 const adj = buildAdjacency(fixtureGalaxy.roots.length, fixtureGalaxy.edges);
 
@@ -16,14 +16,24 @@ describe('fitDistance', () => {
 });
 
 describe('focusSphere', () => {
-  it('centers on the root and reaches its farthest neighbor', () => {
+  it('contains the root and all its neighbors', () => {
     const s = focusSphere(fixtureGalaxy.roots, adj, 3, 1);
-    expect(s.center).toEqual([6, -11, 8]);
-    expect(s.radius).toBeCloseTo(Math.hypot(6 + 14, -11 + 5, 8 + 9));
+    for (const id of [3, ...adj[3]!.map((n) => n.id)]) {
+      const p = fixtureGalaxy.roots[id]!.pos;
+      const d = Math.hypot(p[0] - s.center[0], p[1] - s.center[1], p[2] - s.center[2]);
+      expect(d).toBeLessThanOrEqual(s.radius + 1e-9);
+    }
+  });
+  it('centers between the root and its neighbors, so the whole group fills the view', () => {
+    // Root 3 at [6,-11,8] has one neighbor, root 4 at [-14,-5,-9]: the center is the midpoint.
+    const s = focusSphere(fixtureGalaxy.roots, adj, 3, 1);
+    expect(s.center).toEqual([-4, -8, -0.5]);
+    expect(s.radius).toBeCloseTo(Math.hypot(20, 6, 17) / 2);
   });
   it('uses the minimum radius for a root with no neighbors', () => {
     const s = focusSphere(fixtureGalaxy.roots, [[], [], [], [], [], []], 0, 4);
     expect(s.radius).toBe(4);
+    expect(s.center).toEqual([0, 0, 0]);
   });
 });
 
@@ -51,5 +61,16 @@ describe('flyToPose', () => {
   it('falls back to +z when camera and target coincide', () => {
     const pose = flyToPose({ center: [1, 2, 3], radius: 1 }, [0, 0, 0], [0, 0, 0], 90, 1);
     expect(pose.position[2]).toBeGreaterThan(3);
+  });
+});
+
+describe('damp', () => {
+  it('moves part of the way toward the target each frame', () => {
+    const next = damp(0, 100, 8, 1 / 60);
+    expect(next).toBeGreaterThan(0);
+    expect(next).toBeLessThan(100);
+  });
+  it('snaps to the target once close enough', () => {
+    expect(damp(99.7, 100, 8, 1 / 60)).toBe(100);
   });
 });

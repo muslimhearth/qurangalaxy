@@ -9,6 +9,7 @@ import { Links } from './Links';
 import { buildSceneModel } from './model';
 import { createRenderer } from './renderer';
 import { Stars } from './Stars';
+import { usePanelInset } from './usePanelInset';
 
 if (import.meta.env.DEV) void import('./devSynthetic').then((m) => m.installSyntheticGalaxy());
 
@@ -21,7 +22,8 @@ export function GalaxyScene() {
   const select = useGalaxyStore((s) => s.select);
   const hover = useGalaxyStore((s) => s.hover);
   const model = useMemo(() => (galaxy ? buildSceneModel(galaxy) : null), [galaxy]);
-  const anchors = useRef<LabelAnchors>(new Map()).current;
+  const anchors = useRef<LabelAnchors>({ ids: [], els: new Map() }).current;
+  const inset = usePanelInset();
 
   const clearHover = () => {
     if (useGalaxyStore.getState().hoveredId !== null) hover(null);
@@ -48,8 +50,8 @@ export function GalaxyScene() {
             <BackgroundStars radius={model.bounds.radius} />
             <Links model={model} />
             <Stars model={model} />
-            <LabelTracker model={model} anchors={anchors} />
-            <CameraRig model={model} />
+            <LabelTracker model={model} anchors={anchors} inset={inset} />
+            <CameraRig model={model} inset={inset} />
           </>
         )}
         <Bloom />

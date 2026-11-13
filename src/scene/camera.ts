@@ -19,20 +19,26 @@ export function fitDistance(radius: number, fovDeg: number, aspect: number): num
   return radius / Math.sin(Math.min(vHalf, hHalf));
 }
 
-/** Sphere centered on a root that reaches its farthest neighbor (at least `minRadius`). */
+/**
+ * Sphere around a root and all its neighbors (radius at least `minRadius`).
+ * Centered on their bounding box, so the whole constellation fills the view.
+ */
 export function focusSphere(
   roots: readonly Root[],
   adj: Adjacency,
   id: number,
   minRadius: number,
 ): Sphere {
-  const p = roots[id]!.pos;
+  const points = [id, ...(adj[id] ?? []).map((n) => n.id)].map((i) => roots[i]!.pos);
+  const center = [0, 1, 2].map((k) => {
+    const values = points.map((p) => p[k]!);
+    return (Math.min(...values) + Math.max(...values)) / 2;
+  }) as Vec3;
   let radius = minRadius;
-  for (const n of adj[id] ?? []) {
-    const q = roots[n.id]!.pos;
-    radius = Math.max(radius, Math.hypot(q[0] - p[0], q[1] - p[1], q[2] - p[2]));
+  for (const p of points) {
+    radius = Math.max(radius, Math.hypot(p[0] - center[0], p[1] - center[1], p[2] - center[2]));
   }
-  return { center: [...p], radius };
+  return { center, radius };
 }
 
 /**
@@ -78,4 +84,13 @@ export function idleRotation(
 ): number {
   if (interacting || now - lastInteraction < IDLE_DELAY) return 0;
   return IDLE_SPEED * dt;
+}
+
+/**
+ * Frame-rate independent ease of `current` toward `target` (`rate` per second).
+ * Snaps when less than half a unit away, so pixel offsets settle exactly.
+ */
+export function damp(current: number, target: number, rate: number, dt: number): number {
+  const next = target + (current - target) * Math.exp(-rate * dt);
+  return Math.abs(next - target) < 0.5 ? target : next;
 }

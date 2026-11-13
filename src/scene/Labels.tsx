@@ -1,12 +1,18 @@
 import { useFrame, useThree } from '@react-three/fiber';
-import type { CSSProperties } from 'react';
+import { useLayoutEffect, type CSSProperties } from 'react';
 import { Vector3 } from 'three';
 import { useGalaxyStore } from '../state/store';
-import { labelIds, ndcToScreen } from './labels';
+import { blockedBoxes, type Inset } from './inset';
+import { declutter, labelBox, labelIds, ndcToScreen, type Box } from './labels';
 import type { SceneModel } from './model';
 
-/** Label DOM nodes by root id. The layer fills it; the tracker moves the nodes. */
-export type LabelAnchors = Map<number, HTMLDivElement>;
+/** Shared by the layer (fills it) and the tracker (moves the nodes). */
+export interface LabelAnchors {
+  /** Labeled root ids, highest priority first. */
+  ids: number[];
+  /** Label DOM nodes by root id. */
+  els: Map<number, HTMLDivElement>;
+}
 
 const layer: CSSProperties = {
   position: 'fixed',
@@ -20,7 +26,8 @@ const base: CSSProperties = {
   position: 'absolute',
   left: 0,
   top: 0,
-  visibility: 'hidden', // until the tracker places it
+  opacity: 0, // until the tracker places it
+  transition: 'opacity 0.25s',
   fontFamily: "'Noto Naskh Arabic', 'Amiri', 'Geeza Pro', serif",
   fontSize: 15,
   color: 'rgba(232, 230, 240, 0.85)',
@@ -39,11 +46,14 @@ export function LabelLayer({ model, anchors }: { model: SceneModel; anchors: Lab
   const roots = useGalaxyStore((s) => s.galaxy?.roots);
   const selectedId = useGalaxyStore((s) => s.selectedId);
   const hoveredId = useGalaxyStore((s) => s.hoveredId);
+  const ids = roots ? labelIds(model.adjacency, model.top, selectedId, hoveredId) : [];
+  useLayoutEffect(() => {
+    anchors.ids = ids;
+  });
   if (!roots) return null;
-  const ids = labelIds(model.adjacency, model.top, selectedId, hoveredId);
 
   return (
-    <div style={layer} aria-hidden>
+    <div className="label-layer" style={layer} aria-hidden>
       {ids.map((id) => (
         <div
           key={id}
@@ -51,8 +61,8 @@ export function LabelLayer({ model, anchors }: { model: SceneModel; anchors: Lab
           lang="ar"
           style={id === selectedId || id === hoveredId ? focused : base}
           ref={(el) => {
-            if (el) anchors.set(id, el);
-            else anchors.delete(id);
+            if (el) anchors.els.set(id, el);
+            else anchors.els.delete(id);
           }}
         >
           {roots[id]?.ar}
@@ -64,20 +74,44 @@ export function LabelLayer({ model, anchors }: { model: SceneModel; anchors: Lab
 
 const v = new Vector3();
 
-/** Inside the canvas: moves each label to its star's screen position every frame. */
-export function LabelTracker({ model, anchors }: { model: SceneModel; anchors: LabelAnchors }) {
+/** Label sizes in pixels, re-measured only when a label's font size changes. */
+const sizes = new WeakMap<HTMLElement, { font: string; w: number; h: number }>();
+function labelSize(el: HTMLElement) {
+  let s = sizes.get(el);
+  if (!s || s.font !== el.style.fontSize) {
+    s = { font: el.style.fontSize, w: el.offsetWidth, h: el.offsetHeight };
+    sizes.set(el, s);
+  }
+  return s;
+}
+
+/**
+ * Inside the canvas: moves each label to its star's screen position every frame,
+ * then shows only labels that do not collide with a higher-priority label or the panel.
+ */
+export function LabelTracker({ model, anchors, inset }: { model: SceneModel; anchors: LabelAnchors; inset: Inset }) {
   const roots = useGalaxyStore((s) => s.galaxy!.roots);
   const size = useThree((s) => s.size);
   useFrame(({ camera }) => {
-    for (const [id, el] of anchors) {
+    const els: HTMLDivElement[] = [];
+    const boxes: (Box | null)[] = [];
+    for (const id of anchors.ids) {
+      const el = anchors.els.get(id);
       const r = roots[id];
-      if (!r) continue;
+      if (!el) continue;
+      els.push(el);
+      if (!r) {
+        boxes.push(null);
+        continue;
+      }
       // Anchor just above the star's top edge.
       v.set(r.pos[0], r.pos[1] + model.radii[id]! * 1.2, r.pos[2]).project(camera);
       const p = ndcToScreen(v.x, v.y, v.z, size.width, size.height);
-      el.style.visibility = p.visible ? 'visible' : 'hidden';
       el.style.transform = `translate(${p.x}px, ${p.y}px) translate(-50%, -100%)`;
+      boxes.push(p.visible ? labelBox(p, labelSize(el)) : null);
     }
+    const shown = declutter(boxes, blockedBoxes(inset, size.width, size.height));
+    els.forEach((el, i) => (el.style.opacity = shown[i] ? '1' : '0'));
   });
   return null;
 }

@@ -4,8 +4,8 @@ import { edgePositions, starBaseColors, starMatrices } from './buffers';
 import { buildAdjacency, topByCount, type Adjacency } from './neighbors';
 import { starRadii, starRadiusRange, type RadiusRange } from './scales';
 
-/** Number of most frequent roots that always show a label. */
-export const TOP_LABELS = 20;
+/** Number of most frequent roots that may show a label; collisions hide the rest. */
+export const TOP_LABELS = 80;
 
 /** Everything the scene derives from a galaxy once, at load time. */
 export interface SceneModel {
@@ -16,7 +16,7 @@ export interface SceneModel {
   baseColors: Float32Array;
   edgePositions: Float32Array;
   adjacency: Adjacency;
-  /** Ids of the most frequent roots. */
+  /** Ids of the most frequent roots, highest count first. */
   top: number[];
 }
 
