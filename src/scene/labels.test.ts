@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { fixtureGalaxy } from '../data/fixture';
-import { buildAdjacency, topByCount } from './neighbors';
+import { buildAdjacency, topByCount, TOP_LINKS } from './neighbors';
 import { declutter, labelBox, labelIds, ndcToScreen } from './labels';
 
 const adj = buildAdjacency(fixtureGalaxy.roots.length, fixtureGalaxy.edges);
@@ -30,6 +30,11 @@ describe('labelIds', () => {
 
   it('caps the number of neighbor labels per focus root', () => {
     expect(labelIds(adj, [], 1, null, 2)).toEqual([1, 0, 2]);
+  });
+
+  it('labels by default exactly the strongest links that light up (TOP_LINKS)', () => {
+    const hub = buildAdjacency(40, Array.from({ length: 39 }, (_, i) => ({ source: 0, target: i + 1, weight: 40 - i })));
+    expect(labelIds(hub, [], 0, null)).toHaveLength(TOP_LINKS + 1);
   });
 });
 

@@ -29,3 +29,14 @@ export function topByCount(roots: readonly Root[], n: number): number[] {
     .slice(0, n)
     .map((r) => r.id);
 }
+
+/**
+ * Number of strongest links a focused root lights up. The same roots form the focus ring and
+ * get labels; the rest of its links stay faint, so a hub does not turn into a hairball.
+ */
+export const TOP_LINKS = 20;
+
+/** The `TOP_LINKS` strongest neighbors of root `id`, strongest first (empty for an unknown id). */
+export function topNeighbors(adj: Adjacency, id: number): Neighbor[] {
+  return (adj[id] ?? []).slice(0, TOP_LINKS);
+}

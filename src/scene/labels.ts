@@ -1,8 +1,9 @@
-import type { Adjacency } from './neighbors';
+import { TOP_LINKS, type Adjacency } from './neighbors';
 
 /**
  * Ids of roots that may get a text label, highest priority first: the selected root,
- * the hovered root, up to `maxNeighbors` strongest neighbors of each, then the `top` roots.
+ * the hovered root, up to `maxNeighbors` strongest neighbors of each (by default the lit
+ * links, `TOP_LINKS`), then the `top` roots.
  * No duplicates. `declutter` later hides the ones that collide.
  */
 export function labelIds(
@@ -10,7 +11,7 @@ export function labelIds(
   top: readonly number[],
   selectedId: number | null,
   hoveredId: number | null,
-  maxNeighbors = 30,
+  maxNeighbors = TOP_LINKS,
 ): number[] {
   const focus = [selectedId, hoveredId].filter((id) => id !== null);
   const ids = new Set<number>(focus);

@@ -38,7 +38,7 @@ export function Links({ model, intro }: { model: SceneModel; intro: IntroState }
   // Recolor only when the focus changes.
   useLayoutEffect(() => {
     const attr = geometry.getAttribute('color') as THREE.BufferAttribute;
-    attr.array.set(edgeColors(edges, model.baseColors, focusOf(selectedId, hoveredId)));
+    attr.array.set(edgeColors(edges, model.baseColors, model.adjacency, focusOf(selectedId, hoveredId)));
     attr.needsUpdate = true;
   }, [geometry, edges, model, selectedId, hoveredId]);
 
