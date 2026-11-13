@@ -13,6 +13,28 @@ describe('SearchBox', () => {
 
   const input = () => screen.getByRole('combobox', { name: /search roots/i });
 
+  it('lets Escape through to the window when the query is empty', () => {
+    render(<SearchBox />);
+    let reachedWindow = false;
+    const onKey = () => (reachedWindow = true);
+    window.addEventListener('keydown', onKey);
+    fireEvent.keyDown(input(), { key: 'Escape' });
+    window.removeEventListener('keydown', onKey);
+    expect(reachedWindow).toBe(true);
+  });
+
+  it('keeps Escape in the box while it clears a query', () => {
+    render(<SearchBox />);
+    fireEvent.change(input(), { target: { value: 'rhm' } });
+    let reachedWindow = false;
+    const onKey = () => (reachedWindow = true);
+    window.addEventListener('keydown', onKey);
+    fireEvent.keyDown(input(), { key: 'Escape' });
+    window.removeEventListener('keydown', onKey);
+    expect(useGalaxyStore.getState().query).toBe('');
+    expect(reachedWindow).toBe(false);
+  });
+
   it('shows matching roots as you type', () => {
     render(<SearchBox />);
     fireEvent.change(input(), { target: { value: 'rhm' } });

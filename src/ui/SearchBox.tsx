@@ -27,9 +27,9 @@ export function SearchBox() {
     } else if (e.key === 'Enter') {
       const hit = results[active] ?? results[0];
       if (hit) choose(hit.id);
-    } else if (e.key === 'Escape') {
+    } else if (e.key === 'Escape' && query !== '') {
       setQuery('');
-      // Stop the panel's Escape handler from also closing the selection.
+      // First Escape only clears the query; an empty box lets the next Escape close the panel.
       e.stopPropagation();
     }
   };
