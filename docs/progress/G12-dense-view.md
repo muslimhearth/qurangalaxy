@@ -3,7 +3,12 @@
 ## Done
 - **Link cap.** A focused root lights only its 20 strongest links (`TOP_LINKS` in `src/scene/neighbors.ts`).
   Their brightness follows the shared-verse weight. Its other links are faint (1.5 × the default link level).
-  Links that do not touch the focus are unchanged. Hover uses the same cap with softer factors.
+  Hover uses the same cap with softer factors. On hover and with no focus, links that do not touch the
+  focus look as before. While a root is selected they are no longer drawn (`src/scene/drawnEdges.ts`,
+  an index buffer plus draw range). Before, they were drawn at 0.15 × the default level (about 0.2 %
+  brightness, below one 8-bit step), so the picture does not change. With the camera now close to the
+  ring, they were long on screen and doubled the frame time in software rendering (820 → 440 ms on the
+  Android test device, main: 600 ms). The slow frames made Playwright taps time out.
   Neighbors past the cap dim (0.3 on selection, 0.6 on hover), so the top 20 stand out.
 - **Focus ring.** On selection, the 20 strongest neighbors glide from their galaxy places into an oval spiral
   around the selected root. The ring faces the camera. Stronger links sit closer to the center.
@@ -13,6 +18,7 @@
   label anchors and tap picking all read it. The camera targets the selected root, which never moves.
 - Camera frames the ring in the free area: beside the panel (desktop), above the sheet and below the
   search bar (phones). The search bar is now a `top` inset while a root is selected (`src/scene/inset.ts`).
+  It is ignored when a maximized sheet would leave less than a fifth of the screen.
 - While a root is selected, labels show only the selection, the hover and their strongest links.
   The frequent-root labels elsewhere crowded the gaps of the ring.
 - Scene neighbor order now breaks weight ties by word count, as the panel's "Connected roots" list does,
