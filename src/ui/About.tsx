@@ -19,19 +19,20 @@ export function About() {
       </div>
       {open && (
         <div id="about-body" className="about-body">
-          <p>
-            Each star is an Arabic root of the Quran. Bigger stars have more words. Lines join roots that often share
-            verses.
-          </p>
+          <p>Each star is an Arabic root of the Quran. Bigger stars have more words; lines join roots that share verses.</p>
           <ul>
-            <li>Drag to turn, scroll to zoom.</li>
-            <li>Click a star or search a root to see its words and verses.</li>
-            <li>Press Escape to close the panel.</li>
+            <li>Drag or two-finger swipe to turn; pinch or scroll to zoom.</li>
+            <li>Tap a star, or search: رحم, noor, light. Use the slider for semantic search.</li>
+            <li>Moved away? Tap “Back to” to return to the selected root.</li>
           </ul>
           <p className="sources">
             Sources: <a href="https://corpus.quran.com/" target="_blank" rel="noreferrer">Quranic Arabic Corpus</a>{' '}
             (morphology), <a href="https://tanzil.net/" target="_blank" rel="noreferrer">Tanzil.net</a> (Uthmani text,
-            Saheeh International translation).
+            Saheeh International translation),{' '}
+            <a href="https://en.wiktionary.org/" target="_blank" rel="noreferrer">
+              Wiktionary
+            </a>{' '}
+            (English meanings, CC BY-SA 4.0).
           </p>
         </div>
       )}
