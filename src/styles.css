@@ -323,3 +323,67 @@ a { color: var(--accent); }
   .recenter { bottom: calc(100% + 10px); right: var(--gap); }
   .hover-hint { bottom: auto; top: 76px; }
 }
+
+/* Mushaf view (G13): the Quran as a mosaic of verse dots, drawn on one canvas under the overlay. */
+.mushaf {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(1200px 700px at 50% 45%, #0e1226 0%, var(--bg) 70%);
+}
+.mushaf-canvas { position: absolute; display: block; touch-action: manipulation; cursor: pointer; }
+.mushaf-canvas:focus-visible { outline: 1px solid rgba(255, 255, 255, 0.25); outline-offset: 6px; border-radius: 4px; }
+.mushaf-tip {
+  position: absolute;
+  z-index: 20;
+  transform: translate(-50%, -100%);
+  pointer-events: none;
+  display: flex; flex-direction: column; align-items: center; gap: 1px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  background: rgba(12, 14, 28, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+  font-size: 0.85rem;
+}
+.mushaf-tip.below { transform: translate(-50%, 0); }
+.mushaf-tip strong { font-weight: 600; }
+.mushaf-tip-key { color: var(--accent); font-variant-numeric: tabular-nums; font-size: 0.8rem; }
+.mushaf-tip-uses { color: var(--muted); font-size: 0.75rem; }
+.mushaf-tip-uses [lang='ar'] { font-size: 1rem; color: var(--fg); }
+.mushaf-legend {
+  position: absolute;
+  margin: 0;
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px;
+  font-size: 0.8rem; color: #8e94b3;
+}
+.mushaf-swatch { display: inline-flex; align-items: center; gap: 7px; color: #c7cbe0; }
+.mushaf-swatch [lang='ar'] { font-size: 1.1rem; line-height: 1; color: var(--fg); }
+.mushaf-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; }
+.mushaf-dot.a { background: #ffc35a; box-shadow: 0 0 8px #ffc35a; }
+.mushaf-dot.b { background: #6fd0ff; box-shadow: 0 0 8px #6fd0ff; }
+.mushaf-dot.ab { background: #fff; box-shadow: 0 0 8px #fff; }
+
+/* Galaxy | Mushaf segmented control. Bottom left on desktop; under the search field on phones. */
+.mushaf-toggle {
+  position: absolute;
+  left: var(--gap);
+  bottom: var(--gap);
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+}
+.mushaf-toggle button {
+  min-width: 76px; min-height: 44px;
+  padding: 0 18px;
+  border: none; border-radius: 999px;
+  background: transparent;
+  color: #9aa0bd; font-size: 0.9rem; font-weight: 500;
+}
+.mushaf-toggle button:hover { color: var(--fg); }
+.mushaf-toggle button[aria-pressed='true'] { background: #fff; color: #0b0d18; }
+@media (max-width: 720px) {
+  .mushaf-toggle { left: auto; right: var(--gap); bottom: auto; top: 66px; }
+  .mushaf-toggle button { min-width: 0; padding: 0 14px; font-size: 0.85rem; }
+}

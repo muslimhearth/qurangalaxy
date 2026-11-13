@@ -75,7 +75,8 @@ export function drawMosaic(
     const pad = Math.max(1.5, gap);
     ctx.beginPath();
     addSurahBands(ctx, layout, s.surah, pad);
-    ctx.lineWidth = 3;
+    // Half the stroke is erased below, so the visible line is half this width.
+    ctx.lineWidth = dot >= 6 ? 3 : 2;
     ctx.strokeStyle = COLORS.outline;
     ctx.stroke();
     ctx.globalCompositeOperation = 'destination-out';

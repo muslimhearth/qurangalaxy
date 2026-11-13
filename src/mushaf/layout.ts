@@ -8,9 +8,12 @@ export interface DotSize {
   surahGap: number;
 }
 
-/** Sizes for a dot of `dot` px: 2 px gaps from 6 px dots up, else 1 px (as in the approved design). */
+/**
+ * Sizes for a dot of `dot` px. Gaps grow with the dot: 8 px dots get 2 px gaps, 4 px dots 1 px
+ * (as in the approved design).
+ */
 export function sizeFor(dot: number): DotSize {
-  return { dot, gap: dot >= 6 ? 2 : 1, surahGap: Math.max(2, Math.round(dot * 0.75)) };
+  return { dot, gap: Math.max(1, dot / 4), surahGap: Math.max(2, dot * 0.75) };
 }
 
 /** Dot positions from `flow`, before the mosaic is placed on screen. */
@@ -80,14 +83,16 @@ export interface MushafLayout extends DotSize {
   rowStart: number[];
   /** Top of the first row in canvas pixels. */
   top: number;
+  /** Bottom of the last row in canvas pixels. */
+  bottom: number;
   /** Left edge of the label column in canvas pixels. */
   left: number;
   /** Surah numbers for the row starts, thinned out so they never crowd. */
   labels: RowLabel[];
 }
 
-/** Dot sizes tried, largest first, in CSS pixels. Half steps let small screens fill their space. */
-const DOT_STEPS = [10, 9, 8, 7, 6, 5, 4.5, 4, 3.5, 3, 2.5, 2];
+/** Dot sizes tried, largest first, in CSS pixels. Fine steps let the mosaic fill its area. */
+const DOT_STEPS = Array.from({ length: 41 }, (_, i) => 12 - i * 0.25);
 /** Minimum vertical distance between two row labels (the label font is about 9 px). */
 const LABEL_SPACING = 11;
 
@@ -112,7 +117,7 @@ export function mushafLayout(counts: readonly number[], width: number, height: n
   const y = fl.y.map((v) => v + top);
   const pitch = size.dot + size.gap;
   const labels = rowLabels(counts, fl.rowStart, top, pitch, size.dot);
-  return { ...size, pitch, gutter, x, y, rowStart: fl.rowStart, top, left, labels };
+  return { ...size, pitch, gutter, x, y, rowStart: fl.rowStart, top, bottom: top + fl.height, left, labels };
 }
 
 /** Labels each row with the first surah that starts in it, skipping rows too close to the last label. */
