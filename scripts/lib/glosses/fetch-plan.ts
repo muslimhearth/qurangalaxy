@@ -19,7 +19,7 @@ export function appendixTitle(root: string): string {
 /**
  * Likely page titles of one vocalized word: its plain spelling, plus variants for
  * a superscript alef written as a full ا, a final ت written as ة (the corpus spells
- * some nouns with ت) and a final ى written as ي.
+ * some nouns with ت) and ى written as ي.
  */
 export function titleGuesses(word: string): string[] {
   const plain = pageTitle(word);
@@ -27,7 +27,8 @@ export function titleGuesses(word: string): string[] {
   if (word.includes('ٰ')) out.push(pageTitle(word.replace(/ٰ/g, 'ا')));
   // A noun ending in "-at" (not a verb ending "-tْ" with sukun) may be a taa marbuta.
   if (/َت$/.test(word)) out.push(plain.replace(/ت$/, 'ة'));
-  if (plain.endsWith('ى')) out.push(plain.replace(/ى$/, 'ي'));
+  // The corpus writes ى inside words too (شَىْء); Wiktionary writes ي there.
+  if (plain.includes('ى')) out.push(plain.replace(/ى/g, 'ي'));
   return [...new Set(out)];
 }
 
