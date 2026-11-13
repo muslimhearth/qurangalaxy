@@ -27,6 +27,14 @@ function markAway() {
   if (s.selectedId !== null && !s.awayFromSelection) s.setAwayFromSelection(true);
 }
 
+/** Easing time (s) of fly-to moves: slow and graceful. */
+const FLY_SMOOTH = 0.6;
+/**
+ * Easing time (s) of pinch, wheel and swipe steps: short, like map apps. Each step eases to
+ * its target instead of jumping, so uneven touchpad events feel like one smooth motion.
+ */
+const GESTURE_SMOOTH = 0.14;
+
 /** How fast the view slides aside for the panel (per second). */
 const OFFSET_RATE = 6;
 
@@ -69,6 +77,7 @@ export function CameraRig({ model, inset, intro }: { model: SceneModel; inset: I
     const c = controls.current!;
     c.mouseButtons.wheel = CameraControlsImpl.ACTION.NONE; // we handle the wheel ourselves
     c.dollyToCursor = true; // touch pinch zooms toward the fingers
+    c.draggingSmoothTime = GESTURE_SMOOTH; // touch drag and pinch ease the same way
     const classify = createWheelClassifier();
     const ray = new Raycaster();
     const ndc = new Vector2();
@@ -77,7 +86,7 @@ export function CameraRig({ model, inset, intro }: { model: SceneModel; inset: I
     const pos = new Vector3();
     const target = new Vector3();
     /** Zooms by `factor` toward the scene point under the screen point (clientX, clientY). */
-    const zoom = (factor: number, smooth: boolean, clientX: number, clientY: number) => {
+    const zoom = (factor: number, clientX: number, clientY: number) => {
       // Respect min/max distance by limiting the factor.
       const d = Math.min(c.maxDistance, Math.max(c.minDistance, c.distance * factor));
       const f = d / c.distance;
@@ -90,16 +99,19 @@ export function CameraRig({ model, inset, intro }: { model: SceneModel; inset: I
       plane.setFromNormalAndCoplanarPoint(camera.getWorldDirection(hit), target);
       const point = ray.ray.intersectPlane(plane, hit) ?? target;
       const pose = zoomToward(pos.toArray() as Vec3, target.toArray() as Vec3, point.toArray() as Vec3, f);
-      void c.setLookAt(...pose.position, ...pose.target, smooth);
+      // Targets build on the end of the current ease (getPosition/getTarget), so fast pinches add up.
+      c.smoothTime = GESTURE_SMOOTH;
+      void c.setLookAt(...pose.position, ...pose.target, true);
     };
     const onWheel = (e: WheelEvent) => {
       e.preventDefault(); // stop page zoom on ctrl + wheel and page scroll
       const intent = classify(e, e.timeStamp);
-      if (intent.kind === 'zoom') zoom(intent.factor, !e.ctrlKey, e.clientX, e.clientY);
+      if (intent.kind === 'zoom') zoom(intent.factor, e.clientX, e.clientY);
       else {
         // Same feel as dragging: one canvas height of swipe is one full turn.
         const turn = (2 * Math.PI) / canvas.clientHeight;
-        void c.rotate(intent.dx * turn, intent.dy * turn, false);
+        c.smoothTime = GESTURE_SMOOTH;
+        void c.rotate(intent.dx * turn, intent.dy * turn, true);
       }
       lastInteraction.current = clock.elapsedTime;
       markAway();
@@ -114,7 +126,7 @@ export function CameraRig({ model, inset, intro }: { model: SceneModel; inset: I
       e.preventDefault();
       const g = e as Event & { scale: number; clientX: number; clientY: number };
       const scale = g.scale;
-      zoom(lastScale / scale, false, g.clientX, g.clientY);
+      zoom(lastScale / scale, g.clientX, g.clientY);
       lastScale = scale;
       lastInteraction.current = clock.elapsedTime;
       markAway();
@@ -139,6 +151,7 @@ export function CameraRig({ model, inset, intro }: { model: SceneModel; inset: I
     // Fit the free area next to (or above) the panel, not the whole canvas.
     const frame = viewFrame(camera.fov, size.width, size.height, inset);
     const pose = flyToPose(sphere, pos, target, frame.fov, frame.aspect);
+    c.smoothTime = FLY_SMOOTH;
     void c.setLookAt(...pose.position, ...pose.target, true);
     lastInteraction.current = clock.elapsedTime;
   }, [selectedId, recenterTick, roots, model, camera, clock, size, inset]);
@@ -167,7 +180,7 @@ export function CameraRig({ model, inset, intro }: { model: SceneModel; inset: I
     <CameraControls
       ref={controls}
       makeDefault
-      smoothTime={0.6}
+      smoothTime={FLY_SMOOTH}
       onControlStart={() => (interacting.current = true)}
       // Only real movement (not a plain tap) counts as moving away from the selection.
       onControl={markAway}
