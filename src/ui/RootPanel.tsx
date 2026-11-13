@@ -35,6 +35,11 @@ export function RootPanel() {
         </h2>
         <div>
           <p className="root-tr">{root.tr}</p>
+          {root.en.length > 0 && (
+            <p className="root-en" aria-label="Meanings">
+              {root.en.join(', ')}
+            </p>
+          )}
           <p className="root-stats">
             {fmt(root.count)} words · {fmt(root.verseCount)} verses
           </p>
@@ -53,6 +58,7 @@ export function RootPanel() {
                 <span lang="ar" dir="rtl">
                   {l.ar}
                 </span>
+                {l.en[0] && <span className="chip-en">{l.en[0]}</span>}
                 <span className="count">{fmt(l.count)}</span>
               </li>
             ))}

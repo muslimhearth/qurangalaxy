@@ -9,3 +9,10 @@ Data files in this folder are derived from:
 
 3. Quranic Arabic Corpus morphology v0.4 (https://corpus.quran.com), GNU General Public License.
    Retrieved via https://github.com/mustafa0x/quran-morphology
+
+4. English meanings of roots and lemmas (the "en" fields in galaxy.json) are derived from
+   English Wiktionary (https://en.wiktionary.org), root appendix pages ("Appendix:Arabic roots/...")
+   and Arabic entry pages, by Wiktionary contributors.
+   License: Creative Commons Attribution-ShareAlike 4.0 (https://creativecommons.org/licenses/by-sa/4.0/).
+   The glosses were shortened automatically. Where Wiktionary has no entry, meanings are the most
+   distinctive words of the Saheeh International translation (item 2) in the root's verses.

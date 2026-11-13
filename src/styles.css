@@ -184,6 +184,12 @@ a { color: var(--accent); }
 /* Naskh tails (م, ن) hang below the font's own descent; bottom padding keeps them in the header. */
 .root-ar { margin: 0; padding: 0.15em 0 0.75em; font-size: 3rem; line-height: 1; color: var(--accent); font-weight: 400; }
 .root-tr { margin: 0; font-size: 1.05rem; }
+.root-head > div { min-width: 0; }
+/* English meanings of the root: one or two short lines, never wider than the header. */
+.root-en {
+  margin: 2px 0 0; font-size: 0.92rem; color: #e6e2f2;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
 .root-stats { margin: 2px 0 0; color: var(--muted); font-size: 0.85rem; }
 .close {
   margin-left: auto;
@@ -207,6 +213,10 @@ a { color: var(--accent); }
   border: 1px solid var(--border); background: rgba(255, 255, 255, 0.03);
 }
 .chip [lang='ar'] { font-size: 1.15rem; }
+.chip-en {
+  font-size: 0.8rem; color: #c9c7d6;
+  max-width: 12em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
 .chip-link:hover { border-color: var(--accent); background: var(--accent-soft); }
 
 /* Verses */

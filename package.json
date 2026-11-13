@@ -17,7 +17,8 @@
     "ship": "bash scripts/ship.sh",
     "models": "tsx scripts/models.ts",
     "eval:semantic": "tsx scripts/eval-semantic.ts",
-    "embeddings": "tsx scripts/build-embeddings.ts"
+    "embeddings": "tsx scripts/build-embeddings.ts",
+    "data:glosses": "tsx scripts/fetch-glosses.ts"
   },
   "dependencies": {
     "@fontsource/amiri-quran": "5.3.0",
