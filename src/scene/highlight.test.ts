@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fixtureGalaxy } from '../data/fixture';
 import { buildAdjacency } from './neighbors';
-import { focusOf, starColors, edgeColors } from './highlight';
+import { edgeBaseLevel, edgeColors, focusOf, starColors } from './highlight';
 
 const adj = buildAdjacency(fixtureGalaxy.roots.length, fixtureGalaxy.edges);
 const base = new Float32Array(fixtureGalaxy.roots.length * 3).fill(0.5);
@@ -32,6 +32,16 @@ describe('starColors', () => {
     const sel = starColors(base, adj, { id: 0, strong: true });
     const hov = starColors(base, adj, { id: 0, strong: false });
     expect(hov[3 * 3]!).toBeGreaterThan(sel[3 * 3]!);
+  });
+});
+
+describe('edgeBaseLevel', () => {
+  it('keeps few edges clearly visible', () => {
+    expect(edgeBaseLevel(6)).toBeCloseTo(0.14);
+  });
+  it('makes edges fainter when there are many, so the core does not wash out', () => {
+    expect(edgeBaseLevel(10000)).toBeLessThan(0.03);
+    expect(edgeBaseLevel(10000)).toBeGreaterThan(0.005);
   });
 });
 

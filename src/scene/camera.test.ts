@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fixtureGalaxy } from '../data/fixture';
 import { buildAdjacency } from './neighbors';
-import { fitDistance, focusSphere, flyToPose } from './camera';
+import { fitDistance, focusSphere, flyToPose, idleRotation } from './camera';
 
 const adj = buildAdjacency(fixtureGalaxy.roots.length, fixtureGalaxy.edges);
 
@@ -24,6 +24,20 @@ describe('focusSphere', () => {
   it('uses the minimum radius for a root with no neighbors', () => {
     const s = focusSphere(fixtureGalaxy.roots, [[], [], [], [], [], []], 0, 4);
     expect(s.radius).toBe(4);
+  });
+});
+
+describe('idleRotation', () => {
+  it('is zero while the user interacts', () => {
+    expect(idleRotation(true, 100, 0, 0.016)).toBe(0);
+  });
+  it('is zero shortly after the last interaction', () => {
+    expect(idleRotation(false, 1, 0, 0.016)).toBe(0);
+  });
+  it('turns slowly once idle', () => {
+    const a = idleRotation(false, 100, 0, 1);
+    expect(a).toBeGreaterThan(0);
+    expect(a).toBeLessThan(0.1);
   });
 });
 

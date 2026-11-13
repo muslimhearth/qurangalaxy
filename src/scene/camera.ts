@@ -60,3 +60,22 @@ export function flyToPose(
     position: [c[0] + d[0] * dist, c[1] + d[1] * dist, c[2] + d[2] * dist],
   };
 }
+
+/** Idle auto-rotate speed in radians per second (one turn in about 3.5 minutes). */
+export const IDLE_SPEED = 0.03;
+/** Seconds without interaction before auto-rotate starts. */
+export const IDLE_DELAY = 4;
+
+/**
+ * Azimuth angle to add this frame for the idle auto-rotate.
+ * Zero while the user interacts and for `IDLE_DELAY` seconds after.
+ */
+export function idleRotation(
+  interacting: boolean,
+  now: number,
+  lastInteraction: number,
+  dt: number,
+): number {
+  if (interacting || now - lastInteraction < IDLE_DELAY) return 0;
+  return IDLE_SPEED * dt;
+}

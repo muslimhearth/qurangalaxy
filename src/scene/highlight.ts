@@ -19,11 +19,19 @@ const STAR = {
   strong: { focus: 1.8, other: 0.12 },
   soft: { focus: 1.5, other: 0.4 },
 };
+// Edge factors: `linked` is absolute, `other` is relative to the base level.
 const EDGE = {
-  base: 0.14,
-  strong: { linked: 1.0, other: 0.02 },
-  soft: { linked: 0.6, other: 0.07 },
+  strong: { linked: 1.0, other: 0.15 },
+  soft: { linked: 0.6, other: 0.5 },
 };
+
+/**
+ * Default edge brightness. Lines blend additively, so thousands of them would
+ * pile up into a white core; fade them as the edge count grows (1/sqrt).
+ */
+export function edgeBaseLevel(edgeCount: number): number {
+  return Math.min(0.14, 1.5 / Math.sqrt(Math.max(1, edgeCount)));
+}
 
 /**
  * Star colors for a focus: the focus root brightens, its neighbors keep their color,
@@ -55,9 +63,10 @@ export function edgeColors(
 ): Float32Array {
   const out = new Float32Array(edges.length * 6);
   const f = focus ? (focus.strong ? EDGE.strong : EDGE.soft) : null;
+  const base = edgeBaseLevel(edges.length);
   edges.forEach((e, i) => {
     const linked = focus !== null && (e.source === focus.id || e.target === focus.id);
-    const k = f ? (linked ? f.linked : f.other) : EDGE.base;
+    const k = f ? (linked ? f.linked : f.other * base) : base;
     for (const [end, root] of [
       [0, e.source],
       [1, e.target],

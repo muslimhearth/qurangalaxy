@@ -11,7 +11,7 @@ export interface RadiusRange {
  */
 export function starRadiusRange(boundingRadius: number, starCount: number): RadiusRange {
   const spacing = boundingRadius / Math.cbrt(Math.max(1, starCount));
-  return { min: spacing * 0.06, max: spacing * 0.3 };
+  return { min: spacing * 0.06, max: spacing * 0.24 };
 }
 
 /** Star radius per count on a sqrt scale between `range.min` and `range.max`. */
