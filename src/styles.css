@@ -149,10 +149,11 @@ a { color: var(--accent); }
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 16px 18px 12px;
+  padding: 8px 18px 4px;
   border-bottom: 1px solid var(--border);
 }
-.root-ar { margin: 0; font-size: 3rem; line-height: 1.2; color: var(--accent); font-weight: 400; }
+/* Naskh tails (م, ن) hang below the font's own descent; bottom padding keeps them in the header. */
+.root-ar { margin: 0; padding: 0.15em 0 0.75em; font-size: 3rem; line-height: 1; color: var(--accent); font-weight: 400; }
 .root-tr { margin: 0; font-size: 1.05rem; }
 .root-stats { margin: 2px 0 0; color: var(--muted); font-size: 0.85rem; }
 .close {
