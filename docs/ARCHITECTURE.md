@@ -41,6 +41,7 @@ Raw downloads are cached in `data/raw/` (gitignored). Generated JSON in `public/
 | `scripts/lib/glosses/*`, `scripts/fetch-glosses.ts`, `src/search/english.ts` | G8 | English meanings from Wiktionary (cached) with a translation fallback; English search |
 | `src/semantic/*`, `src/search/blend.ts`, `scripts/models.ts`, `scripts/build-embeddings.ts`, `scripts/eval-semantic.ts` | G9 | Meaning search: worker, int8 cosine search, verse→root scores, blend |
 | `src/scene/intro/*` | G11 + main | Opening: stars start in a small core and spread to their places with an ease-in (inner first). Skips: deep link, reduced motion, `?nointro`, automated browsers (`?intro` forces it) |
+| `scripts/corpus-wbw.ts`, `scripts/corpus-glosses.ts`, `scripts/lib/corpus-wbw/*` | G10 | Polite, resumable scraper of the corpus word-by-word glosses; per-lemma/root aggregation; `loadCorpusGlosses` hook (not wired into the data build) |
 | `deploy/Caddyfile.site`, `scripts/ship.sh` | main | Deploy |
 
 ## Testing
