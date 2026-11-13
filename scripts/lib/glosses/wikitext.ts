@@ -34,7 +34,7 @@ const SKIP_LABEL =
   /colloquial|dialect|egypt|gulf|levant|iraq|morocc|tunis|algeri|hijaz|najd|sudan|neolog|slang|internet|vulgar|informal|computing|modern|chiefly in/i;
 const FORM_OF_PLAIN = new Set(['alt form', 'alt sp', 'alt spelling', 'alternative form', 'alternative spelling', 'alt-form']);
 // Templates whose first argument is shown as text.
-const TEXT_ARG1 = new Set(['non-gloss', 'n-g', 'ngd', 'non-gloss definition', 'taxlink', 'taxfmt', 'vern', 'smallcaps', 'lang']);
+const TEXT_ARG1 = new Set(['non-gloss', 'n-g', 'ng', 'ngd', 'non-gloss definition', 'taxlink', 'taxfmt', 'vern', 'smallcaps', 'lang']);
 const LINK = new Set(['l', 'm', 'l-lite', 'll', 'link', 'mention', 'm-lite']);
 
 /** Splits `inner` (template text without braces) on top-level "|", respecting nested {{ }} and [[ ]]. */

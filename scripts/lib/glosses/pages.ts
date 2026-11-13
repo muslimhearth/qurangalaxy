@@ -46,7 +46,7 @@ const POS = new Set([
 ]);
 // "Related to X", "relating to X", "having to do with X": the head phrase carries no meaning.
 const ROOT_PREFIX =
-  /^(?:(?:forms? |form )?(?:words? )?(?:(?:related|relating|pertaining|referring|relates)(?: to)?|having to do with|to do with|denoting|expressing|concerning|involving|meaning)\s+(?:the (?:concept|idea|notion)s? of\s+)?)/i;
+  /^(?:(?:forms? )?(?:terms? |words? )?(?:(?:related|relating|relate|pertaining|referring|relates)(?: to)?|having to do with|to do with|denoting|expressing|concerning|involving|meaning)\s+(?:the (?:concept|idea|notion|number)s?(?: of)?\s+)?)/i;
 
 /** Key that treats "day"/"days" and case variants as the same gloss. */
 export function glossKey(gloss: string): string {
@@ -71,8 +71,11 @@ export function parseRootAppendix(page: string): RootAppendix {
   const derived: RootAppendix['derived'] = [];
   for (const line of logicalLines(section)) {
     if (SENSE.test(line)) {
-      const text = plainText(line.replace(/^#\s*/, '')).replace(ROOT_PREFIX, '');
-      glosses.push(...splitPhrases(text.replace(/\s+(?:and|or)\s+/g, ', ')));
+      for (const part of plainText(line.replace(/^#\s*/, '')).split(/[,;/]|\s+(?:and|or)\s+/)) {
+        const phrase = part.trim().replace(/^derivatively\s+/i, '').replace(ROOT_PREFIX, '');
+        // Root meanings are headings: keep them shorter than lemma glosses.
+        glosses.push(...splitPhrases(phrase).filter((p) => p.split(' ').length <= 3));
+      }
     } else if (line.startsWith('*')) {
       for (const inner of topTemplates(line)) {
         const t = parseTemplate(inner);

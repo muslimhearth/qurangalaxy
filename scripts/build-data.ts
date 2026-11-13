@@ -1,11 +1,13 @@
 /**
  * Builds public/data/*.json from the raw Quran sources. Run with `pnpm data`.
- * Raw files are cached in data/raw/ and downloaded only when missing.
+ * Raw files are cached in data/raw/ and downloaded only when missing. Wiktionary pages for
+ * the English meanings are cached in data/raw/wiktionary/ the same way (see fetch-glosses.ts).
  */
 import { mkdirSync, statSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { buildDataset } from './lib/dataset';
 import { readCached } from './lib/raw-cache';
+import { ensureWiktionary } from './fetch-glosses';
 
 const RAW_DIR = 'data/raw';
 const OUT_DIR = 'public/data';
@@ -29,7 +31,8 @@ async function main(): Promise<void> {
   const [morph, arabic, english] = await Promise.all(
     [SOURCES.morphology, SOURCES.arabic, SOURCES.english].map((s) => readCached(RAW_DIR, s.name, s.url)),
   );
-  const data = buildDataset(morph!, arabic!, english!);
+  const wiki = await ensureWiktionary(morph!);
+  const data = buildDataset(morph!, arabic!, english!, wiki);
 
   console.log(`Alignment mismatches: ${data.mismatches.length}`);
   for (const m of data.mismatches) console.log(`  ${m.verse}: tanzil ${m.text} words, corpus ${m.corpus}`);
@@ -48,6 +51,7 @@ async function main(): Promise<void> {
   console.log(`Verses: ${Object.keys(data.verses).length}`);
   console.log(`Edges: ${data.galaxy.edges.length}`);
   console.log(`Clusters: ${data.galaxy.clusterCount}`);
+  console.log(`English meanings: ${JSON.stringify(data.glossStats)}`);
   for (const name of Object.keys(files)) {
     const kb = statSync(join(OUT_DIR, name)).size / 1024;
     console.log(`  ${name}: ${kb.toFixed(0)} KB`);

@@ -2,7 +2,7 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { emptyCache, fillCache, loadCache, saveCache } from './cache';
+import { emptyCache, fillCache, loadCache, saveCache, type WikiCache } from './cache';
 import type { WikiClient } from './wiki-client';
 
 function fakeClient(pages: Record<string, string>) {
@@ -32,7 +32,7 @@ describe('fillCache', () => {
 
   it('fetches nothing that is already cached, and extra titles on request', async () => {
     const { client, asked } = fakeClient({ منارة: 'm' });
-    const cache = { appendix: { نور: null }, pages: { نور: 'x', نار: null } };
+    const cache: WikiCache = { appendix: { نور: null }, pages: { نور: 'x', نار: null } };
     await fillCache(cache, roots, client, { extraTitles: () => ['منارة', 'نور'] });
     expect(asked).toEqual([['منارة']]);
     expect(cache.pages['منارة']).toBe('m');

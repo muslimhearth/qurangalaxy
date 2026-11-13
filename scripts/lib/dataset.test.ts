@@ -52,6 +52,19 @@ describe('buildDataset', () => {
     expect(data.errors).toEqual([]);
   });
 
+  it('fills English meanings from the Wiktionary cache it is given', () => {
+    const wiki = {
+      appendix: { أله: '==Arabic==\n===Root===\n# Related to [[god]].', سمو: null },
+      pages: { الله: '==Arabic==\n{{ar-rootbox|ء ل ه}}\n===Proper noun===\n{{ar-proper noun|اللّٰه}}\n# [[God]]' },
+    };
+    const withGlosses = buildDataset(MORPH, AR, EN, wiki);
+    expect(withGlosses.galaxy.roots[0]!.en).toEqual(['god']);
+    expect(withGlosses.galaxy.roots[0]!.lemmas[0]!.en).toEqual(['God']);
+    expect(withGlosses.glossStats.roots.appendix).toBe(1);
+    // Without a cache, meanings stay empty or come from the translation only.
+    expect(data.galaxy.roots[0]!.lemmas[0]!.en).toEqual([]);
+  });
+
   it('throws when Arabic and English verse keys differ', () => {
     expect(() => buildDataset(MORPH, AR, '1|1|x')).toThrow(/English/);
   });

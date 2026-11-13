@@ -33,6 +33,13 @@ describe('parseRootAppendix', () => {
     expect(parseRootAppendix(RAHM_ROOT).glosses).toEqual(['mercy']);
   });
 
+  it('handles the ng template, "forms terms related to" and "the number"', () => {
+    const page = (s: string) => parseRootAppendix(`==Arabic==\n===Root===\n# ${s}`).glosses;
+    expect(page('{{ng|related to the number [[three]]}}')).toEqual(['three']);
+    expect(page('{{n-g|Forms terms related to traveling.}}')).toEqual(['traveling']);
+    expect(page('bowing down; relate to bending')).toEqual(['bowing down', 'bending']);
+  });
+
   it('splits meanings joined by "and" or "or"', () => {
     expect(parseRootAppendix('==Arabic==\n===Root===\n# Related to [[sea]] and [[sailing]].').glosses).toEqual([
       'sea',

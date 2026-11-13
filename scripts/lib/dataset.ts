@@ -1,9 +1,11 @@
 import type { Galaxy, Occurrences, VerseKey, Verses } from '../../src/data/types';
-import { aggregateRoots } from './aggregate';
+import { aggregateRoots, type RootStats } from './aggregate';
 import { findMismatches, type Mismatch } from './align';
+import { emptyCache, type WikiCache } from './glosses/cache';
+import { buildGlosses, glossStats } from './glosses/glosses';
 import { cooccurrenceEdges } from './edges';
 import { layoutGalaxy } from './layout';
-import { parseMorphology } from './morphology';
+import { parseMorphology, type RootWord } from './morphology';
 import { parseTanzil, stripBasmala } from './tanzil';
 import { transliterateRoot } from './transliterate';
 import { validateData } from './validate';
@@ -23,10 +25,20 @@ export interface Dataset {
   errors: string[];
   /** Number of distinct words that carry a root. */
   rootWordCount: number;
+  /** Where the English meanings came from (roots, lemmas, Quran words). */
+  glossStats: ReturnType<typeof glossStats>;
 }
 
-/** Builds the whole dataset from the raw text of the three sources. Pure: no file or network access. */
-export function buildDataset(morphText: string, arabicText: string, englishText: string): Dataset {
+/**
+ * Builds the whole dataset from the raw text of the three sources and the cached Wiktionary
+ * pages (for English meanings). Pure: no file or network access.
+ */
+export function buildDataset(
+  morphText: string,
+  arabicText: string,
+  englishText: string,
+  wiki: WikiCache = emptyCache(),
+): Dataset {
   const morph = parseMorphology(morphText);
   const english = parseTanzil(englishText);
   const arabic = new Map<VerseKey, string>();
@@ -53,6 +65,13 @@ export function buildDataset(morphText: string, arabicText: string, englishText:
     list.map((o) => ({ v: o.v, w: o.w.map((n) => toTextPosition(o.v, n)) })),
   );
   const edges = cooccurrenceEdges(occurrences, EDGES_PER_ROOT);
+  const glosses = buildGlosses({
+    roots,
+    wiki,
+    rootTexts: occurrences.map((list) => list.map((o) => verses[o.v]!.en)),
+    lemmaTexts: lemmaVerseTexts(roots, morph.rootWords, verses),
+    allTexts: Object.values(verses).map((v) => v.en),
+  });
   const layout = layoutGalaxy({ counts: roots.map((r) => r.count), edges });
 
   const galaxy: Galaxy = {
@@ -61,10 +80,10 @@ export function buildDataset(morphText: string, arabicText: string, englishText:
       id: r.id,
       ar: r.ar,
       tr: transliterateRoot(r.ar),
-      en: [], // English meanings: filled by the glosses step
+      en: glosses.roots[r.id]!,
       count: r.count,
       verseCount: r.verseCount,
-      lemmas: r.lemmas,
+      lemmas: r.lemmas.map((l, li) => ({ ...l, en: glosses.lemmas[r.id]![li]! })),
       pos: layout.positions[r.id]!,
       cluster: layout.clusters[r.id]!,
     })),
@@ -79,5 +98,18 @@ export function buildDataset(morphText: string, arabicText: string, englishText:
     mismatches,
     errors: validateData(galaxy, occurrences, verses),
     rootWordCount: new Set(morph.rootWords.map((w) => `${w.verse}:${w.word}`)).size,
+    glossStats: glossStats(roots, glosses),
   };
+}
+
+/** English texts of the verses of each lemma: result[rootId][lemmaIndex], in Quran order. */
+function lemmaVerseTexts(roots: RootStats[], rootWords: RootWord[], verses: Verses): string[][][] {
+  const index = new Map<string, number[]>(); // "root|lemma" -> [rootId, lemmaIndex]
+  roots.forEach((r) => r.lemmas.forEach((l, li) => index.set(`${r.ar}|${l.ar}`, [r.id, li])));
+  const keys = roots.map((r) => r.lemmas.map(() => new Set<VerseKey>()));
+  for (const w of rootWords) {
+    const [ri, li] = index.get(`${w.root}|${w.lemma}`)!;
+    keys[ri!]![li!]!.add(w.verse);
+  }
+  return keys.map((ls) => ls.map((set) => [...set].map((v) => verses[v]!.en)));
 }
