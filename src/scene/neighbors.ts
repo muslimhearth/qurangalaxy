@@ -10,15 +10,20 @@ export interface Neighbor {
 /** Neighbor lists per root id, each sorted by edge weight, strongest first. */
 export type Adjacency = Neighbor[][];
 
-/** Builds neighbor lists for `rootCount` roots from undirected edges. */
-export function buildAdjacency(rootCount: number, edges: readonly Edge[]): Adjacency {
+/**
+ * Builds neighbor lists for `rootCount` roots from undirected edges. Equal weights go by
+ * word count (`counts`, highest first) when given, as in the panel's "Connected roots" list,
+ * so the ring and the list agree; else by edge order.
+ */
+export function buildAdjacency(rootCount: number, edges: readonly Edge[], counts?: readonly number[]): Adjacency {
   const adj: Adjacency = Array.from({ length: rootCount }, () => []);
   edges.forEach((e, i) => {
     adj[e.source]?.push({ id: e.target, edge: i, weight: e.weight });
     adj[e.target]?.push({ id: e.source, edge: i, weight: e.weight });
   });
-  // Stable sort keeps edge order for equal weights.
-  for (const list of adj) list.sort((a, b) => b.weight - a.weight);
+  const count = (id: number) => counts?.[id] ?? 0;
+  // Stable sort keeps edge order for full ties.
+  for (const list of adj) list.sort((a, b) => b.weight - a.weight || count(b.id) - count(a.id));
   return adj;
 }
 

@@ -36,7 +36,11 @@ export function buildSceneModel(galaxy: Galaxy): SceneModel {
     matrices: starMatrices(roots, radii),
     baseColors: starBaseColors(roots),
     edgePositions: edgePositions(roots, edges),
-    adjacency: buildAdjacency(roots.length, edges),
+    adjacency: buildAdjacency(
+      roots.length,
+      edges,
+      roots.map((r) => r.count),
+    ),
     top: topByCount(roots, TOP_LABELS),
   };
 }

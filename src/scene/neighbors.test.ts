@@ -28,3 +28,14 @@ describe('topNeighbors', () => {
     expect(topNeighbors(hubAdj, 99)).toEqual([]);
   });
 });
+
+describe('buildAdjacency tie-break', () => {
+  it('orders equal weights by word count, like the panel list', () => {
+    const edges = [
+      { source: 0, target: 1, weight: 2 },
+      { source: 0, target: 2, weight: 2 },
+    ];
+    expect(buildAdjacency(3, edges, [1, 5, 9])[0]!.map((n) => n.id)).toEqual([2, 1]);
+    expect(buildAdjacency(3, edges)[0]!.map((n) => n.id)).toEqual([1, 2]);
+  });
+});
