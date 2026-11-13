@@ -14,7 +14,7 @@ async function labelCenters(page: Page): Promise<Map<string, { x: number; y: num
 }
 
 /** Sends `n` wheel events to the canvas center, as a touchpad would. */
-async function wheel(page: Page, n: number, init: WheelEventInit) {
+async function wheel(page: Page, n: number, init: { deltaX?: number; deltaY?: number; ctrlKey?: boolean }) {
   await page.evaluate(
     ({ n, init }) => {
       const canvas = document.querySelector('canvas')!;
