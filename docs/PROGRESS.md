@@ -12,8 +12,8 @@
 | G7 Latin spelling search ("noor" → نور) | merged | Done: 60+ terms, chat digits (3ilm), ~3 ms per query |
 | G8 English meanings (Wiktionary + translation fallback) | merged | Done: 90% of Quran words via Wiktionary, 4.5% fallback |
 | G9 Semantic search + exact↔meaning slider | merged | Done: MiniLM in a worker, hit@5 94% on 35 phrases |
-| G10 Corpus word-by-word glosses (local evaluation only) | agent worktree | In progress |
-| G11 Hint of «القرآن الكريم» in the galaxy intro | merged | Done: faint calligraphy dust + partial star pull, skips on deep link / reduced motion / input |
+| G10 Corpus word-by-word glosses (local evaluation only) | branch, not merged | Done: 77,429/77,429 words; kept off main until the corpus team allows use |
+| G11 Galaxy intro | merged, then reworked | The calligraphy was replaced (user choice) by stars spreading from the core with an ease-in |
 | Deploy | main | Live at https://quranic.space (Caddy, `pnpm ship`) |
 
 Per-goal detail: `docs/progress/`.
@@ -39,6 +39,9 @@ Per-goal detail: `docs/progress/`.
 - Main fixes after merging G7 + G8: English meanings outrank accidental Latin spellings ("sea" → بحر, not ساءَ); an exact lemma meaning beats a root phrase that only contains the word; earlier meanings beat later ones.
 - Main UX fixes from user testing: touchpad pinch/swipe, rotation from start (3 s pause after interaction), camera pivots on the selected root and zooms toward the pointer, phone sheet minimizes.
 - Deploy: static files in `~tux/qurangalaxy/web` on the server, Caddy site block in `deploy/Caddyfile.site` (strict CSP; everything self-hosted). `pnpm ship` fetches the model, builds and rsyncs.
+
+- Later UX from user testing: search mode in a chip (Exact / Hybrid / Semantic slider, no help text), phone sheet with 3 sizes, "Back to" button, map-like gesture easing (0.14 s), About panel refreshed.
+- G10 stays on its own branch: its test fixtures and report quote scraped corpus glosses, which must not reach the public repo before permission.
 
 ## Known issues
 - R3F still bundles three's `WebGLRenderer` (unused) and logs two library deprecation warnings (`THREE.Clock`, `PCFSoftShadowMap`). These come from the library and go away when R3F updates.

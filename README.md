@@ -30,15 +30,16 @@ pnpm dev       # open http://localhost:5173
 | `pnpm build` | Typecheck and production build |
 
 ## Features
-- Opening: the galaxy forms with a faint calligraphy of «القرآن الكريم» inside it (skipped for deep links and reduced motion; tap to skip).
+- Opening: the stars light up in the galaxy's core and spread out, slowly at first, then faster (skipped for deep links and reduced motion; tap to skip).
 - 1,651 roots as stars in 10 theme clusters; star size = word count; links = shared verses.
 - Search in Arabic (diacritics ignored), root letters (`rhm`), Latin spelling (`noor`, `rahmaan`, `salah`, chat digits `3ilm`) or English (`light`, `sea`, `mother`).
-- Search by meaning: move the *Exact ↔ Meaning* slider and type a phrase ("patience in hardship"). The first use downloads a small English model (23 MB) from this site; it runs in your browser.
+- Exact, hybrid or semantic search: the chip in the search field opens an *Exact ↔ Semantic* slider. Semantic search finds roots and verses for a phrase ("patience in hardship"); the first use downloads a small English model (23 MB) from this site, and it runs in your browser.
 - English meanings for roots and word forms in the root panel.
 - Root panel: lemmas, the strongest connected roots, every verse with the root's words highlighted.
 - Labels never overlap; the camera frames the selection beside the panel (desktop) or above the sheet (phones).
-- Deep links: `#/root/رحم`. Works on desktop and phones (bottom sheet that minimizes to its header).
-- Touchpad: pinch zooms toward the pointer, two-finger swipe orbits. The galaxy turns slowly when idle.
+- Deep links: `#/root/رحم`. Works on desktop and phones (bottom sheet with three sizes; tap a minimized sheet to open it).
+- After you move away from a selected root, a *Back to* button flies the camera back.
+- Touchpad: pinch zooms toward the pointer with map-like easing, two-finger swipe orbits. The galaxy turns slowly when idle.
 - WebGPU rendering with automatic WebGL 2 fallback.
 
 ## Stack
