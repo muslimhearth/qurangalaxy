@@ -37,6 +37,7 @@ Raw downloads are cached in `data/raw/` (gitignored). Generated JSON in `public/
 | `src/ui/*`, `src/data/load.ts`, `src/data/useLoadGalaxy.ts` | G4 ui | Data loading, search box, panels, URL state |
 | `src/search/types.ts`, `exact.ts`, `matchers.ts` | main | Search contract: a `Matcher` returns scored `Match`es (0..1); `exactMatches` keeps the best per root |
 | `src/search/basic.ts` | main | Arabic letters and lemmas, Latin root letters |
+| `src/search/spelling.ts` | G7 | Latin spelling ("noor", "3ilm") → cheapest Arabic spelling of each lemma, vowels checked against diacritics |
 
 ## Testing
 | Layer | Tool | What it covers |

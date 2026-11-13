@@ -9,7 +9,7 @@
 | G4 UI and data loading | merged | Done: search, root panel, deep links |
 | G5 Integration, E2E, polish | main | Done: 186 unit + 28 browser tests (desktop, Android, iPhone) |
 | G6 Polish | main | Done: label declutter, panel-aware camera, hub links, fonts |
-| G7 Latin spelling search ("noor" → نور) | agent worktree | In progress |
+| G7 Latin spelling search ("noor" → نور) | merged | Done: 60+ terms, chat digits (3ilm), ~3 ms per query |
 | G8 English meanings (Wiktionary + translation fallback) | agent worktree | In progress |
 | G9 Semantic search + exact↔meaning slider | agent worktree | In progress |
 
