@@ -1,7 +1,7 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
 import { PNG } from 'pngjs';
 
-// The Mushaf view is not wired into App yet; these tests use its dev harness page.
+// Most tests use the Mushaf dev harness page (no 3D scene, faster); the last ones use the real app.
 const HARNESS = '/src/mushaf/dev/index.html';
 const RHM = '#/root/' + encodeURIComponent('رحم');
 
@@ -85,4 +85,36 @@ test('tapping a lit dot scrolls the root panel to that verse', async ({ page, is
   await expect(verse.locator('.verse-key')).toHaveText(key);
   await expect(verse).toBeInViewport();
   await page.screenshot({ path: shot(info, 'tap') });
+});
+
+test('the app switches between Galaxy and Mushaf and keeps the root in the link', async ({ page, isMobile }, info) => {
+  await page.goto('/#/mushaf/root/' + encodeURIComponent('رحم'));
+  await expect(page.getByLabel('Root details', { exact: true }).locator('.root-ar')).toHaveText('رحم');
+  await expect.poll(async () => (await amberPoints(page)).length, { timeout: 15_000 }).toBeGreaterThan(200);
+  await page.screenshot({ path: shot(info, 'app') });
+
+  const galaxy = page.getByRole('button', { name: 'Galaxy' });
+  if (isMobile) {
+    // Phones: one icon button beside the search field, not a row of its own.
+    await expect(page.getByRole('button', { name: 'Mushaf' })).toBeHidden();
+    const s = (await page.locator('.search').boundingBox())!;
+    const t = (await galaxy.boundingBox())!;
+    expect(t.x).toBeGreaterThanOrEqual(s.x + s.width);
+    expect(Math.abs(t.y + t.height / 2 - (s.y + s.height / 2))).toBeLessThan(8);
+    await galaxy.tap();
+  } else {
+    await galaxy.click();
+  }
+  await expect(page.locator('canvas:not(.mushaf-canvas)')).toBeVisible({ timeout: 15_000 });
+  expect(decodeURIComponent(new URL(page.url()).hash)).toBe('#/root/رحم');
+});
+
+test('the tooltip of a top-row dot stays below the search field', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'hover');
+  await page.goto('/#/mushaf/root/' + encodeURIComponent('رحم'));
+  await expect(page.locator('.mushaf-canvas')).toBeVisible();
+  await page.mouse.move((await dotPoint(page, 5, 0)).x, (await dotPoint(page, 5, 0)).y);
+  const tip = (await page.getByRole('tooltip').boundingBox())!;
+  const search = (await page.locator('.search').boundingBox())!;
+  expect(tip.y).toBeGreaterThan(search.y + search.height);
 });
