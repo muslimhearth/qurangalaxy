@@ -1,4 +1,4 @@
-import { CameraControls } from '@react-three/drei';
+import { CameraControls, CameraControlsImpl } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useRef } from 'react';
 import type { PerspectiveCamera } from 'three';
@@ -7,6 +7,7 @@ import { useGalaxyStore } from '../state/store';
 import { damp, fitDistance, flyToPose, focusSphere, idleRotation } from './camera';
 import { viewFrame, type Inset } from './inset';
 import type { SceneModel } from './model';
+import { createWheelClassifier } from './wheel';
 
 /** How fast the view slides aside for the panel (per second). */
 const OFFSET_RATE = 6;
@@ -39,6 +40,50 @@ export function CameraRig({ model, inset }: { model: SceneModel; inset: Inset })
     c.minDistance = model.radiusRange.max * 2;
     c.maxDistance = d * 3;
   }, [model, camera]);
+
+  // Touchpad-friendly wheel: pinch zooms, two-finger swipe orbits, a mouse wheel zooms.
+  const canvas = useThree((s) => s.gl.domElement);
+  useEffect(() => {
+    const c = controls.current!;
+    c.mouseButtons.wheel = CameraControlsImpl.ACTION.NONE; // we handle the wheel ourselves
+    const classify = createWheelClassifier();
+    const zoom = (factor: number, smooth: boolean) => {
+      const d = Math.min(c.maxDistance, Math.max(c.minDistance, c.distance * factor));
+      void c.dollyTo(d, smooth);
+    };
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault(); // stop page zoom on ctrl + wheel and page scroll
+      const intent = classify(e, e.timeStamp);
+      if (intent.kind === 'zoom') zoom(intent.factor, !e.ctrlKey);
+      else {
+        // Same feel as dragging: one canvas height of swipe is one full turn.
+        const turn = (2 * Math.PI) / canvas.clientHeight;
+        void c.rotate(intent.dx * turn, intent.dy * turn, false);
+      }
+      lastInteraction.current = clock.elapsedTime;
+    };
+    // Safari reports trackpad pinches as gesture events with a running scale.
+    let lastScale = 1;
+    const onGestureStart = (e: Event) => {
+      e.preventDefault();
+      lastScale = 1;
+    };
+    const onGestureChange = (e: Event) => {
+      e.preventDefault();
+      const scale = (e as Event & { scale: number }).scale;
+      zoom(lastScale / scale, false);
+      lastScale = scale;
+      lastInteraction.current = clock.elapsedTime;
+    };
+    canvas.addEventListener('wheel', onWheel, { passive: false });
+    canvas.addEventListener('gesturestart', onGestureStart);
+    canvas.addEventListener('gesturechange', onGestureChange);
+    return () => {
+      canvas.removeEventListener('wheel', onWheel);
+      canvas.removeEventListener('gesturestart', onGestureStart);
+      canvas.removeEventListener('gesturechange', onGestureChange);
+    };
+  }, [canvas, clock]);
 
   // Fly to the selected root and its neighbors.
   useEffect(() => {
