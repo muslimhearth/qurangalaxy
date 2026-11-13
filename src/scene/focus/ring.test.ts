@@ -53,8 +53,8 @@ describe('ringLayout', () => {
     // [vertical ring radius in px, stretch] as ringView makes them: desktop 1280 x 720, Pixel 7 and
     // iPhone 15 above the sheet, a narrow window, and two in-between frames.
     for (const [px, aspect] of [
-      [309, 1.29],
-      [110, 1.68],
+      [289, 1.38],
+      [108, 1.72],
       [75, 2.2],
       [150, 1],
       [100, 1.57],
@@ -128,16 +128,22 @@ describe('ringView', () => {
   it('fills a phone free area: room for the top labels, oval up to 2.2', () => {
     // iPhone 15 above the sheet: 393 x 192 px.
     const v = ringView(1, fov, 393, 192);
-    expect(px(v, 192)).toBeCloseTo(75);
+    expect(px(v, 192)).toBeCloseTo(75.1, 1);
     expect(v.aspect).toBe(2.2);
-    // The camera looks a bit above the root, so the root sits 11 px below the middle.
-    expect(v.lift * px(v, 192)).toBeCloseTo(11);
+    // The camera looks a bit above the root, so the root sits about 11 px below the middle.
+    expect(v.lift * px(v, 192)).toBeCloseTo(10.6, 1);
   });
 
-  it('uses a wide desktop free area with a mild oval', () => {
+  it('uses a wide desktop free area with a mild oval, and room for the labels of big stars', () => {
     const v = ringView(1, fov, 842, 660);
-    expect(px(v, 660)).toBeCloseTo(309);
-    expect(v.aspect).toBeCloseTo((421 - 21) / 309);
+    const ry = px(v, 660);
+    expect(ry).toBeCloseTo(289.5, 1);
+    expect(v.aspect).toBeCloseTo((421 - 21) / ry);
+    // The top label (20 px, 1.2 star radii above its star; stars up to ry / 12) stays inside the area.
+    const starPx = ry / 12;
+    const lift = v.lift * ry;
+    expect(ry + 1.2 * starPx + 20 - lift).toBeLessThanOrEqual(330);
+    expect(ry + starPx + lift).toBeLessThanOrEqual(330);
   });
 
   it('keeps a circle that fits the width in a tall free area', () => {

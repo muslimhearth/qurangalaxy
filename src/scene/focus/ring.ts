@@ -1,4 +1,5 @@
 import type { Vec3 } from '../../data/types';
+import { LABEL_LIFT } from '../labels';
 import { TOP_LINKS } from '../neighbors';
 
 /**
@@ -15,11 +16,9 @@ const MAX_ASPECT = 2.2;
 /** Ring vertical radius in largest-star radii: big stars stay small next to their labels. */
 const RING_SIZE = 12;
 
-/**
- * Screen room in px around the ring: `above` for the labels over the top stars, `below` for the
- * bottom stars, `side` for half a label plus a margin.
- */
-const ROOM = { above: 32, below: 10, side: 21 };
+/** Label size on screen in px (see Labels.tsx), and the margin kept to the free area's edges. */
+const LABEL = { height: 20, halfWidth: 15 };
+const MARGIN = 4;
 
 /**
  * 2D ring positions (x right, y up; 2 floats per star) for the `count` strongest links in rank
@@ -101,15 +100,23 @@ export interface RingView {
  * tall as the area allows and stretched sideways to use a wide area.
  */
 export function ringView(radius: number, fovDeg: number, freeW: number, freeH: number): RingView {
-  // On-screen vertical ring radius in px; never below 20 px, even in a tiny area.
-  const ry = Math.max(20, Math.min((freeH - ROOM.above - ROOM.below) / 2, freeW / 2 - ROOM.side));
-  const aspect = Math.min(MAX_ASPECT, Math.max(1, (freeW / 2 - ROOM.side) / ry));
+  // On screen the largest star has radius ry / RING_SIZE. Above the ring: a label, LABEL_LIFT
+  // star radii and a margin. Below: a star radius and a margin. So the height needs
+  // 2 ry + (LABEL_LIFT + 1) ry / RING_SIZE + LABEL.height + 2 MARGIN.
+  const side = LABEL.halfWidth + 6;
+  const fitH = (freeH - LABEL.height - 2 * MARGIN) / (2 + (LABEL_LIFT + 1) / RING_SIZE);
+  const ry = Math.max(20, Math.min(fitH, freeW / 2 - side)); // never below 20 px, even in a tiny area
+  const aspect = Math.min(MAX_ASPECT, Math.max(1, (freeW / 2 - side) / ry));
   const pxPerUnit = ry / radius;
+  const star = ry / RING_SIZE;
+  const above = LABEL.height + LABEL_LIFT * star + MARGIN;
+  const below = star + MARGIN;
   const tanHalf = Math.tan((fovDeg * Math.PI) / 360);
   return {
     aspect,
     // At this distance the plane through the target shows freeH / 2 px per tanHalf · distance units.
     distance: freeH / 2 / (tanHalf * pxPerUnit),
-    lift: (ROOM.above - ROOM.below) / 2 / pxPerUnit,
+    // Center the ring plus its label room: look (above - below) / 2 px above the root.
+    lift: (above - below) / 2 / pxPerUnit,
   };
 }

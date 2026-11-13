@@ -56,7 +56,7 @@ test('the 20 strongest links form a readable ring beside the panel', async ({ pa
           const free = sideways ? l.x + l.w <= panel.x : l.y + l.h <= panel.y;
           return !free || l.y < bar.y + bar.height || l.x < 0;
         });
-        return bad.length ? `not in the free area: ${bad.join(' ')}` : 'ok';
+        return bad.length ? `not in the free area: ${bad.map((t) => JSON.stringify(all.get(t))).join(' ')}` : 'ok';
       },
       { timeout: 45_000 },
     )
