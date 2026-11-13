@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import type { Galaxy } from '../data/types';
+import type { Layout } from '../mushaf/LayoutToggle';
 
 /** App-wide state shared by the 3D scene and the 2D UI. */
 export interface GalaxyState {
@@ -17,6 +18,8 @@ export interface GalaxyState {
   awayFromSelection: boolean;
   /** Bumped to ask the camera to fly back to the selected root. */
   recenterTick: number;
+  /** Main view: the 3D galaxy or the 2D Mushaf mosaic. */
+  layout: Layout;
   setGalaxy: (galaxy: Galaxy) => void;
   select: (id: number | null) => void;
   hover: (id: number | null) => void;
@@ -24,6 +27,7 @@ export interface GalaxyState {
   setSemanticWeight: (weight: number) => void;
   setAwayFromSelection: (away: boolean) => void;
   recenter: () => void;
+  setLayout: (layout: Layout) => void;
 }
 
 export const useGalaxyStore = create<GalaxyState>()((set) => ({
@@ -34,6 +38,7 @@ export const useGalaxyStore = create<GalaxyState>()((set) => ({
   semanticWeight: 0,
   awayFromSelection: false,
   recenterTick: 0,
+  layout: 'galaxy',
   setGalaxy: (galaxy) => set({ galaxy }),
   // A new selection is framed by the camera, so it is not "away".
   select: (selectedId) => set({ selectedId, awayFromSelection: false }),
@@ -42,4 +47,5 @@ export const useGalaxyStore = create<GalaxyState>()((set) => ({
   setSemanticWeight: (w) => set({ semanticWeight: Math.min(1, Math.max(0, w)) }),
   setAwayFromSelection: (awayFromSelection) => set({ awayFromSelection }),
   recenter: () => set((s) => ({ recenterTick: s.recenterTick + 1, awayFromSelection: false })),
+  setLayout: (layout) => set({ layout }),
 }));
