@@ -214,6 +214,8 @@ a { color: var(--accent); }
 /* Phones: bottom sheet instead of side panel; about collapses under the search. */
 @media (max-width: 720px) {
   .about { top: auto; bottom: var(--gap); left: var(--gap); right: var(--gap); max-width: none; }
+  /* The glassy sheet is see-through, so hide the title bar under it while a root is open. */
+  .overlay:has(.root-panel) .about { display: none; }
   .root-panel {
     top: auto;
     left: 0;
