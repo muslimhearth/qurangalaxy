@@ -15,9 +15,18 @@ pnpm dev       # open http://localhost:5173
 | Command | Job |
 |---|---|
 | `pnpm dev` | Dev server |
-| `pnpm test` | Unit tests |
-| `pnpm test:e2e` | Browser tests |
+| `pnpm test` | Unit tests (164) |
+| `pnpm test:e2e` | Browser tests: desktop Chromium and Android (Pixel 7) |
+| `pnpm test:e2e:iphone` | Browser tests on iPhone 15 (WebKit), in the official Playwright container (needs podman) |
+| `pnpm data` | Rebuild `public/data/` from the sources |
 | `pnpm build` | Typecheck and production build |
+
+## Features
+- 1,651 roots as stars in 10 theme clusters; star size = word count; links = shared verses.
+- Search in Arabic (diacritics ignored) or Latin letters: `رحم`, `rhm`, `رحمن`.
+- Root panel: lemmas, connected roots, every verse with the root's words highlighted.
+- Deep links: `#/root/رحم`. Works on desktop and phones (bottom sheet).
+- WebGPU rendering with automatic WebGL 2 fallback.
 
 ## Stack
 Vite, React 19, TypeScript, react-three-fiber, three.js (WebGPU with WebGL fallback), Zustand, Vitest, Playwright.

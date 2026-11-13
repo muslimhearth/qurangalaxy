@@ -36,8 +36,20 @@ Raw downloads are cached in `data/raw/` (gitignored). Generated JSON in `public/
 | `src/scene/*` | G3 scene | 3D rendering and picking |
 | `src/ui/*`, `src/data/load.ts`, `src/data/useLoadGalaxy.ts` | G4 ui | Data loading, search, panels, URL state |
 
+## Testing
+| Layer | Tool | What it covers |
+|---|---|---|
+| Unit | Vitest + Testing Library (jsdom) | Parsers, aggregation, layout, scene helpers, UI components |
+| End to end | Playwright | Real data in real browsers: the scene draws (lit-pixel check), search, highlights, deep links, layout per screen size, touch |
+
+Playwright projects: `desktop` (Chromium 1280×720), `android` (Pixel 7), `iphone` (iPhone 15, WebKit).
+WebKit's Linux build needs Ubuntu libraries, so `pnpm test:e2e:iphone` runs it in `mcr.microsoft.com/playwright:v1.65.0-noble`.
+Headless browsers have no GPU: Chromium and WebKit run the WebGL 2 fallback in software, so the first frame can take seconds; tests poll instead of using fixed waits.
+
 ## Key decisions
 - **Precomputed layout.** The force layout runs at build time, so the app starts instantly and looks the same for every user.
 - **Lazy detail data.** Only `galaxy.json` loads at startup. Verses and occurrences load on first selection.
 - **WebGPU first.** three.js `WebGPURenderer` falls back to WebGL 2 automatically.
 - **One store.** Scene and UI talk only through the Zustand store.
+- **Lazy 3D chunk.** `App` loads `GalaxyScene` with `React.lazy`: the UI (74 kB gzip) paints first, three.js (461 kB gzip) follows.
+- **Tanzil word positions.** `Occurrence.w` indexes `Verse.ar` split on spaces; `scripts/lib/wordmap.ts` maps the 4 verses where the corpus joins two Tanzil words.
