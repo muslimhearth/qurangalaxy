@@ -31,6 +31,7 @@ describe('normalizeGloss', () => {
     expect(n('and the earth.')).toBe('earth');
     expect(n('His Knowledge')).toBe('knowledge');
     expect(n('so their hearts')).toBe('hearts');
+    expect(n('O my Lord!')).toBe('lord');
   });
 
   it('drops a leading preposition only when the word has a preposition prefix', () => {

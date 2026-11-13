@@ -1,7 +1,7 @@
 import type { MorphWord } from './morph-index';
 
-/** Leading words that belong to prefixes or suffixes, not to the lemma. Always dropped. */
-const LEADING = new Set(['and', 'so', 'then', 'but', 'or', 'the', 'a', 'an', 'his', 'her', 'its', 'their', 'your', 'our', 'my']);
+/** Leading words that belong to prefixes, suffixes or the vocative "O", not to the lemma. Always dropped. */
+const LEADING = new Set(['o', 'and', 'so', 'then', 'but', 'or', 'the', 'a', 'an', 'his', 'her', 'its', 'their', 'your', 'our', 'my']);
 /** Leading prepositions. Dropped only when the word has a prefixed preposition (bi, li, ka). */
 const PREPOSITIONS = new Set(['by', 'with', 'for', 'to', 'in', 'of', 'from', 'on', 'like', 'as', 'at', 'upon', 'about']);
 /** Leading subject pronouns. Dropped only for verbs ("they believe" → "believe"). */
