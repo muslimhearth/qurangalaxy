@@ -42,7 +42,7 @@ interface Unit {
   marked: boolean;
 }
 
-/** Splits a word into letters with their marks, dropping alefs (spelled in different ways). */
+/** Splits a word into letters with their marks: hamza on any seat is one letter; plain alefs (spelled in different ways) are dropped. */
 function units(word: string): Unit[] {
   const out: Unit[] = [];
   for (const ch of word.replace(SUPERSCRIPT_ALEF, 'ا')) {
@@ -53,7 +53,7 @@ function units(word: string): Unit[] {
       if (ch === SHADDA) u.shadda = true;
       else u.vowel = ch;
     } else if (!MARKS.test(ch)) {
-      out.push({ base: normalizeArabic(ch).replace(/ة/g, 'ت'), vowel: '', shadda: false, marked: false });
+      out.push({ base: /[أإآءؤئ]/.test(ch) ? 'ء' : normalizeArabic(ch).replace(/ة/g, 'ت'), vowel: '', shadda: false, marked: false });
     }
     MARKS.lastIndex = 0;
   }

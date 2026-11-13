@@ -5,14 +5,20 @@
 import type { WikiCache } from './cache';
 import { distinctiveWords, documentFrequencies } from './fallback';
 import { titleGuesses } from './fetch-plan';
-import { lemmaGlosses, matchDerived, matchEntry, type EntryLookup } from './match';
+import { lemmaGlosses, matchDerived, rankEntries, type EntryLookup } from './match';
 import { dedupeGlosses, glossKey, parseLemmaPage, parseRootAppendix, type RootAppendix, type WikiEntry } from './pages';
+import { glossSupport, verseStems } from './support';
 
 /** Most meanings kept per root and per lemma. */
 export const MAX_ROOT = 4;
 export const MAX_LEMMA = 3;
 /** Lemma fallback needs at least this many verses to be trusted. */
-const MIN_LEMMA_VERSES = 3;
+const MIN_LEMMA_VERSES = 5;
+/** Share of a lemma's (root's) verses that must contain a fallback word. */
+const LEMMA_SHARE = 0.6;
+const ROOT_SHARE = 0.2;
+/** Share of a root's verses (at least one) whose translation must support an appendix meaning. */
+const SUPPORT_SHARE = 0.01;
 
 /** A root and its lemmas (sorted by count, highest first). */
 export interface GlossRoot {
@@ -59,25 +65,36 @@ function entryLookup(wiki: WikiCache): EntryLookup {
   };
 }
 
-/** Form-of targets of matched lemmas whose pages are not cached yet (fetched in a second round). */
+/** Form-of targets of candidate lemma entries whose pages are not cached yet (fetched in a second round). */
 export function formOfTargets(roots: GlossRoot[], wiki: WikiCache): string[] {
   const lookup = entryLookup(wiki);
   const out = new Set<string>();
   for (const r of roots) {
     for (const l of r.lemmas) {
-      const e = matchEntry(l.ar, r.ar, lookup);
-      if (!e || e.glosses.length > 0) continue;
-      for (const f of e.formOf) for (const t of titleGuesses(f.target)) if (!(t in wiki.pages)) out.add(t);
+      for (const { entry } of rankEntries(l.ar, r.ar, lookup)) {
+        for (const f of entry.formOf) for (const t of titleGuesses(f.target)) if (!(t in wiki.pages)) out.add(t);
+      }
     }
   }
   return [...out];
 }
 
-/** Root meanings from the appendix, those shared with its lemmas first. */
-function appendixMeanings(app: RootAppendix, lemmaGlosses: string[][]): string[] {
-  const shared = new Set(lemmaGlosses.flat().map((g) => glossKey(g.replace(/^to /, ''))));
-  const isShared = (g: string) => shared.has(glossKey(g.replace(/^to /, '')));
-  return [...app.glosses.filter(isShared), ...app.glosses.filter((g) => !isShared(g))];
+/**
+ * Root meanings from the appendix. Appendix pages often list etymological or rare senses
+ * ("coryza" for أرض), so a meaning stays only when a lemma shares it or the root's verses
+ * use it. Meanings the verses use most come first (صبر: patience before binding); when two or
+ * more are used, unused ones are dropped (بحر: no "noble or great man").
+ */
+function appendixMeanings(app: RootAppendix, lemmaGlosses: string[][], verses: Set<string>[]): string[] {
+  if (app.glosses.length === 0) return [];
+  const key = (g: string) => glossKey(g.replace(/^to /, ''));
+  const shared = new Set(lemmaGlosses.flat().map(key));
+  const min = Math.max(1, Math.ceil(SUPPORT_SHARE * verses.length));
+  const scored = app.glosses.map((g) => ({ g, support: glossSupport(g, verses) }));
+  const kept = scored.filter((x) => shared.has(key(x.g)) || x.support >= min);
+  const used = kept.filter((x) => x.support >= min);
+  // Stable sort keeps the appendix order among equally used meanings.
+  return (used.length >= 2 ? used : kept).sort((a, b) => b.support - a.support).map((x) => x.g);
 }
 
 /** First glosses of the top lemmas, then their second glosses, and so on. */
@@ -101,12 +118,12 @@ export function buildGlosses(input: GlossInput): GlossResult {
     const lemmas: string[][] = [];
     const sources: LemmaSource[] = [];
     root.lemmas.forEach((l, li) => {
-      let g = lemmaGlosses(l.ar, root.ar, lookup);
+      const texts = input.lemmaTexts[ri]?.[li] ?? [];
+      let g = lemmaGlosses(l.ar, root.ar, lookup, texts.map(verseStems));
       if (g.length === 0) g = matchDerived(l.ar, app.derived);
       let source: LemmaSource = g.length > 0 ? 'wiktionary' : 'none';
-      const texts = input.lemmaTexts[ri]?.[li] ?? [];
       if (g.length === 0 && texts.length >= MIN_LEMMA_VERSES) {
-        g = distinctiveWords(texts, df, total);
+        g = distinctiveWords(texts, df, total, LEMMA_SHARE);
         if (g.length > 0) source = 'fallback';
       }
       lemmas.push(dedupeGlosses(g).slice(0, MAX_LEMMA));
@@ -114,14 +131,16 @@ export function buildGlosses(input: GlossInput): GlossResult {
     });
 
     const wikiLemmas = lemmas.filter((_, i) => sources[i] === 'wiktionary');
-    let meanings = appendixMeanings(app, wikiLemmas);
+    let meanings = appendixMeanings(app, wikiLemmas, (input.rootTexts[ri] ?? []).map(verseStems));
     let source: RootSource = 'appendix';
+    // The most frequent lemma's first meaning follows the root's own meanings (نور: light, fire).
+    if (meanings.length > 0 && wikiLemmas[0]?.[0]) meanings.push(wikiLemmas[0][0]);
     if (meanings.length === 0) {
       meanings = lemmaMeanings(wikiLemmas);
       source = 'lemmas';
     }
     if (meanings.length === 0) {
-      meanings = distinctiveWords(input.rootTexts[ri] ?? [], df, total);
+      meanings = distinctiveWords(input.rootTexts[ri] ?? [], df, total, ROOT_SHARE);
       source = meanings.length > 0 ? 'fallback' : 'none';
     }
     result.roots.push(dedupeGlosses(meanings).slice(0, MAX_ROOT));

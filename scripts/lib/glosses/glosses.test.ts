@@ -10,7 +10,7 @@ const wiki: WikiCache = {
     نور: '==Arabic==\n===Root===\n# Related to [[light]].\n====Derived terms====\n* {{l|ar|نَار|t=fire}}',
     يوم: null,
     بحر: null,
-    زبر: '==Arabic==\n===Root===\n# Related to [[stupidity]], [[iron]].',
+    زبر: '==Arabic==\n===Root===\n# Related to [[stupidity]], [[earth]], [[iron]].',
   },
   pages: {
     نور: page('ن و ر', 'نُور', '# [[light]], [[radiance]]'),
@@ -33,6 +33,12 @@ const corpus = [
   'birds fly in rows',
   'a garden with rivers',
   'mountains like wool',
+  'the sea was split',
+  'fish of the sea',
+  'stars in the night',
+  'grapes and olives',
+  'a well of water',
+  'the wind scatters dust',
 ];
 
 const input = {
@@ -43,16 +49,16 @@ const input = {
     { ar: 'زبر', lemmas: [{ ar: 'زُبَر', count: 2 }, { ar: 'زُبْرَة', count: 1 }] },
   ],
   wiki,
-  rootTexts: [[corpus[7]!], [corpus[3]!], [corpus[0]!, corpus[1]!, corpus[2]!], [corpus[4]!]],
-  lemmaTexts: [[[], [corpus[7]!], []], [[corpus[3]!]], [[corpus[0]!, corpus[1]!, corpus[2]!]], [[], []]],
+  rootTexts: [[corpus[7]!], [corpus[3]!], [corpus[0]!, corpus[1]!, corpus[2]!, corpus[12]!, corpus[13]!], [corpus[4]!]],
+  lemmaTexts: [[[], [corpus[7]!], []], [[corpus[3]!]], [[corpus[0]!, corpus[1]!, corpus[2]!, corpus[12]!, corpus[13]!]], [[], []]],
   allTexts: corpus,
 };
 
 describe('buildGlosses', () => {
   const out = buildGlosses(input);
 
-  it('uses the appendix root meaning first', () => {
-    expect(out.roots[0]).toEqual(['light']);
+  it('uses the appendix root meaning first, then the top lemma meaning', () => {
+    expect(out.roots[0]).toEqual(['light', 'fire']);
     expect(out.rootSource[0]).toBe('appendix');
   });
 
@@ -69,12 +75,12 @@ describe('buildGlosses', () => {
   it('falls back to distinctive translation words when Wiktionary has nothing', () => {
     expect(out.roots[2]).toEqual(['sea', 'ships']);
     expect(out.rootSource[2]).toBe('fallback');
-    expect(out.lemmas[2]).toEqual([['sea', 'ships']]);
+    expect(out.lemmas[2]).toEqual([['sea']]);
     expect(out.lemmaSource[2]).toEqual(['fallback']);
   });
 
-  it('puts root meanings that its lemmas share first', () => {
-    expect(out.roots[3]).toEqual(['iron', 'stupidity']);
+  it('keeps appendix meanings that lemmas share or the verses use, most used first', () => {
+    expect(out.roots[3]).toEqual(['earth', 'iron', 'piece of iron']);
   });
 
   it('counts sources and covered words', () => {

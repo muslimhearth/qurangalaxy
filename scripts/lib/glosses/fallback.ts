@@ -46,9 +46,10 @@ export function documentFrequencies(texts: string[]): Map<string, number> {
 
 /**
  * Up to MAX_FALLBACK words that stand out in `texts` against a corpus of `total` texts with
- * document frequencies `df`. Score = share of texts with the word × log(total / df).
+ * document frequencies `df`, found in at least `minShare` of the texts.
+ * Score = share of texts with the word × log(total / df).
  */
-export function distinctiveWords(texts: string[], df: Map<string, number>, total: number): string[] {
+export function distinctiveWords(texts: string[], df: Map<string, number>, total: number, minShare = 0): string[] {
   const n = texts.length;
   if (n === 0) return [];
   const inTexts = new Map<string, number>();
@@ -66,7 +67,7 @@ export function distinctiveWords(texts: string[], df: Map<string, number>, total
   for (const [s, a] of inTexts) {
     const d = df.get(s) ?? a;
     // One verse cannot show a pattern; with more, the word must recur.
-    if (a < Math.min(2, n)) continue;
+    if (a < Math.min(2, n) || a / n < minShare) continue;
     if (a / n / (d / total) < MIN_LIFT) continue;
     scored.push({ s, score: (a / n) * Math.log(total / d) });
   }

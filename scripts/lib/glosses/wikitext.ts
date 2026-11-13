@@ -32,7 +32,10 @@ const ARABIC = /[؀-ۿ]/;
 // Labels that mark a sense as not Classical Arabic.
 const SKIP_LABEL =
   /colloquial|dialect|egypt|gulf|levant|iraq|morocc|tunis|algeri|hijaz|najd|sudan|neolog|slang|internet|vulgar|informal|computing|modern|chiefly in/i;
-const FORM_OF_PLAIN = new Set(['alt form', 'alt sp', 'alt spelling', 'alternative form', 'alternative spelling', 'alt-form']);
+// Phrases that are notes, not meanings: "etc", "cf. Hebrew", "forms the past perfect",
+// "in reduplication", or a fragment ending in a preposition ("one possessed of").
+const NOT_A_GLOSS = /^(?:etc|cf\b|forms? |used |see |in |as |also )|\b(?:of|with|to|for|from|by|in|on|at|etc)$/i;
+const FORM_OF_PLAIN =new Set(['alt form', 'alt sp', 'alt spelling', 'alternative form', 'alternative spelling', 'alt-form']);
 // Templates whose first argument is shown as text.
 const TEXT_ARG1 = new Set(['non-gloss', 'n-g', 'ng', 'ngd', 'non-gloss definition', 'taxlink', 'taxfmt', 'vern', 'smallcaps', 'lang']);
 const LINK = new Set(['l', 'm', 'l-lite', 'll', 'link', 'mention', 'm-lite']);
@@ -133,9 +136,9 @@ export function plainText(wikitext: string): string {
  */
 export function splitPhrases(text: string, proper = false): string[] {
   const out: string[] = [];
-  for (const [i, raw] of text.split(/[;,]/).entries()) {
+  for (const [i, raw] of text.split(/[;,:/]/).entries()) {
     let p = raw.trim().replace(/[.:!]+$/, '').replace(/^(?:a|an|the)\s+/i, '').trim();
-    if (!p || ARABIC.test(p) || /[{}[\]=|]/.test(p)) continue;
+    if (!p || ARABIC.test(p) || /[{}[\]=|…!?]/.test(p) || NOT_A_GLOSS.test(p)) continue;
     // Later phrases are often explanations; keep them only when shorter.
     if (p.split(/\s+/).length > (i === 0 ? MAX_WORDS : MAX_WORDS - 1)) continue;
     const words = p.split(/\s+/);

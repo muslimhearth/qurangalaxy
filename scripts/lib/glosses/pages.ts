@@ -1,6 +1,7 @@
 /**
  * Parses Wiktionary root appendix pages and Arabic lemma pages into glosses.
  */
+import { englishStem } from '../../../src/search/english';
 import { rootKey } from './arabic';
 import {
   arabicSection,
@@ -48,9 +49,9 @@ const POS = new Set([
 const ROOT_PREFIX =
   /^(?:(?:forms? )?(?:terms? |words? )?(?:(?:related|relating|relate|pertaining|referring|relates)(?: to)?|having to do with|to do with|denoting|expressing|concerning|involving|meaning)\s+(?:the (?:concept|idea|notion|number)s?(?: of)?\s+)?)/i;
 
-/** Key that treats "day"/"days" and case variants as the same gloss. */
+/** Key that treats "day"/"days", "sky"/"skies" and case variants as the same gloss. */
 export function glossKey(gloss: string): string {
-  return gloss.toLowerCase().replace(/(?<=\w\w)(?:es|s)$/, '');
+  return (gloss.toLowerCase().match(/[a-z]+/g) ?? []).map(englishStem).join(' ');
 }
 
 /** Removes duplicate glosses (by glossKey), keeping the first. */

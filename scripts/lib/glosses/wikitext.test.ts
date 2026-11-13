@@ -51,6 +51,14 @@ describe('splitPhrases', () => {
     expect(splitPhrases('Light', false)).toEqual(['light']);
   });
 
+  it('drops notes such as "etc", "cf. ...", "forms ..." and fragments ending in a preposition', () => {
+    expect(splitPhrases('O God, oaths, etc')).toEqual(['O God', 'oaths']);
+    expect(splitPhrases('killing, cf. Hebrew x')).toEqual(['killing']);
+    expect(splitPhrases('to be, forms the past perfect')).toEqual(['to be']);
+    expect(splitPhrases('lord, one possessed of')).toEqual(['lord']);
+    expect(splitPhrases('to make: to create')).toEqual(['to make', 'to create']);
+  });
+
   it('drops phrases with Arabic letters or leftover markup', () => {
     expect(splitPhrases('light, نور, }}')).toEqual(['light']);
   });

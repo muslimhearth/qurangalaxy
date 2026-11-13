@@ -35,6 +35,20 @@ describe('matchEntry', () => {
     expect(matchEntry('عَلِمَ', 'علم', lookup)?.glosses).toEqual(['to know']);
   });
 
+  it('prefers a noun for a noun lemma and a main entry over a derived one', () => {
+    const qawm = [
+      entry({ title: 'قوم', root: 'قوم', head: 'قوم', pos: 'Verb', glosses: ['to raise'] }),
+      entry({ title: 'قوم', head: 'قَوْم', glosses: ['standing up'], formOf: [{ kind: 'verbal noun', target: 'قَامَ' }] }),
+      entry({ title: 'قوم', head: 'قَوْم', glosses: ['people', 'nation'] }),
+    ];
+    expect(matchEntry('قَوْم', 'قوم', () => qawm)?.glosses).toEqual(['people', 'nation']);
+    const rabb = [
+      entry({ title: 'رب', root: 'ربب', head: 'رَبَّ', pos: 'Verb', glosses: ['to be master'] }),
+      entry({ title: 'رب', root: 'ربب', head: 'رَبّ', glosses: ['master', 'lord'] }),
+    ];
+    expect(matchEntry('رَبّ', 'ربب', () => rabb)?.glosses).toEqual(['master', 'lord']);
+  });
+
   it('finds a page under a spelling variant', () => {
     expect(matchEntry('رَحْمٰن', 'رحم', lookup)?.glosses).toEqual(['merciful']);
   });
@@ -48,6 +62,27 @@ describe('matchEntry', () => {
 describe('lemmaGlosses', () => {
   it('follows a plural-of sense to the singular', () => {
     expect(lemmaGlosses('عُيُون', 'عين', lookup)).toEqual(['eye', 'spring']);
+  });
+
+  it('picks the homograph whose glosses the lemma verses use', () => {
+    const kufr = [
+      entry({ title: 'كفر', root: 'كفر', head: 'كَفَرَ', pos: 'Verb', glosses: ['to disbelieve'] }),
+      entry({ title: 'كفر', head: 'كُفْر', formOf: [{ kind: 'verbal noun', target: 'كَفَرَ' }] }),
+      entry({ title: 'كفر', head: 'كُفْر', glosses: ['pitch', 'tar'] }),
+    ];
+    const verses = [new Set(['disbeliev', 'sign']), new Set(['fire'])];
+    expect(lemmaGlosses('كُفْر', 'كفر', () => kufr, verses)).toEqual(['disbelieve']);
+    expect(lemmaGlosses('كُفْر', 'كفر', () => kufr)).toEqual(['pitch', 'tar']);
+  });
+
+  it('weighs an entry own glosses against its form-of target', () => {
+    const pages2: Record<string, WikiEntry[]> = {
+      رماح: [entry({ title: 'رماح', head: 'رِمَاح', glosses: ['habit of kicking'], formOf: [{ kind: 'plural', target: 'رُمْح' }] })],
+      رمح: [entry({ title: 'رمح', head: 'رُمْح', glosses: ['spear', 'lance'] })],
+    };
+    const look = (t: string) => pages2[t] ?? [];
+    expect(lemmaGlosses('رِماح', 'رمح', look)).toEqual(['habit of kicking']);
+    expect(lemmaGlosses('رِماح', 'رمح', look, [new Set(['hand', 'spear'])])).toEqual(['spear', 'lance']);
   });
 
   it('does not borrow a verb gloss for a participle', () => {
