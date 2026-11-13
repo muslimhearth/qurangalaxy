@@ -23,7 +23,9 @@ pnpm dev       # open http://localhost:5173
 Vite, React 19, TypeScript, react-three-fiber, three.js (WebGPU with WebGL fallback), Zustand, Vitest, Playwright.
 
 ## Data and license
-- Morphology: Quranic Arabic Corpus (GPL).
-- Arabic text and English translation (Saheeh International): Tanzil.net.
+- Morphology: [Quranic Arabic Corpus](https://corpus.quran.com) v0.4 (GPL).
+- Arabic text: Tanzil Quran Text (Uthmani, Version 1.1), Copyright (C) 2007-2026 [Tanzil Project](https://tanzil.net), Creative Commons Attribution 3.0. Used verbatim.
+- English translation: Saheeh International, from [Tanzil.net](https://tanzil.net/trans/).
+- Full notice for the generated data: `public/data/NOTICE.txt`.
 
 Code is licensed GPL-3.0-or-later. See `LICENSE` and `docs/ARCHITECTURE.md`.

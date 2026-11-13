@@ -60,7 +60,7 @@ export type VerseKey = `${number}:${number}`;
 export interface Occurrence {
   /** The verse. */
   v: VerseKey;
-  /** 1-based word positions in the verse (corpus word numbering) built from the root. */
+  /** 1-based positions of the root's words in `Verse.ar` split on single spaces (Tanzil numbering). */
   w: number[];
 }
 

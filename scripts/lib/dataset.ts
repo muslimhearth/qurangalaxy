@@ -7,6 +7,7 @@ import { parseMorphology } from './morphology';
 import { parseTanzil, stripBasmala } from './tanzil';
 import { transliterateRoot } from './transliterate';
 import { validateData } from './validate';
+import { checkJoinedWords, toTextPosition } from './wordmap';
 
 /** How many strongest edges each root keeps before the union is taken. */
 export const EDGES_PER_ROOT = 8;
@@ -41,7 +42,16 @@ export function buildDataset(morphText: string, arabicText: string, englishText:
     throw new Error(`English has ${english.size} verses, Arabic has ${arabic.size}`);
   }
 
-  const { roots, occurrences } = aggregateRoots(morph.rootWords);
+  // Every word-count mismatch must be a known joined word, or the build stops.
+  const mismatches = findMismatches(arabic, morph.verseWordCounts);
+  checkJoinedWords(mismatches);
+
+  const aggregate = aggregateRoots(morph.rootWords);
+  const roots = aggregate.roots;
+  // Store Tanzil word positions, so the app can split Verse.ar on spaces and highlight directly.
+  const occurrences = aggregate.occurrences.map((list) =>
+    list.map((o) => ({ v: o.v, w: o.w.map((n) => toTextPosition(o.v, n)) })),
+  );
   const edges = cooccurrenceEdges(occurrences, EDGES_PER_ROOT);
   const layout = layoutGalaxy({ counts: roots.map((r) => r.count), edges });
 
@@ -65,7 +75,7 @@ export function buildDataset(morphText: string, arabicText: string, englishText:
     galaxy,
     occurrences,
     verses,
-    mismatches: findMismatches(arabic, morph.verseWordCounts),
+    mismatches,
     errors: validateData(galaxy, occurrences, verses),
     rootWordCount: new Set(morph.rootWords.map((w) => `${w.verse}:${w.word}`)).size,
   };

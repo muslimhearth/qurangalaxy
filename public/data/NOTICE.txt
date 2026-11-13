@@ -1,0 +1,11 @@
+Data files in this folder are derived from:
+
+1. Tanzil Quran Text (Uthmani, Version 1.1)
+   Copyright (C) 2007-2026 Tanzil Project
+   License: Creative Commons Attribution 3.0
+   This text is used verbatim. Source: https://tanzil.net
+
+2. English translation: Saheeh International (en.sahih), distributed by Tanzil.net (https://tanzil.net/trans/).
+
+3. Quranic Arabic Corpus morphology v0.4 (https://corpus.quran.com), GNU General Public License.
+   Retrieved via https://github.com/mustafa0x/quran-morphology
