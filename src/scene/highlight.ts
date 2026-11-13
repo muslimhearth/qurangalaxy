@@ -1,5 +1,5 @@
 import type { Edge } from '../data/types';
-import type { Adjacency } from './neighbors';
+import { topNeighbors, type Adjacency } from './neighbors';
 
 /** The root the highlight centers on. `strong` is true for a selection, false for a hover. */
 export interface Focus {
@@ -15,14 +15,15 @@ export function focusOf(selectedId: number | null, hoveredId: number | null): Fo
 }
 
 // Brightness factors. Values above 1 push the focus star into the bloom.
+// `top`: the strongest neighbors; `rest`: the other neighbors; `other`: unrelated stars.
 const STAR = {
-  strong: { focus: 1.8, other: 0.12 },
-  soft: { focus: 1.5, other: 0.4 },
+  strong: { focus: 1.8, top: 1, rest: 0.3, other: 0.12 },
+  soft: { focus: 1.5, top: 1, rest: 0.6, other: 0.4 },
 };
-// Edge factors: `linked` is absolute, `other` is relative to the base level.
+// Edge factors: `top` is absolute (scaled by weight); `rest` and `other` are relative to the base level.
 const EDGE = {
-  strong: { linked: 1.0, other: 0.15 },
-  soft: { linked: 0.6, other: 0.5 },
+  strong: { top: 1.0, rest: 1.5, other: 0.15 },
+  soft: { top: 0.6, rest: 1.5, other: 0.5 },
 };
 
 /**
@@ -34,25 +35,25 @@ export function edgeBaseLevel(edgeCount: number): number {
 }
 
 /**
- * Brightness of the focus root's own edges. A root with a few dozen links shows them at
- * full strength; a hub such as أله (1,000+ links) fades them (8/sqrt), or the additive
- * lines merge into one white blob.
+ * Brightness factor of one of the focus root's strongest links, from its weight relative to
+ * the strongest link (`maxWeight`). Square root, floored at 0.3: weak links stay visible.
  */
-export function linkedLevel(linkedCount: number): number {
-  return Math.min(1, 8 / Math.sqrt(Math.max(1, linkedCount)));
+export function linkWeightLevel(weight: number, maxWeight: number): number {
+  return 0.3 + 0.7 * Math.sqrt(weight / Math.max(1, maxWeight));
 }
 
 /**
- * Star colors for a focus: the focus root brightens, its neighbors keep their color,
- * all other stars dim. Returns a new buffer (3 floats per star).
+ * Star colors for a focus: the focus root brightens, its strongest neighbors keep their color,
+ * its other neighbors dim a little, all other stars dim more. Returns a new buffer (3 floats per star).
  */
 export function starColors(base: Float32Array, adj: Adjacency, focus: Focus | null): Float32Array {
   const out = new Float32Array(base);
   if (!focus) return out;
   const f = focus.strong ? STAR.strong : STAR.soft;
-  const keep = new Set(adj[focus.id]?.map((n) => n.id));
+  const top = new Set(topNeighbors(adj, focus.id).map((n) => n.id));
+  const rest = new Set(adj[focus.id]?.map((n) => n.id));
   for (let i = 0; i < out.length / 3; i++) {
-    const k = i === focus.id ? f.focus : keep.has(i) ? 1 : f.other;
+    const k = i === focus.id ? f.focus : top.has(i) ? f.top : rest.has(i) ? f.rest : f.other;
     out[i * 3] = base[i * 3]! * k;
     out[i * 3 + 1] = base[i * 3 + 1]! * k;
     out[i * 3 + 2] = base[i * 3 + 2]! * k;
@@ -62,21 +63,29 @@ export function starColors(base: Float32Array, adj: Adjacency, focus: Focus | nu
 
 /**
  * Line colors for all edges (2 vertices x 3 floats per edge). Each end takes its
- * star's base color, scaled: faint by default, bright on edges of the focus,
- * near-black on the other edges.
+ * star's base color, scaled: faint by default; on the focus root's `TOP_LINKS` strongest
+ * edges bright by weight; faint on its other edges; near-black on all other edges.
  */
 export function edgeColors(
   edges: readonly Edge[],
   starBase: Float32Array,
+  adj: Adjacency,
   focus: Focus | null,
 ): Float32Array {
   const out = new Float32Array(edges.length * 6);
   const f = focus ? (focus.strong ? EDGE.strong : EDGE.soft) : null;
   const base = edgeBaseLevel(edges.length);
-  const touches = (e: Edge) => focus !== null && (e.source === focus.id || e.target === focus.id);
-  const linkedK = f ? f.linked * linkedLevel(edges.filter(touches).length) : 0;
+  // Brightness per edge index of the focus edges; every other edge uses the shared level.
+  const level = new Map<number, number>();
+  if (focus && f) {
+    const top = topNeighbors(adj, focus.id);
+    const maxWeight = top[0]?.weight ?? 1;
+    for (const n of adj[focus.id] ?? []) level.set(n.edge, f.rest * base);
+    for (const n of top) level.set(n.edge, f.top * linkWeightLevel(n.weight, maxWeight));
+  }
+  const otherK = f ? f.other * base : base;
   edges.forEach((e, i) => {
-    const k = f ? (touches(e) ? linkedK : f.other * base) : base;
+    const k = level.get(i) ?? otherK;
     for (const [end, root] of [
       [0, e.source],
       [1, e.target],

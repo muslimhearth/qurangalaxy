@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fixtureGalaxy } from '../data/fixture';
-import { buildAdjacency, topByCount } from './neighbors';
-import { declutter, labelBox, labelIds, ndcToScreen } from './labels';
+import { buildAdjacency, topByCount, TOP_LINKS } from './neighbors';
+import { declutter, LABEL_LIFT, labelBox, labelIds, ndcToScreen } from './labels';
 
 const adj = buildAdjacency(fixtureGalaxy.roots.length, fixtureGalaxy.edges);
 const top = topByCount(fixtureGalaxy.roots, 1); // [1]
@@ -23,13 +23,21 @@ describe('labelIds', () => {
     expect(labelIds(adj, top, null, null)).toEqual([1]);
   });
 
-  it('adds the selected root, the hovered root and their neighbors, without duplicates', () => {
-    const ids = labelIds(adj, top, 3, 5);
-    expect(ids.sort()).toEqual([1, 3, 4, 5]);
+  it('adds the hovered root, its neighbors and the top roots, without duplicates', () => {
+    expect(labelIds(adj, top, null, 5).sort()).toEqual([1, 4, 5]);
+  });
+
+  it('labels only the focus ring while a root is selected, not the frequent roots', () => {
+    expect(labelIds(adj, top, 3, 5).sort()).toEqual([3, 4, 5]);
   });
 
   it('caps the number of neighbor labels per focus root', () => {
     expect(labelIds(adj, [], 1, null, 2)).toEqual([1, 0, 2]);
+  });
+
+  it('labels by default exactly the strongest links that light up (TOP_LINKS)', () => {
+    const hub = buildAdjacency(40, Array.from({ length: 39 }, (_, i) => ({ source: 0, target: i + 1, weight: 40 - i })));
+    expect(labelIds(hub, [], 0, null)).toHaveLength(TOP_LINKS + 1);
   });
 });
 
@@ -68,5 +76,12 @@ describe('declutter', () => {
   it('leaves a small gap between labels', () => {
     // Touching boxes count as overlapping because of the gap.
     expect(declutter([box(0, 0), box(41, 0)], [])).toEqual([true, false]);
+  });
+});
+
+describe('LABEL_LIFT', () => {
+  it('puts a label just above the top edge of its star', () => {
+    expect(LABEL_LIFT).toBeGreaterThan(1);
+    expect(LABEL_LIFT).toBeLessThan(1.5);
   });
 });

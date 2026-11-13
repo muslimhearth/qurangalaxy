@@ -4,6 +4,8 @@ import { useGalaxyStore } from '../state/store';
 import { BackgroundStars } from './BackgroundStars';
 import { Bloom } from './Bloom';
 import { CameraRig } from './CameraRig';
+import { FocusDriver } from './focus/FocusDriver';
+import { createFocusState, prefersReducedMotion } from './focus/state';
 import { IntroDriver } from './intro/IntroDriver';
 import { introForPageLoad } from './intro/state';
 import { LabelLayer, LabelTracker, type LabelAnchors } from './Labels';
@@ -27,6 +29,11 @@ export function GalaxyScene() {
   const model = useMemo(() => (galaxy ? buildSceneModel(galaxy) : null), [galaxy]);
   // One intro per page load: decided when the galaxy first arrives (skip rules read the URL then).
   const intro = useMemo(() => (model ? introForPageLoad() : null), [model]);
+  // Animated star positions (focus ring), one per galaxy; starts at the galaxy positions.
+  const focus = useMemo(
+    () => (galaxy ? createFocusState(new Float32Array(galaxy.roots.flatMap((r) => r.pos)), prefersReducedMotion()) : null),
+    [galaxy],
+  );
   const anchors = useRef<LabelAnchors>({ ids: [], els: new Map() }).current;
   const inset = usePanelInset();
   // Filled by <TapPicker> inside the canvas: finds the star nearest to a tap that hit nothing.
@@ -53,15 +60,17 @@ export function GalaxyScene() {
         onPointerLeave={clearHover}
       >
         <color attach="background" args={['#04050b']} />
-        {model && intro && (
+        {model && intro && focus && (
           <>
             <BackgroundStars radius={model.bounds.radius} />
             <IntroDriver model={model} intro={intro} />
-            <Links model={model} intro={intro} />
-            <Stars model={model} intro={intro} />
-            <TapPicker model={model} intro={intro} pick={pick} />
-            <LabelTracker model={model} anchors={anchors} inset={inset} intro={intro} />
-            <CameraRig model={model} inset={inset} intro={intro} />
+            {/* Before the parts that read star positions: they see this frame's glide. */}
+            <FocusDriver focus={focus} intro={intro} />
+            <Links model={model} intro={intro} focus={focus} />
+            <Stars model={model} intro={intro} focus={focus} />
+            <TapPicker model={model} intro={intro} focus={focus} pick={pick} />
+            <LabelTracker model={model} anchors={anchors} inset={inset} intro={intro} focus={focus} />
+            <CameraRig model={model} inset={inset} intro={intro} focus={focus} />
           </>
         )}
         <Bloom />
