@@ -55,16 +55,44 @@ export function twinkle(t: number, phase: number): number {
   return 1 + 0.12 * Math.sin(t * 2.3 + phase) * Math.sin(t * 0.9 + phase * 1.7);
 }
 
+/** Intro phase names, for the page's `data-intro` attribute (used by browser tests). */
+export type IntroPhase = 'appear' | 'words' | 'morph' | 'done';
+
+/** The phase at intro time `t`. */
+export function introPhase(t: number): IntroPhase {
+  if (t >= introLength) return 'done';
+  if (t >= INTRO.appear + INTRO.hold) return 'morph';
+  return t >= INTRO.appear ? 'words' : 'appear';
+}
+
 /** What the skip rule looks at, read from the browser at start-up. */
 export interface SkipContext {
   reducedMotion: boolean;
+  /** The browser is driven by a test tool (`navigator.webdriver`). */
+  automated?: boolean;
   hash: string;
   search: string;
 }
 
-/** True when the intro must not play: reduced motion, a root deep link or `?nointro`. */
-export function shouldSkipIntro({ reducedMotion, hash, search }: SkipContext): boolean {
-  return reducedMotion || hash.startsWith('#/root/') || new URLSearchParams(search).has('nointro');
+/**
+ * True when the intro must not play: reduced motion, a root deep link or `?nointro`.
+ * Browser tests (automated) skip it too, so they need not wait, unless the URL has `?intro`.
+ */
+export function shouldSkipIntro({ reducedMotion, automated = false, hash, search }: SkipContext): boolean {
+  const params = new URLSearchParams(search);
+  if (reducedMotion || hash.startsWith('#/root/') || params.has('nointro')) return true;
+  return automated && !params.has('intro');
+}
+
+/**
+ * Frozen intro time from `?introAt=<seconds>` (for screenshots and tuning), or null.
+ * The intro then holds that moment until a tap or key press.
+ */
+export function frozenIntroTime(search: string): number | null {
+  const v = new URLSearchParams(search).get('introAt');
+  if (v === null || v.trim() === '') return null;
+  const t = Number(v);
+  return Number.isFinite(t) ? Math.min(introLength, Math.max(0, t)) : null;
 }
 
 /** Intro time that only moves forward. A skip jumps to the morph and plays it fast. */
@@ -72,6 +100,7 @@ export class IntroClock {
   /** Seconds since the intro started, 0..introLength. */
   t: number;
   private speed = 1;
+  private frozen = false;
 
   /** `finished` starts the clock at the end (intro skipped). */
   constructor(finished = false) {
@@ -85,12 +114,25 @@ export class IntroClock {
 
   /** Moves time forward by `dt` seconds. */
   advance(dt: number): void {
+    if (this.frozen) return;
     this.t = Math.min(introLength, this.t + dt * this.speed);
+  }
+
+  /** Holds time at `t` until a skip (see `frozenIntroTime`). */
+  freeze(t: number): void {
+    this.t = t;
+    this.frozen = true;
   }
 
   /** Finish quickly: skip the rest of the hold and speed up the morph. */
   skip(): void {
+    this.frozen = false;
     this.t = Math.max(this.t, INTRO.appear + INTRO.hold);
     this.speed = SKIP_SPEED;
+  }
+
+  /** Jump straight to the end (nothing to show, e.g. the font did not load). */
+  finish(): void {
+    this.t = introLength;
   }
 }

@@ -4,6 +4,8 @@ import {
   IntroClock,
   appearProgress,
   easeInOutCubic,
+  frozenIntroTime,
+  introPhase,
   introLength,
   morphProgress,
   pullAmount,
@@ -86,6 +88,12 @@ describe('shouldSkipIntro', () => {
     expect(shouldSkipIntro({ ...base, hash: '#/root/%D8%B1%D8%AD%D9%85' })).toBe(true);
     expect(shouldSkipIntro({ ...base, hash: '#/' })).toBe(false);
   });
+  it('skips in automated browsers unless ?intro asks for it', () => {
+    expect(shouldSkipIntro({ ...base, automated: true })).toBe(true);
+    expect(shouldSkipIntro({ ...base, automated: true, search: '?intro' })).toBe(false);
+    expect(shouldSkipIntro({ ...base, automated: true, search: '?intro', reducedMotion: true })).toBe(true);
+    expect(shouldSkipIntro({ ...base, automated: true, search: '?intro', hash: '#/root/x' })).toBe(true);
+  });
   it('skips with ?nointro', () => {
     expect(shouldSkipIntro({ ...base, search: '?nointro' })).toBe(true);
     expect(shouldSkipIntro({ ...base, search: '?a=1&nointro' })).toBe(true);
@@ -117,9 +125,41 @@ describe('IntroClock', () => {
     c.skip();
     expect(c.t).toBe(t);
   });
+  it('can finish at once', () => {
+    const c = new IntroClock();
+    c.finish();
+    expect(c.done).toBe(true);
+  });
   it('can start finished', () => {
     const c = new IntroClock(true);
     expect(c.done).toBe(true);
     expect(c.t).toBe(introLength);
+  });
+});
+
+describe('introPhase', () => {
+  it('names each phase in order', () => {
+    expect(introPhase(0)).toBe('appear');
+    expect(introPhase(INTRO.appear)).toBe('words');
+    expect(introPhase(morphStart)).toBe('morph');
+    expect(introPhase(introLength)).toBe('done');
+  });
+});
+
+describe('frozenIntroTime', () => {
+  it('reads ?introAt and clamps it', () => {
+    expect(frozenIntroTime('')).toBeNull();
+    expect(frozenIntroTime('?introAt=3')).toBe(3);
+    expect(frozenIntroTime('?introAt=99')).toBe(introLength);
+    expect(frozenIntroTime('?introAt=x')).toBeNull();
+  });
+  it('holds the clock until a skip', () => {
+    const c = new IntroClock();
+    c.freeze(2);
+    c.advance(1);
+    expect(c.t).toBe(2);
+    c.skip();
+    c.advance(10);
+    expect(c.done).toBe(true);
   });
 });

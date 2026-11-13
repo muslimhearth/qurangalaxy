@@ -4,6 +4,8 @@ import { useGalaxyStore } from '../state/store';
 import { BackgroundStars } from './BackgroundStars';
 import { Bloom } from './Bloom';
 import { CameraRig } from './CameraRig';
+import { IntroDriver } from './intro/IntroDriver';
+import { introForPageLoad } from './intro/state';
 import { LabelLayer, LabelTracker, type LabelAnchors } from './Labels';
 import { Links } from './Links';
 import { buildSceneModel } from './model';
@@ -22,6 +24,8 @@ export function GalaxyScene() {
   const select = useGalaxyStore((s) => s.select);
   const hover = useGalaxyStore((s) => s.hover);
   const model = useMemo(() => (galaxy ? buildSceneModel(galaxy) : null), [galaxy]);
+  // One intro per page load: decided when the galaxy first arrives (skip rules read the URL then).
+  const intro = useMemo(() => (model ? introForPageLoad() : null), [model]);
   const anchors = useRef<LabelAnchors>({ ids: [], els: new Map() }).current;
   const inset = usePanelInset();
 
@@ -45,13 +49,14 @@ export function GalaxyScene() {
         onPointerLeave={clearHover}
       >
         <color attach="background" args={['#04050b']} />
-        {model && (
+        {model && intro && (
           <>
             <BackgroundStars radius={model.bounds.radius} />
-            <Links model={model} />
-            <Stars model={model} />
-            <LabelTracker model={model} anchors={anchors} inset={inset} />
-            <CameraRig model={model} inset={inset} />
+            <IntroDriver model={model} intro={intro} />
+            <Links model={model} intro={intro} />
+            <Stars model={model} intro={intro} />
+            <LabelTracker model={model} anchors={anchors} inset={inset} intro={intro} />
+            <CameraRig model={model} inset={inset} intro={intro} />
           </>
         )}
         <Bloom />
