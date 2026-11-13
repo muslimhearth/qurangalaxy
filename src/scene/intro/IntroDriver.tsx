@@ -18,7 +18,7 @@ const FONT_TIMEOUT_MS = 3000;
 const MAX_STEP = 0.5;
 
 /** Dust particles for the calligraphy: fewer on small (phone) screens. */
-const dustCount = (width: number) => (width < 700 ? 7000 : 14000);
+const dustCount = (width: number) => (width < 700 ? 10000 : 14000);
 
 /**
  * Prepares and runs the intro: waits for the font, samples the words, plans the stars and the

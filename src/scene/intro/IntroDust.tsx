@@ -14,7 +14,7 @@ function attr<T extends 'vec2' | 'vec3'>(array: Float32Array, itemSize: number, 
 /** Pale gold, like the focus label: warm, calm, and apart from the cluster colors. */
 const DUST_COLOR = '#f5dfa4';
 /** Peak dust opacity: a hint of the words, not a sign. */
-const DUST_ALPHA = 0.55;
+const DUST_ALPHA = 0.6;
 
 /**
  * Faint calligraphy of «القرآن الكريم» made of tiny glowing specks inside the galaxy.
