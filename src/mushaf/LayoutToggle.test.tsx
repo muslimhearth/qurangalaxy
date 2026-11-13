@@ -20,4 +20,10 @@ describe('LayoutToggle', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Mushaf' }));
     expect(onChange).toHaveBeenCalledWith('mushaf');
   });
+
+  it('gives each button an icon and a label, so phones can show the icon alone', () => {
+    const { container } = render(<LayoutToggle value="galaxy" onChange={() => {}} />);
+    expect(container.querySelectorAll('button svg[aria-hidden="true"]')).toHaveLength(2);
+    expect(container.querySelectorAll('button .mushaf-toggle-label')).toHaveLength(2);
+  });
 });

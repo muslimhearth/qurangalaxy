@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { flow, hitTest, mushafLayout, sizeFor } from './layout';
+import { flow, hitTest, mushafLayout, sizeFor, tipBelow, TIP_ROOM } from './layout';
 import { VERSE_COUNTS } from './surahs';
 
 describe('sizeFor', () => {
@@ -72,5 +72,14 @@ describe('hitTest', () => {
     expect(hitTest(l, x + l.dot, y, 12)).toBe(4);
     expect(hitTest(l, x + 40, y, 12)).toBe(-1);
     expect(hitTest(l, -50, -50, 12)).toBe(-1);
+  });
+});
+
+describe('tipBelow', () => {
+  it('puts the tooltip below dots near the top of the free area, so it never covers the bars above', () => {
+    expect(tipBelow(10)).toBe(true);
+    expect(tipBelow(TIP_ROOM - 1)).toBe(true);
+    expect(tipBelow(TIP_ROOM)).toBe(false);
+    expect(tipBelow(300)).toBe(false);
   });
 });

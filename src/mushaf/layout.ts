@@ -168,3 +168,14 @@ export function hitTest(layout: MushafLayout, px: number, py: number, radius: nu
   }
   return best;
 }
+
+/** Height (px) the tooltip needs above a dot. */
+export const TIP_ROOM = 80;
+
+/**
+ * Whether the tooltip goes below the dot: true when the dot sits less than `TIP_ROOM` px
+ * below the top of the free area, where a tooltip above it would cover the search or title bar.
+ */
+export function tipBelow(dotTopInArea: number): boolean {
+  return dotTopInArea < TIP_ROOM;
+}

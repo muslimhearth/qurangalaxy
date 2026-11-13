@@ -376,16 +376,21 @@ a { color: var(--accent); }
 }
 .mushaf-toggle button {
   min-width: 76px; min-height: 44px;
-  padding: 0 18px;
+  padding: 0 16px 0 14px;
+  display: inline-flex; align-items: center; gap: 7px;
   border: none; border-radius: 999px;
   background: transparent;
   color: #9aa0bd; font-size: 0.9rem; font-weight: 500;
 }
 .mushaf-toggle button:hover { color: var(--fg); }
 .mushaf-toggle button[aria-pressed='true'] { background: #fff; color: #0b0d18; }
+/* Phones: one icon button beside the search field (the other layout), so the mosaic keeps its height. */
 @media (max-width: 720px) {
-  .mushaf-toggle { left: auto; right: var(--gap); bottom: auto; top: 66px; }
-  .mushaf-toggle button { min-width: 0; padding: 0 14px; font-size: 0.85rem; }
+  body:has(.mushaf-toggle) .search { left: var(--gap); transform: none; width: calc(100vw - 3 * var(--gap) - 48px); }
+  .mushaf-toggle { left: auto; right: var(--gap); bottom: auto; top: 10px; padding: 0; }
+  .mushaf-toggle button { min-width: 0; width: 48px; height: 48px; padding: 0; justify-content: center; color: var(--fg); }
+  .mushaf-toggle button[aria-pressed='true'] { display: none; }
+  .mushaf-toggle-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
 
 /* A verse opened from the Mushaf mosaic flashes once in the verse list. */

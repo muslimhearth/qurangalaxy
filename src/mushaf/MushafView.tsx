@@ -4,7 +4,7 @@ import { useGalaxyStore } from '../state/store';
 import { useVerseFocus } from '../ui/verseFocus';
 import { drawMosaic } from './draw';
 import { PHONE_MAX } from './freeArea';
-import { hitTest, mushafLayout } from './layout';
+import { hitTest, mushafLayout, tipBelow } from './layout';
 import { LIT_A, LIT_B, LIT_NONE, litStates } from './lit';
 import { SURAHS, VERSE_COUNTS, verseAt } from './surahs';
 import { useFade } from './useFade';
@@ -140,7 +140,7 @@ export function MushafView({ compareRootId }: MushafViewProps) {
           index={active}
           x={area.left + layout.x[active]! + layout.dot / 2}
           y={area.top + layout.y[active]!}
-          below={area.top + layout.y[active]! < 70}
+          below={tipBelow(layout.y[active]!)}
           state={lit[active]!}
           rootA={rootA?.ar}
           rootB={rootB?.ar}
