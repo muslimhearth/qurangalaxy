@@ -139,6 +139,29 @@ a { color: var(--accent); }
 }
 .search-option .note[lang='ar'] { font-size: 1rem; text-align: left; }
 .search-empty { padding: 10px 12px; color: var(--muted); }
+/* Meaning results: verse refs and a short English snippet, up to two lines. */
+.search-option .verse-note {
+  white-space: normal;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
+}
+.search-option .verse-note .refs { color: var(--accent); }
+
+/* Exact <-> Meaning slider under the search field */
+.semantic {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px;
+  padding: 0 16px 8px;
+  font-size: 0.78rem; color: var(--muted);
+}
+.semantic label { white-space: nowrap; }
+.search .semantic input[type='range'] {
+  flex: 1; min-width: 120px; width: auto;
+  /* Taller hit area for touch; the track stays thin. */
+  height: 28px; padding: 0; margin: 0;
+  accent-color: var(--accent);
+}
+.semantic-status { flex-basis: 100%; display: flex; align-items: center; gap: 8px; }
+.semantic-status progress { width: 80px; height: 6px; accent-color: var(--accent); }
+.semantic-status.error { color: #e88; }
 
 /* Root panel: right-side panel on desktop */
 .root-panel {

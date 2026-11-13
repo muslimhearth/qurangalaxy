@@ -1,18 +1,41 @@
 import { useMemo, useState, type KeyboardEvent } from 'react';
 import { useGalaxyStore } from '../state/store';
-import { searchRoots } from '../search/exact';
+import { blendMatches } from '../search/blend';
+import { exactMatches } from '../search/exact';
 import type { Match } from '../search/types';
+import type { Verses } from '../data/types';
+import type { SemanticService } from '../semantic/service';
+import { useSemanticSearch } from '../semantic/useSemanticSearch';
+import { getWorkerService } from '../semantic/workerService';
+import { SemanticSlider } from './SemanticSlider';
+import { snippet } from './snippet';
+import { useVerseTexts } from './useVerseTexts';
 
-/** Search field at the top: find a root by Arabic letters, transliteration or lemma. */
-export function SearchBox() {
+/** Number of results in the list. */
+const LIMIT = 8;
+
+/**
+ * Search field at the top: find a root by Arabic letters, transliteration or lemma, or by
+ * meaning (a phrase matched against the English verses). The slider mixes the two.
+ */
+export function SearchBox({ semanticService = getWorkerService }: { semanticService?: () => SemanticService }) {
   const galaxy = useGalaxyStore((s) => s.galaxy);
   const query = useGalaxyStore((s) => s.query);
   const setQuery = useGalaxyStore((s) => s.setQuery);
   const select = useGalaxyStore((s) => s.select);
+  const weight = useGalaxyStore((s) => s.semanticWeight);
   const [active, setActive] = useState(0);
 
-  const results = useMemo(() => (galaxy ? searchRoots(galaxy.roots, query) : []), [galaxy, query]);
+  const semantic = useSemanticSearch(query, weight, semanticService);
+  const exact = useMemo(() => (galaxy ? exactMatches(galaxy.roots, query) : []), [galaxy, query]);
+  const results = useMemo(
+    () => (galaxy ? blendMatches(galaxy.roots, exact, semantic.matches ?? [], weight, LIMIT) : []),
+    [galaxy, exact, semantic.matches, weight],
+  );
+  const verses = useVerseTexts(results.some((m) => m.verses));
   const open = query.trim() !== '';
+  // Meaning results are on their way: say so instead of "No roots match".
+  const pending = weight > 0 && semantic.matches === null && semantic.status !== 'error';
 
   const roots = galaxy?.roots ?? [];
 
@@ -50,7 +73,7 @@ export function SearchBox() {
         aria-controls="root-search-results"
         aria-autocomplete="list"
         aria-activedescendant={open && results[active] ? `root-option-${results[active].id}` : undefined}
-        placeholder="Search a root: رحم, rhm, رحمن…"
+        placeholder={weight > 0 ? 'Search a root or a phrase: patience…' : 'Search a root: رحم, rhm, رحمن…'}
         autoComplete="off"
         spellCheck={false}
         value={query}
@@ -60,9 +83,12 @@ export function SearchBox() {
         }}
         onKeyDown={onKeyDown}
       />
+      <SemanticSlider status={semantic.status} progress={semantic.progress} error={semantic.error} />
       {open && (
         <ul id="root-search-results" role="listbox" className="search-results" aria-label="Matching roots">
-          {results.length === 0 && <li className="search-empty">No roots match.</li>}
+          {results.length === 0 && (
+            <li className="search-empty">{pending ? 'Searching by meaning…' : 'No roots match.'}</li>
+          )}
           {results.map((match, i) => {
             const root = roots[match.id]!;
             return (
@@ -82,7 +108,7 @@ export function SearchBox() {
                 </span>
                 <span className="tr">
                   {root.tr}
-                  <ResultNote match={match} meaning={root.en[0]} rootAr={root.ar} />
+                  <ResultNote match={match} meaning={root.en[0]} rootAr={root.ar} verses={verses} />
                 </span>
                 <span className="count">{root.count.toLocaleString('en')}</span>
               </li>
@@ -95,11 +121,30 @@ export function SearchBox() {
 }
 
 /**
- * Second line of a result: what matched when it was not the root itself (a lemma or an
- * English meaning), else the root's first English meaning.
+ * Second line of a result: what matched when it was not the root itself (a lemma, an
+ * English meaning, or the best verses of a meaning search), else the root's first meaning.
  */
-function ResultNote({ match, meaning, rootAr }: { match: Match; meaning?: string; rootAr: string }) {
+function ResultNote({
+  match,
+  meaning,
+  rootAr,
+  verses,
+}: {
+  match: Match;
+  meaning?: string;
+  rootAr: string;
+  verses: Verses | null;
+}) {
   const { kind, text } = match.reason;
+  if (match.verses?.length) {
+    const first = verses?.[match.verses[0]!];
+    return (
+      <span className="note verse-note" title={first?.en}>
+        <span className="refs">{match.verses.join(', ')}</span>
+        {first && <> · {snippet(first.en, 90)}</>}
+      </span>
+    );
+  }
   if (kind === 'arabic' && text !== rootAr) {
     return (
       <span className="note" lang="ar" dir="rtl">

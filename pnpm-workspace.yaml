@@ -1,2 +1,5 @@
 allowBuilds:
   esbuild: true
+  # Ships its CPU binaries in the package; the install script only fetches optional GPU builds.
+  onnxruntime-node: false
+  protobufjs: false

@@ -1,0 +1,42 @@
+/**
+ * Phrase queries with the roots a reader expects for them. A query counts as a hit when
+ * any expected root appears in the results. Roots are spelled as in galaxy.json.
+ * Note: fire (نار) shares the root نور with light.
+ */
+export const EVAL_SET: { query: string; expect: string[] }[] = [
+  { query: 'patience', expect: ['صبر'] },
+  { query: 'patience in hardship', expect: ['صبر'] },
+  { query: 'light', expect: ['نور'] },
+  { query: 'sea and ships', expect: ['بحر', 'فلك'] },
+  { query: 'kindness to parents', expect: ['ولد', 'برر'] },
+  { query: 'creation of the heavens', expect: ['خلق', 'سمو'] },
+  { query: 'mercy', expect: ['رحم'] },
+  { query: 'gratitude', expect: ['شكر'] },
+  { query: 'repentance', expect: ['توب'] },
+  { query: 'prayer', expect: ['صلو'] },
+  { query: 'charity to the poor', expect: ['صدق', 'زكو', 'نفق', 'فقر', 'مسك'] },
+  { query: 'gardens with rivers flowing beneath', expect: ['جنن', 'نهر'] },
+  { query: 'the fire of hell', expect: ['نور', 'سعر', 'جحم'] },
+  { query: 'death', expect: ['موت'] },
+  { query: 'resurrection of the dead', expect: ['بعث', 'حيي'] },
+  { query: 'fasting', expect: ['صوم'] },
+  { query: 'interest on loans', expect: ['ربو'] },
+  { query: 'wine and gambling', expect: ['خمر', 'يسر'] },
+  { query: 'the wealth of orphans', expect: ['يتم'] },
+  { query: 'the bee', expect: ['نحل'] },
+  { query: 'rain from the sky', expect: ['مطر', 'موه', 'غيث'] },
+  { query: 'the sun and the moon', expect: ['شمس', 'قمر'] },
+  { query: 'night and day', expect: ['ليل', 'نهر'] },
+  { query: 'mountains', expect: ['جبل'] },
+  { query: 'punishment for theft', expect: ['سرق'] },
+  { query: 'divorce', expect: ['طلق'] },
+  { query: 'breastfeeding', expect: ['رضع'] },
+  { query: 'the winds', expect: ['روح'] },
+  { query: 'honesty and truthfulness', expect: ['صدق'] },
+  { query: 'fair weights and measures', expect: ['كيل', 'وزن'] },
+  { query: 'fighting in the cause of God', expect: ['قتل', 'جهد'] },
+  { query: 'liars', expect: ['كذب'] },
+  { query: 'pilgrimage', expect: ['حجج'] },
+  { query: 'marriage', expect: ['نكح', 'زوج'] },
+  { query: 'keeping promises and covenants', expect: ['وثق', 'عهد', 'وفي'] },
+];
