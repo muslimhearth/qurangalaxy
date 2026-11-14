@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState, type FocusEvent, type KeyboardEvent, type ReactNode } from 'react';
 import { useGalaxyStore } from '../state/store';
-import { blendMatches } from '../search/blend';
+import { blendMatches, meaningWeight } from '../search/blend';
 import { exactMatches } from '../search/exact';
+import { isArabicQuery } from '../search/arabicKey';
+import { useWordForms } from '../search/useWordForms';
 import type { Match } from '../search/types';
 import type { VerseKey, Verses } from '../data/types';
 import { useSearchHistory, type HistoryEntry } from '../history/history';
@@ -78,13 +80,20 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
 
   // Roots mode.
   const semantic = useSemanticSearch(rootsOn ? text : '', rootsOn ? rootWeight : 0, semanticService);
-  const exact = useMemo(() => (galaxy && rootsOn ? exactMatches(galaxy.roots, text) : []), [galaxy, rootsOn, text]);
+  // Arabic queries: exact only (the meaning model knows English only).
+  const rootMix = meaningWeight(text, rootWeight);
+  // Arabic words: the word-form index loads on the first Arabic query; results refresh when it arrives.
+  const wordForms = useWordForms(rootsOn && isArabicQuery(text));
+  const exact = useMemo(
+    () => (galaxy && rootsOn ? exactMatches(galaxy.roots, text) : []),
+    [galaxy, rootsOn, text, wordForms],
+  );
   const rootResults = useMemo(
-    () => (galaxy && rootsOn ? blendMatches(galaxy.roots, exact, semantic.matches ?? [], rootWeight, LIMIT) : []),
-    [galaxy, rootsOn, exact, semantic.matches, rootWeight],
+    () => (galaxy && rootsOn ? blendMatches(galaxy.roots, exact, semantic.matches ?? [], rootMix, LIMIT) : []),
+    [galaxy, rootsOn, exact, semantic.matches, rootMix],
   );
   const rootVerses = useVerseTexts(rootResults.some((m) => m.verses));
-  const rootsPending = rootWeight > 0 && semantic.matches === null && semantic.status !== 'error';
+  const rootsPending = rootMix > 0 && semantic.matches === null && semantic.status !== 'error';
 
   // Verses mode.
   const verseResults = useVerseResults(text, !rootsOn, verseWeight, semanticService);

@@ -43,7 +43,12 @@ async function main(): Promise<void> {
   }
 
   mkdirSync(OUT_DIR, { recursive: true });
-  const files = { 'galaxy.json': data.galaxy, 'occurrences.json': data.occurrences, 'verses.json': data.verses };
+  const files = {
+    'galaxy.json': data.galaxy,
+    'occurrences.json': data.occurrences,
+    'verses.json': data.verses,
+    'wordforms.json': data.wordForms,
+  };
   for (const [name, value] of Object.entries(files)) writeFileSync(join(OUT_DIR, name), JSON.stringify(value));
 
   console.log(`Roots: ${data.galaxy.roots.length}`);

@@ -52,6 +52,11 @@ describe('buildDataset', () => {
     expect(data.errors).toEqual([]);
   });
 
+  it('builds the word-form index for Arabic word search', () => {
+    expect(data.wordForms.forms['لله']).toEqual([[0, 2, 'ٱللَّهِ']]);
+    expect(data.wordForms.forms['بسم']).toEqual([[1, 1, 'بِسْمِ']]);
+  });
+
   it('fills English meanings from the Wiktionary cache it is given', () => {
     const wiki = {
       appendix: { أله: '==Arabic==\n===Root===\n# Related to [[god]].', سمو: null },

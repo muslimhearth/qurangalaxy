@@ -19,6 +19,8 @@
     "eval:semantic": "tsx scripts/eval-semantic.ts",
     "embeddings": "tsx scripts/build-embeddings.ts",
     "data:translit": "tsx scripts/build-translit.ts",
+    "data:wordforms": "tsx scripts/build-wordforms.ts",
+    "eval:wordforms": "tsx scripts/eval-wordforms.ts",
     "data:glosses": "tsx scripts/fetch-glosses.ts",
     "corpus:wbw": "tsx scripts/corpus-wbw.ts",
     "corpus:glosses": "tsx scripts/corpus-glosses.ts"
