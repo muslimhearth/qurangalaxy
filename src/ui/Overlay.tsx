@@ -6,6 +6,7 @@ import { SearchBox } from './SearchBox';
 import { RootPanel } from './RootPanel';
 import { VersePanel } from './VersePanel';
 import { HoverHint } from './HoverHint';
+import { WordCard } from '../morph/WordCard';
 import { SurahReader } from '../reader/SurahReader';
 import { TabBar } from '../tabs/TabBar';
 import { useTabSync } from '../tabs/useTabSync';
@@ -59,6 +60,7 @@ export function Overlay() {
           the panel stays mounted but hidden, so its scroll, filters and "show more" survive. */}
       {openVerse ? <VersePanel hidden={reading} /> : <RootPanel hidden={reading} />}
       <HoverHint />
+      <WordCard />
     </div>
   );
 }
