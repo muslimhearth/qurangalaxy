@@ -51,6 +51,17 @@ export function initialTabs(): Tabs {
   return { tabs: [tab], activeId: tab.id };
 }
 
+/**
+ * Tabs at app start: the saved tabs stay, but the app opens on an empty tab, so it does not
+ * reopen the last root. Reuses an empty tab if one exists, else adds one at the end.
+ */
+export function freshStart(t: Tabs): Tabs {
+  const empty = t.tabs.find((x) => isEmptyView(x));
+  if (empty) return { ...t, activeId: empty.id };
+  const tab: Tab = { id: newId(), ...EMPTY_VIEW };
+  return { tabs: [...t.tabs, tab], activeId: tab.id };
+}
+
 /** The active tab (the first one if the active id is stale). */
 export function activeTab(t: Tabs): Tab {
   return t.tabs.find((x) => x.id === t.activeId) ?? t.tabs[0]!;

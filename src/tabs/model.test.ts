@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { activeTab, addTab, closeTab, EMPTY_VIEW, initialTabs, isEmptyView, sameView, setActive, tabLabel, updateActive } from './model';
+import { activeTab, addTab, closeTab, EMPTY_VIEW, freshStart, initialTabs, isEmptyView, sameView, setActive, tabLabel, updateActive } from './model';
 import { fixtureGalaxy } from '../data/fixture';
 
 describe('tab model', () => {
@@ -104,5 +104,23 @@ describe('tab model', () => {
     expect(isEmptyView({ ...EMPTY_VIEW, reader: { surah: 1, verse: 1 } })).toBe(false);
     // Before the galaxy loads, or for a stale id, a root tab still gets a label.
     expect(tabLabel({ ...EMPTY_VIEW, selectedId: 0 }, null)).toBe('…');
+  });
+});
+
+describe('freshStart', () => {
+  it('adds an empty active tab after the saved ones', () => {
+    const saved = addTab(initialTabs(), { selectedId: 3 });
+    const withRoot = updateActive(setActive(saved, saved.tabs[0]!.id), { selectedId: 5 });
+    const t = freshStart(withRoot);
+    expect(t.tabs).toHaveLength(3);
+    expect(isEmptyView(activeTab(t))).toBe(true);
+    expect(t.tabs[2]!.id).toBe(t.activeId);
+  });
+
+  it('reuses an empty tab instead of adding another', () => {
+    const saved = addTab(initialTabs(), { selectedId: 3 });
+    const t = freshStart(saved);
+    expect(t.tabs).toHaveLength(2);
+    expect(t.activeId).toBe(saved.tabs[0]!.id);
   });
 });

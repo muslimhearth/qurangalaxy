@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { resetTabs, useTabsStore } from './store';
+import { activeView, resetTabs, useTabsStore } from './store';
 import { loadTabs } from './persist';
 import { activeTab } from './model';
 
@@ -38,5 +38,20 @@ describe('tabs store', () => {
     expect(useTabsStore.getState().tabs).toHaveLength(2);
     resetTabs();
     expect(useTabsStore.getState().tabs).toHaveLength(1);
+  });
+
+  it('opens on an empty tab after a plain visit, but keeps the active tab for a link', () => {
+    useTabsStore.getState().activate(useTabsStore.getState().tabs[0]!.id);
+    useTabsStore.getState().update({ selectedId: 2 });
+    useTabsStore.getState().open({ selectedId: 4 });
+    window.history.replaceState(null, '', '/');
+    resetTabs({ fromStorage: true });
+    expect(activeView().selectedId).toBeNull();
+    expect(useTabsStore.getState().tabs).toHaveLength(3);
+    useTabsStore.getState().activate(useTabsStore.getState().tabs[1]!.id);
+    window.history.replaceState(null, '', '/#/root/x');
+    resetTabs({ fromStorage: true });
+    expect(activeView().selectedId).toBe(4);
+    window.history.replaceState(null, '', '/');
   });
 });

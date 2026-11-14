@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { activeTab, addTab, closeTab, initialTabs, setActive, updateActive, type TabView, type Tabs } from './model';
+import { activeTab, addTab, closeTab, freshStart, initialTabs, setActive, updateActive, type TabView, type Tabs } from './model';
 import { loadTabs, saveTabs } from './persist';
 
 /** In-app tabs. Kept apart from the shared galaxy store; `connectTabs` joins the two. */
@@ -14,10 +14,20 @@ export interface TabsState extends Tabs {
   update: (view: Partial<TabView>) => void;
 }
 
+/**
+ * Tabs at app start. Saved tabs come back. A plain visit opens on an empty tab, so the app does not
+ * reopen the last root; a link with a hash (or a reload of one) keeps the saved active tab, which the
+ * link then fills.
+ */
+function startTabs(): Tabs {
+  const saved = loadTabs() ?? initialTabs();
+  return window.location.hash.length > 1 ? saved : freshStart(saved);
+}
+
 const data = (s: Tabs): Tabs => ({ tabs: s.tabs, activeId: s.activeId });
 
 export const useTabsStore = create<TabsState>()((set, get) => ({
-  ...(loadTabs() ?? initialTabs()),
+  ...startTabs(),
   open: (view = {}, activate = true) => {
     const before = data(get());
     const next = addTab(before, view, activate);
@@ -39,7 +49,7 @@ useTabsStore.subscribe((s) => saveTabs(data(s)));
 
 /** Tests: start over with one empty tab, or with what localStorage holds. */
 export function resetTabs({ fromStorage = false } = {}) {
-  useTabsStore.setState(fromStorage ? (loadTabs() ?? initialTabs()) : initialTabs());
+  useTabsStore.setState(fromStorage ? startTabs() : initialTabs());
 }
 
 /** View of the active tab. */
