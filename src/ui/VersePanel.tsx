@@ -10,6 +10,8 @@ import { useNewTabGesture } from '../tabs/useNewTabGesture';
 import { TranslitText } from './TranslitText';
 import { useTranslit } from './useTranslit';
 import { useVerseTexts } from './useVerseTexts';
+import { verseWords } from './helpers';
+import { VerseWords } from '../morph/VerseWords';
 
 /** Loads occurrences.json (shared, cached); null until loaded or on error. */
 function useOccurrences(): Occurrences | null {
@@ -114,7 +116,7 @@ export function VersePanel({ hidden = false }: { hidden?: boolean }) {
         {verse && (
           <>
             <p className="verse-ar verse-panel-ar" dir="rtl" lang="ar">
-              {verse.ar}
+              <VerseWords verseKey={key} words={verseWords(verse.ar, [])} />
             </p>
             {translit?.[key] && (
               <p className="verse-tr">

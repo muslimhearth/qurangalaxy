@@ -4,6 +4,7 @@ import { BookmarkButton } from '../bookmarks/BookmarkButton';
 import type { Occurrences, VerseKey } from '../data/types';
 import { useGalaxyStore } from '../state/store';
 import { verseWords } from '../ui/helpers';
+import { VerseWords } from '../morph/VerseWords';
 import { MeaningsToggle, useMeanings } from '../ui/meanings';
 import { useVerseTexts } from '../ui/useVerseTexts';
 import { useVerseFocus } from '../ui/verseFocus';
@@ -228,12 +229,7 @@ export function SurahReader() {
                     <BookmarkButton target={{ verse: key }} className="verse-bookmark" />
                   </div>
                   <p className="verse-ar" dir="rtl" lang="ar">
-                    {verseWords(v.ar, gold.get(key) ?? []).map((word, i) => (
-                      <span key={i}>
-                        {i > 0 && ' '}
-                        {word.hit ? <mark>{word.text}</mark> : word.text}
-                      </span>
-                    ))}
+                    <VerseWords verseKey={key} words={verseWords(v.ar, gold.get(key) ?? [])} />
                   </p>
                   {showMeanings && <p className="verse-en">{v.en}</p>}
                 </li>
