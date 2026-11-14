@@ -89,6 +89,8 @@ test('a verse search result opens in a new tab', async ({ page, isMobile }) => {
   await page.goto('/');
   const box = page.getByRole('combobox');
   await expect(box).toBeVisible({ timeout: 15_000 });
+  // Phones show "Roots | Verses" only while the field has focus.
+  await press(box, isMobile);
   await press(page.getByRole('radio', { name: 'Verses' }), isMobile);
   await box.fill('mercy');
   await expect(page.getByRole('option').first()).toBeVisible({ timeout: 15_000 });
