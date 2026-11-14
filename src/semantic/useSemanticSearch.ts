@@ -1,5 +1,6 @@
 /** React hook: debounced semantic search that loads the model only when first needed. */
 import { useEffect, useState } from 'react';
+import { isArabicQuery } from '../search/arabicKey';
 import type { Match } from '../search/types';
 import type { VerseHit } from './aggregate';
 import type { ProgressListener } from './embedder';
@@ -17,7 +18,7 @@ export interface SemanticState<T = Match> {
   status: SemanticStatus;
   /** Model download progress, 0..1. */
   progress: number;
-  /** Matches for the current query, or null while none are ready (or weight is 0). */
+  /** Matches for the current query, or null while none are ready (or weight is 0); [] for Arabic queries. */
   matches: T[] | null;
   error?: string;
 }
@@ -25,12 +26,17 @@ export interface SemanticState<T = Match> {
 /** Runs one search on the service. */
 type Run<T> = (service: SemanticService, query: string) => Promise<T[]>;
 
+// One shared empty result, so memos that depend on `matches` stay stable for Arabic queries.
+const NO_MATCHES: never[] = [];
+
 const runRoots: Run<Match> = (s, q) => s.search(q);
 const runVerses: Run<VerseHit> = (s, q) => s.searchVerses(q);
 
 /**
  * Runs semantic search for `query` while `weight` > 0. The model starts loading the first
  * time `weight` leaves 0; typing never waits for it (searches run in a worker).
+ * Arabic queries are skipped: the model knows English only. They get [] at once, so nothing
+ * waits for meaning results and the exact ranking stays as it is.
  */
 export function useSemanticSearch(
   query: string,
@@ -58,8 +64,9 @@ function useSemanticQuery<T>(
   subscribe: (l: ProgressListener) => () => void,
   run: Run<T>,
 ): SemanticState<T> {
-  const enabled = weight > 0;
   const q = query.trim();
+  const arabic = isArabicQuery(q);
+  const enabled = weight > 0 && !arabic;
   const [status, setStatus] = useState<SemanticStatus>('off');
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string>();
@@ -98,6 +105,6 @@ function useSemanticQuery<T>(
     // getService and run are fixed for the life of the component (tests pass a fake).
   }, [enabled, q]);
 
-  const matches = enabled && result?.query === q ? result.matches : null;
+  const matches = weight > 0 && arabic ? NO_MATCHES : enabled && result?.query === q ? result.matches : null;
   return { status, progress, matches, error };
 }

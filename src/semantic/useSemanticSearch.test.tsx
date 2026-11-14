@@ -42,6 +42,28 @@ describe('useSemanticSearch', () => {
     expect(f.service.search).not.toHaveBeenCalled();
   });
 
+  it('skips Arabic queries: no model load, no search, and an empty result (nothing pending)', async () => {
+    const f = fakeService();
+    const { result, rerender } = renderHook(({ q }) => useSemanticSearch(q, 0.5, () => f.service, f.subscribe), {
+      initialProps: { q: 'ظهورها' },
+    });
+    await act(async () => vi.advanceTimersByTime(DEBOUNCE_MS * 2));
+    expect(f.service.warm).not.toHaveBeenCalled();
+    expect(f.service.search).not.toHaveBeenCalled();
+    expect(result.current.matches).toEqual([]);
+    // An English query then loads the model as usual.
+    rerender({ q: 'patience' });
+    expect(f.service.warm).toHaveBeenCalled();
+  });
+
+  it('skips Arabic queries in verse search too', async () => {
+    const f = fakeService();
+    const { result } = renderHook(() => useSemanticVerses('يسألونك', 1, () => f.service, f.subscribe));
+    await act(async () => vi.advanceTimersByTime(DEBOUNCE_MS * 2));
+    expect(f.service.searchVerses).not.toHaveBeenCalled();
+    expect(result.current.matches).toEqual([]);
+  });
+
   it('loads the model when the weight leaves 0 and reports progress', async () => {
     const f = fakeService();
     const { result, rerender } = renderHook(({ w }) => useSemanticSearch('', w, () => f.service, f.subscribe), {
