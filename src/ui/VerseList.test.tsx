@@ -4,9 +4,15 @@ import { VerseList } from './VerseList';
 import { fixtureOccurrences, fixtureVerses } from '../data/fixture';
 import type { Occurrence, Verses } from '../data/types';
 import { useVerseFocus } from './verseFocus';
+import { useGalaxyStore } from '../state/store';
+import { useMeanings } from './meanings';
 
 describe('VerseList', () => {
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    useMeanings.setState({ show: true });
+    useGalaxyStore.setState(useGalaxyStore.getInitialState());
+  });
 
   it('shows key, RTL Arabic with highlighted root words, and English', () => {
     const { container } = render(<VerseList occurrences={fixtureOccurrences[2]!} verses={fixtureVerses} />);
@@ -60,5 +66,28 @@ describe('VerseList', () => {
     // A verse that does not use the root changes nothing.
     act(() => useVerseFocus.getState().focusVerse('3:1'));
     expect(container.querySelectorAll('.flash')).toHaveLength(1);
+  });
+
+  it('a verse key opens that verse in the surah reader', () => {
+    render(<VerseList occurrences={fixtureOccurrences[2]!} verses={fixtureVerses} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Read 1:3 in its surah' }));
+    expect(useGalaxyStore.getState().reader).toEqual({ surah: 1, verse: 3 });
+  });
+
+  it('hides the English text when "Show meanings" is off', () => {
+    useMeanings.setState({ show: false });
+    render(<VerseList occurrences={fixtureOccurrences[2]!} verses={fixtureVerses} />);
+    expect(screen.queryByText('Fixture translation of 1:1')).toBeNull();
+  });
+
+  it('renders extra actions per verse in the verse head', () => {
+    render(
+      <VerseList
+        occurrences={fixtureOccurrences[2]!}
+        verses={fixtureVerses}
+        actions={(key) => <button type="button">Save {key}</button>}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Save 1:3' })).toBeInTheDocument();
   });
 });

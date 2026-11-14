@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import type { Occurrence, Verses } from '../data/types';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import type { Occurrence, VerseKey, Verses } from '../data/types';
+import { VerseKeyButton } from '../reader/VerseKeyButton';
 import { verseWords } from './helpers';
+import { useMeanings } from './meanings';
 import { useVerseFocus, type VerseFocusRequest } from './verseFocus';
 
 /** How long a focused verse stays highlighted, in ms. */
@@ -15,10 +17,13 @@ export interface VerseListProps {
   verses: Verses;
   /** Occurrences of a second root: its words get `<mark class="alt">` (shared-verse view). */
   others?: Occurrence[];
+  /** Extra buttons for one verse (e.g. a bookmark star), shown in the verse head after the key. */
+  actions?: (key: VerseKey) => ReactNode;
 }
 
 /** Verses that use a root: key, Arabic with the root's words highlighted, English below. */
-export function VerseList({ occurrences, verses, others }: VerseListProps) {
+export function VerseList({ occurrences, verses, others, actions }: VerseListProps) {
+  const showMeanings = useMeanings((s) => s.show);
   const [shown, setShown] = useState(VERSE_PAGE);
   const otherWords = useMemo(() => new Map(others?.map((o) => [o.v, o.w])), [others]);
   const visible = occurrences.slice(0, shown);
@@ -45,7 +50,10 @@ export function VerseList({ occurrences, verses, others }: VerseListProps) {
           if (!verse) return null;
           return (
             <li key={occ.v} className={flash?.key === occ.v ? 'verse flash' : 'verse'} data-verse={occ.v}>
-              <span className="verse-key">{occ.v}</span>
+              <div className="verse-head">
+                <VerseKeyButton verseKey={occ.v} />
+                {actions?.(occ.v)}
+              </div>
               <p className="verse-ar" dir="rtl" lang="ar">
                 {verseWords(verse.ar, occ.w, otherWords.get(occ.v)).map((word, i) => (
                   // Spaces between words are kept as text nodes so copy/paste stays natural.
@@ -55,7 +63,7 @@ export function VerseList({ occurrences, verses, others }: VerseListProps) {
                   </span>
                 ))}
               </p>
-              <p className="verse-en">{verse.en}</p>
+              {showMeanings && <p className="verse-en">{verse.en}</p>}
             </li>
           );
         })}
