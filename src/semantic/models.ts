@@ -80,4 +80,4 @@ export const MODELS: Record<string, ModelSpec> = {
 };
 
 /** The model the app ships with. */
-export const MODEL: ModelSpec = MODELS['Xenova/all-MiniLM-L6-v2']!;
+export const MODEL: ModelSpec = MODELS['Snowflake/snowflake-arctic-embed-s']!;

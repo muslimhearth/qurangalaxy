@@ -28,7 +28,7 @@ export interface Recipe {
 export const PLAIN: Recipe = { window: 0, self: 1, shortSelf: 1, shortWords: 12, lengthPower: 0 };
 
 /** The recipe behind the committed public/data/embeddings.* (chosen with `pnpm eval:semantic --sweep`). */
-export const SHIPPED: Recipe = PLAIN;
+export const SHIPPED: Recipe = { ...PLAIN, self: 0.7, shortSelf: 0.7, lengthPower: 0.1 };
 
 /** Short text for eval tables, e.g. "window 0.5 self 0.7/0.5 pow 0.3 <12w". */
 export function describeRecipe(r: Recipe): string {
