@@ -7,6 +7,7 @@ import { DEBOUNCE_MS } from '../semantic/useSemanticSearch';
 import { useGalaxyStore } from '../state/store';
 import { useVerseWeight } from '../verses/verseWeight';
 import { SearchBox } from './SearchBox';
+import { resetTabs, useTabsStore } from '../tabs/store';
 
 /** Fake meaning search: every phrase finds verse 1:3. */
 const fakeService = (): SemanticService => ({
@@ -40,6 +41,7 @@ describe('SearchBox verse search', () => {
     expect(screen.getByRole('combobox', { name: 'Search verses' })).toBeInTheDocument();
     fireEvent.change(input(), { target: { value: 'translation' } });
     expect(await screen.findAllByRole('option')).toHaveLength(4);
+    expect(screen.getByTestId('search-count')).toHaveTextContent('4 verses');
     expect(options()[0]).toHaveTextContent('1:1');
     expect(options()[0]!.querySelector('mark')).toHaveTextContent('translation');
   });
@@ -53,6 +55,18 @@ describe('SearchBox verse search', () => {
     expect(useGalaxyStore.getState().query).toBe('translation');
     expect(options()).toHaveLength(0);
     expect(useSearchHistory.getState().entries).toEqual([{ query: 'translation', mode: 'verses' }]);
+  });
+
+  it('Ctrl-click and middle-click open a verse result in a background tab', async () => {
+    resetTabs();
+    render(<SearchBox semanticService={fakeService} />);
+    act(() => useGalaxyStore.getState().setSearchMode('verses'));
+    fireEvent.change(input(), { target: { value: 'translation' } });
+    const found = await screen.findAllByRole('option');
+    fireEvent.click(found[1]!, { ctrlKey: true });
+    fireEvent(found[2]!, new MouseEvent('auxclick', { bubbles: true, button: 1 }));
+    expect(useTabsStore.getState().tabs.map((t) => t.openVerse)).toEqual([null, '1:2', '1:3']);
+    expect(useGalaxyStore.getState().openVerse).toBeNull();
   });
 
   it('adds meaning results from the semantic search', async () => {

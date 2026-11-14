@@ -18,12 +18,12 @@ export interface VerseIndex {
   tr: LangIndex;
 }
 
-/** A verse found by search; `source` tells which text matched best. */
+/** A verse found by search; `source` tells which text matched best ('ar': the Arabic text). */
 export interface VerseMatch {
   key: VerseKey;
   /** 0..1, higher is better. */
   score: number;
-  source: VerseLang | 'semantic';
+  source: VerseLang | 'ar' | 'semantic';
 }
 
 /** Share of the score that comes from the words in order (a phrase). */

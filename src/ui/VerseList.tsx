@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Occurrence, VerseKey, Verses } from '../data/types';
 import { VerseKeyButton } from '../reader/VerseKeyButton';
+import { BookmarkButton } from '../bookmarks/BookmarkButton';
 import { verseWords } from './helpers';
 import { useMeanings } from './meanings';
 import { useVerseFocus, type VerseFocusRequest } from './verseFocus';
@@ -52,6 +53,7 @@ export function VerseList({ occurrences, verses, others, actions }: VerseListPro
             <li key={occ.v} className={flash?.key === occ.v ? 'verse flash' : 'verse'} data-verse={occ.v}>
               <div className="verse-head">
                 <VerseKeyButton verseKey={occ.v} />
+                <BookmarkButton target={{ verse: occ.v }} className="verse-bookmark" />
                 {actions?.(occ.v)}
               </div>
               <p className="verse-ar" dir="rtl" lang="ar">

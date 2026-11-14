@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useGalaxyStore } from '../state/store';
+import { BookmarkButton } from '../bookmarks/BookmarkButton';
 import { ConnectedRoots } from './ConnectedRoots';
 import { RecenterButton } from './RecenterButton';
 import { LemmaChips } from './LemmaChips';
@@ -107,6 +108,7 @@ export function RootPanel({ hidden = false }: { hidden?: boolean }) {
           </p>
         </div>
         <div className="head-buttons">
+          <BookmarkButton target={{ root: root.id }} />
           {size !== 'max' && (
             <button
               type="button"

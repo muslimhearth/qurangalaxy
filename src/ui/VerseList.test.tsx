@@ -6,6 +6,7 @@ import type { Occurrence, Verses } from '../data/types';
 import { useVerseFocus } from './verseFocus';
 import { useGalaxyStore } from '../state/store';
 import { useMeanings } from './meanings';
+import { resetBookmarks, useBookmarks } from '../bookmarks/store';
 
 describe('VerseList', () => {
   afterEach(() => {
@@ -24,6 +25,14 @@ describe('VerseList', () => {
     expect(arabic).toHaveAttribute('lang', 'ar');
     const marks = [...arabic.querySelectorAll('mark')].map((m) => m.textContent);
     expect(marks).toEqual(['ٱلرَّحْمَٰنِ', 'ٱلرَّحِيمِ']);
+  });
+
+  it('each verse row has a bookmark toggle', () => {
+    localStorage.clear();
+    resetBookmarks();
+    render(<VerseList occurrences={fixtureOccurrences[2]!} verses={fixtureVerses} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Bookmark verse 1:3' }));
+    expect(useBookmarks.getState().has({ verse: '1:3' })).toBe(true);
   });
 
   it('marks the words of a second root with class "alt"', () => {

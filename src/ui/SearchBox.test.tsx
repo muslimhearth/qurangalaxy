@@ -5,6 +5,7 @@ import { DEBOUNCE_MS } from '../semantic/useSemanticSearch';
 import { SearchBox } from './SearchBox';
 import { useGalaxyStore } from '../state/store';
 import { fixtureGalaxy } from '../data/fixture';
+import { useSearchHistory } from '../history/history';
 
 describe('SearchBox', () => {
   beforeEach(() => {
@@ -15,26 +16,67 @@ describe('SearchBox', () => {
 
   const input = () => screen.getByRole('combobox', { name: /search roots/i });
 
-  it('lets Escape through to the window when the query is empty', () => {
-    render(<SearchBox />);
-    let reachedWindow = false;
-    const onKey = () => (reachedWindow = true);
+  /** Presses Escape on `target`; true when the key reached a window listener (e.g. the root panel's). */
+  const escapeReachesWindow = (target: Element) => {
+    let reached = false;
+    const onKey = () => (reached = true);
     window.addEventListener('keydown', onKey);
-    fireEvent.keyDown(input(), { key: 'Escape' });
+    fireEvent.keyDown(target, { key: 'Escape' });
     window.removeEventListener('keydown', onKey);
-    expect(reachedWindow).toBe(true);
+    return reached;
+  };
+
+  it('first Escape blurs the field, keeps the text and closes the list; the next one clears it', () => {
+    render(<SearchBox />);
+    input().focus();
+    fireEvent.change(input(), { target: { value: 'rhm' } });
+    expect(screen.getAllByRole('option')).toHaveLength(1);
+    expect(escapeReachesWindow(input())).toBe(false);
+    expect(input()).not.toHaveFocus();
+    expect(useGalaxyStore.getState().query).toBe('rhm');
+    expect(screen.queryByRole('option')).toBeNull();
+    // Field not focused, text present: Escape clears the text, and the root panel stays open.
+    expect(escapeReachesWindow(document.body)).toBe(false);
+    expect(useGalaxyStore.getState().query).toBe('');
+    // Nothing left to clear: Escape goes on to the panels.
+    expect(escapeReachesWindow(document.body)).toBe(true);
   });
 
-  it('keeps Escape in the box while it clears a query', () => {
+  it("stops the browser's own Escape, which clears a search field", () => {
     render(<SearchBox />);
+    input().focus();
     fireEvent.change(input(), { target: { value: 'rhm' } });
-    let reachedWindow = false;
-    const onKey = () => (reachedWindow = true);
-    window.addEventListener('keydown', onKey);
-    fireEvent.keyDown(input(), { key: 'Escape' });
-    window.removeEventListener('keydown', onKey);
-    expect(useGalaxyStore.getState().query).toBe('');
-    expect(reachedWindow).toBe(false);
+    // fireEvent returns false when a handler called preventDefault.
+    expect(fireEvent.keyDown(input(), { key: 'Escape' })).toBe(false);
+  });
+
+  it('closes the recent searches when focus moves to the gear', () => {
+    useSearchHistory.setState({ saving: true, entries: [{ query: 'rhm', mode: 'roots' }] });
+    render(<SearchBox />);
+    fireEvent.focus(input());
+    expect(screen.getByText('Recent searches')).toBeInTheDocument();
+    const gear = screen.getByRole('button', { name: /search settings/i });
+    fireEvent.blur(input(), { relatedTarget: gear });
+    expect(screen.queryByText('Recent searches')).toBeNull();
+  });
+
+  it('keeps Escape from the root panel while the empty field has focus', () => {
+    render(<SearchBox />);
+    input().focus();
+    expect(escapeReachesWindow(input())).toBe(false);
+    expect(input()).not.toHaveFocus();
+  });
+
+  it('leaves Escape in other fields alone', () => {
+    render(
+      <>
+        <input aria-label="other" />
+        <SearchBox />
+      </>,
+    );
+    fireEvent.change(input(), { target: { value: 'rhm' } });
+    escapeReachesWindow(screen.getByLabelText('other'));
+    expect(useGalaxyStore.getState().query).toBe('rhm');
   });
 
   it('shows matching roots as you type', () => {
@@ -47,13 +89,68 @@ describe('SearchBox', () => {
     expect(options[0]).toHaveTextContent('r-ḥ-m');
   });
 
-  it('selects a result on click and clears the query', () => {
+  it('selects a result on click, clears the query and leaves the field', () => {
     render(<SearchBox />);
+    input().focus();
     fireEvent.change(input(), { target: { value: 'rhm' } });
     fireEvent.click(screen.getByRole('option'));
     expect(useGalaxyStore.getState().selectedId).toBe(2);
     expect(useGalaxyStore.getState().query).toBe('');
     expect(screen.queryByRole('option')).toBeNull();
+    // No list or history comes back over the galaxy.
+    expect(input()).not.toHaveFocus();
+  });
+
+  it('shows the number of matching roots at the end of the field', () => {
+    render(<SearchBox />);
+    expect(screen.queryByTestId('search-count')).toBeNull();
+    fireEvent.change(input(), { target: { value: 'r' } });
+    expect(screen.getByTestId('search-count')).toHaveTextContent('2 roots');
+    fireEvent.change(input(), { target: { value: 'rhm' } });
+    expect(screen.getByTestId('search-count')).toHaveTextContent('1 root');
+  });
+
+  describe('with more than 8 matching roots', () => {
+    // Test data: 12 roots that all mean "light".
+    const many = {
+      ...fixtureGalaxy,
+      roots: Array.from({ length: 12 }, (_, id) => ({
+        ...fixtureGalaxy.roots[0]!,
+        id,
+        tr: `l-${id}`,
+        ar: `ن${id}`,
+        en: ['light'],
+        lemmas: [],
+        count: 100 - id,
+      })),
+      edges: [],
+    };
+    beforeEach(() => useGalaxyStore.getState().setGalaxy(many));
+
+    it('shows "8 of 12 roots" and a "Show all" row that expands the list', () => {
+      render(<SearchBox />);
+      fireEvent.change(input(), { target: { value: 'light' } });
+      expect(screen.getByTestId('search-count')).toHaveTextContent('8 of 12 roots');
+      const more = screen.getByRole('option', { name: 'Show all 12 roots' });
+      expect(screen.getAllByRole('option')).toHaveLength(9);
+      fireEvent.click(more);
+      expect(screen.getAllByRole('option')).toHaveLength(12);
+      expect(screen.getByTestId('search-count')).toHaveTextContent('12 roots');
+      expect(useGalaxyStore.getState().selectedId).toBeNull();
+      // A new query starts with the short list again.
+      fireEvent.change(input(), { target: { value: 'ligh' } });
+      expect(screen.getAllByRole('option')).toHaveLength(9);
+    });
+
+    it('expands with Enter on the "Show all" row', () => {
+      render(<SearchBox />);
+      fireEvent.change(input(), { target: { value: 'light' } });
+      fireEvent.keyDown(input(), { key: 'ArrowUp' });
+      expect(screen.getByRole('option', { name: 'Show all 12 roots' })).toHaveAttribute('aria-selected', 'true');
+      fireEvent.keyDown(input(), { key: 'Enter' });
+      expect(screen.getAllByRole('option')).toHaveLength(12);
+      expect(useGalaxyStore.getState().selectedId).toBeNull();
+    });
   });
 
   it('moves through results with arrow keys and selects with Enter', () => {
@@ -63,13 +160,6 @@ describe('SearchBox', () => {
     expect(screen.getAllByRole('option')[1]).toHaveAttribute('aria-selected', 'true');
     fireEvent.keyDown(input(), { key: 'Enter' });
     expect(useGalaxyStore.getState().selectedId).toBe(2);
-  });
-
-  it('clears the query with Escape', () => {
-    render(<SearchBox />);
-    fireEvent.change(input(), { target: { value: 'rhm' } });
-    fireEvent.keyDown(input(), { key: 'Escape' });
-    expect(useGalaxyStore.getState().query).toBe('');
   });
 
   it('says when nothing matches', () => {
@@ -110,13 +200,13 @@ describe('SearchBox', () => {
       window.history.replaceState(null, '', '/');
     });
 
-    /** Opens the search-mode popover (if closed) and returns its slider. */
-    const slider = () => {
-      if (!screen.queryByRole('slider')) fireEvent.click(screen.getByRole('button', { name: /search mode/i }));
-      return screen.getByRole('slider', { name: /search mode/i });
+    /** Picks a match mode in the settings popover (opens it first). */
+    const pickMode = (name: 'Exact' | 'Hybrid' | 'Meaning') => {
+      if (!screen.queryByRole('dialog')) fireEvent.click(screen.getByRole('button', { name: /search settings/i }));
+      fireEvent.click(screen.getByRole('radio', { name }));
     };
 
-    it('does not touch the model while the slider is at exact', async () => {
+    it('does not touch the model in exact mode', async () => {
       const service = fakeService();
       render(<SearchBox semanticService={() => service} />);
       fireEvent.change(input(), { target: { value: 'praise' } });
@@ -128,7 +218,7 @@ describe('SearchBox', () => {
     it('finds roots by meaning and shows the matching verses', async () => {
       const service = fakeService();
       render(<SearchBox semanticService={() => service} />);
-      fireEvent.change(slider(), { target: { value: '1' } });
+      pickMode('Meaning');
       fireEvent.change(input(), { target: { value: 'praise' } });
       await act(async () => vi.advanceTimersByTime(DEBOUNCE_MS));
       const option = screen.getByRole('option');
@@ -142,7 +232,7 @@ describe('SearchBox', () => {
     it('keeps exact results while the meaning search runs', async () => {
       const service = fakeService();
       render(<SearchBox semanticService={() => service} />);
-      fireEvent.change(slider(), { target: { value: '0.5' } });
+      pickMode('Hybrid');
       fireEvent.change(input(), { target: { value: 'rhm' } });
       expect(screen.getByRole('option')).toHaveTextContent('رحم');
       await act(async () => vi.advanceTimersByTime(DEBOUNCE_MS));

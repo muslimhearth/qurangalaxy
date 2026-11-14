@@ -9,6 +9,7 @@ import { useVerseFocus } from './verseFocus';
 import { connectTabs } from '../tabs/connect';
 import { resetTabs, useTabsStore } from '../tabs/store';
 import { activeTab, tabLabel } from '../tabs/model';
+import { resetBookmarks, useBookmarks } from '../bookmarks/store';
 
 describe('RootPanel', () => {
   beforeEach(() => {
@@ -22,6 +23,15 @@ describe('RootPanel', () => {
   afterEach(() => {
     cleanup();
     localStorage.clear();
+  });
+
+  it('bookmarks the root from the header', () => {
+    localStorage.clear();
+    resetBookmarks();
+    useGalaxyStore.getState().select(2);
+    render(<RootPanel />);
+    fireEvent.click(screen.getByRole('button', { name: 'Bookmark رحم' }));
+    expect(useBookmarks.getState().has({ root: 2 })).toBe(true);
   });
 
   it('renders nothing without a selection', () => {

@@ -1,4 +1,6 @@
 import type { Verse, VerseKey } from '../data/types';
+import { currentWordForms } from '../search/wordFormsLoad';
+import { markedArabic } from '../verses/arabic';
 import { markedSnippet, type SnippetPart } from '../verses/highlight';
 import type { VerseLang } from '../verses/terms';
 import { plainTranslit } from '../verses/translit';
@@ -7,6 +9,8 @@ import { plainTranslit } from '../verses/translit';
 const EN_CHARS = 150;
 /** Characters of transliteration shown when it matched. */
 const TR_CHARS = 90;
+/** Arabic words shown before a match starts the line later (the Arabic line does not wrap). */
+const AR_LEAD = 4;
 
 /** Snippet text with the matched words in <mark>. */
 function Marked({ parts }: { parts: SnippetPart[] }) {
@@ -21,10 +25,10 @@ export interface VerseOptionProps {
   translit?: string;
   query: string;
   /** Which text matched; semantic results mark nothing. */
-  source: VerseLang | 'semantic';
+  source: VerseLang | 'ar' | 'semantic';
 }
 
-/** Body of one verse search result: key, English (matches marked), matched transliteration, Arabic. */
+/** Body of one verse search result: key, English (matches marked), matched transliteration, Arabic (matches marked). */
 export function VerseOption({ verseKey, verse, translit, query, source }: VerseOptionProps) {
   const highlightQuery = source === 'semantic' ? '' : query;
   return (
@@ -43,7 +47,7 @@ export function VerseOption({ verseKey, verse, translit, query, source }: VerseO
         )}
         {verse && (
           <span className="verse-hit-ar" lang="ar" dir="rtl">
-            {verse.ar}
+            <Marked parts={markedArabic(verse.ar, source === 'ar' ? query : '', currentWordForms(), AR_LEAD)} />
           </span>
         )}
       </span>

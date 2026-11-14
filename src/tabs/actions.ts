@@ -1,11 +1,12 @@
 import { useTabsStore } from './store';
+import { targetView, toTarget, type TargetLike } from './target';
 
 /**
- * Opens a root in a new tab. `activate: false` keeps the current tab in front
- * (mouse: middle-click, Ctrl/Cmd-click); `true` switches to it (touch long-press).
+ * Opens a root or a verse in a new tab (a bare number is a root id). `activate: false` keeps
+ * the current tab in front (mouse: middle-click, Ctrl/Cmd-click); `true` switches to it (touch long-press).
  */
-export function openInNewTab(rootId: number, activate = false): void {
-  useTabsStore.getState().open({ selectedId: rootId }, activate);
+export function openInNewTab(target: TargetLike, activate = false): void {
+  useTabsStore.getState().open(targetView(toTarget(target)), activate);
 }
 
 /** Opens an empty tab, switches to it and puts the cursor in the search field. */

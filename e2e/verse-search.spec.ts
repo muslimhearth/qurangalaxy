@@ -11,14 +11,17 @@ async function verseMode(page: Page, isMobile: boolean) {
   await page.goto('/');
   const search = page.getByRole('combobox');
   await expect(search).toBeVisible({ timeout: 15_000 });
+  // Phones show "Roots | Verses" only while the field has focus.
+  await press(search, isMobile);
   await press(page.getByRole('radio', { name: 'Verses' }), isMobile);
   await expect(page.getByRole('combobox', { name: 'Search verses' })).toBeVisible();
   // Exact words only: keeps the test fast and free of the 36 MB model download.
-  await press(page.getByRole('button', { name: /search mode/i }), isMobile);
-  const slider = page.getByRole('slider', { name: /search mode/i });
-  await slider.fill('0');
-  await expect(slider).toHaveAttribute('aria-valuetext', 'Exact only');
-  await press(page.getByRole('button', { name: /search mode/i }), isMobile);
+  const gear = page.getByRole('button', { name: /search settings/i });
+  await press(gear, isMobile);
+  const exact = page.getByRole('radio', { name: 'Exact' });
+  await press(exact, isMobile);
+  await expect(exact).toHaveAttribute('aria-checked', 'true');
+  await press(gear, isMobile);
   return search;
 }
 

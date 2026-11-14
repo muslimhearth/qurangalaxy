@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { fixtureGalaxy } from '../data/fixture';
-import { blendMatches } from './blend';
+import { blendMatches, meaningWeight } from './blend';
 import type { Match } from './types';
 
 const roots = fixtureGalaxy.roots;
@@ -42,5 +42,13 @@ describe('blendMatches', () => {
     const b: Match = { id: 1, score: 1, reason: { kind: 'semantic', text: 'x' } };
     // At w = 0.5 both score 0.5; root 1 (أله) has more words than root 0.
     expect(blendMatches(roots, [a], [b], 0.5, 1).map((m) => m.id)).toEqual([1]);
+  });
+});
+
+describe('meaningWeight', () => {
+  it('keeps the slider weight for Latin queries and gives 0 for Arabic ones', () => {
+    expect(meaningWeight('patience', 0.7)).toBe(0.7);
+    expect(meaningWeight('ظهورها', 0.7)).toBe(0);
+    expect(meaningWeight('', 0.7)).toBe(0.7);
   });
 });
