@@ -20,7 +20,7 @@ const EXACT_POOL = 100;
 
 /** What the verse result list needs. */
 export interface VerseResults {
-  /** False until verses.json (and the transliteration, or its failure) has loaded. */
+  /** False until verses.json (and, for non-Arabic queries, the transliteration or its failure) has loaded. */
   ready: boolean;
   matches: VerseMatch[];
   verses: Verses | null;
@@ -43,17 +43,23 @@ export function useVerseResults(
 ): VerseResults {
   const verses = useVerseTexts(enabled);
   const { translit, failed } = useTranslit(enabled);
-  const ready = verses !== null && (translit !== null || failed);
-  const index = useMemo(() => (ready ? buildVerseIndex(verses, translit ?? {}) : null), [ready, verses, translit]);
+  const textsReady = verses !== null && (translit !== null || failed);
+  const index = useMemo(
+    () => (textsReady ? buildVerseIndex(verses, translit ?? {}) : null),
+    [textsReady, verses, translit],
+  );
 
   // Exact search reads every verse; let typing stay smooth while it catches up.
   const q = useDeferredValue(enabled ? query.trim() : '');
+  // Arabic queries search the Arabic text only, so they need no transliteration.
   const arabic = isArabicQuery(q);
+  const ready = arabic ? verses !== null : textsReady;
   // Root forms of an Arabic word come from the word-form index (loaded on the first Arabic query).
   const forms = useWordForms(enabled && isArabicQuery(query));
   const exact = useMemo(() => {
-    if (!index || !q) return [];
-    return arabic ? arabicVerseMatches(arabicIndexFor(verses!), q, forms, EXACT_POOL) : exactVerseMatches(index, q, EXACT_POOL);
+    if (!q) return [];
+    if (arabic) return verses ? arabicVerseMatches(arabicIndexFor(verses), q, forms, EXACT_POOL) : [];
+    return index ? exactVerseMatches(index, q, EXACT_POOL) : [];
   }, [index, verses, q, arabic, forms]);
   const semantic = useSemanticVerses(enabled ? query : '', enabled ? weight : 0, getService);
   // The slider keeps its value; Arabic queries just use exact search alone.
