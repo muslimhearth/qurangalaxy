@@ -80,7 +80,9 @@ function Shared({ root, other, onClose }: { root: Root; other: Root; onClose: ()
   const shared = useSharedVerses(root.id, other.id);
   const ref = useRef<HTMLElement>(null);
   // Bring the list into view: on phones the chips can fill the sheet.
-  useEffect(() => ref.current?.scrollIntoView?.({ block: 'nearest' }), [other.id]);
+  useEffect(() => {
+    ref.current?.scrollIntoView?.({ block: 'nearest' });
+  }, [other.id]);
   const label = `Verses with ${root.ar} and ${other.ar}`;
   return (
     <section className="shared-verses" aria-label={label} ref={ref}>

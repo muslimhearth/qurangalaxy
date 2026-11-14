@@ -68,26 +68,28 @@ test('the 20 strongest links form a readable ring beside the panel', async ({ pa
   for (const [i, a] of boxes.entries()) {
     for (const b of boxes.slice(i + 1)) expect(overlap(a, b), `${a.text} overlaps ${b.text}`).toBe(false);
   }
-  // Closer means more shared verses: the strongest link sits nearer than the weakest.
+  // Closer means a higher link score: the strongest link sits nearer than the weakest.
   expect(distance(all.get(ring[0]!)!, all.get(RAHMA)!)).toBeLessThan(distance(all.get(ring[19]!)!, all.get(RAHMA)!));
   await page.screenshot({ path: `test-results/${info.project.name}-focus-ring.png` });
 });
 
 test('closing the panel sends the ring stars back to their places', async ({ page }) => {
   test.setTimeout(90_000);
-  // قول is in the ring of رحم; يوم is not and never moves. Both are frequent roots, so their
-  // labels stay in the layer after closing. The distance ratio does not depend on the zoom.
-  const moving = 'قول';
+  // عمل is in the ring of أمن (links ranked by score); يوم is not and never moves. All three are
+  // frequent roots, so their labels stay in the layer after closing. The distance ratio does not
+  // depend on the zoom.
+  const center = 'أمن';
+  const moving = 'عمل';
   const still = 'يوم';
-  await page.goto('/#/root/' + encodeURIComponent(RAHMA));
+  await page.goto('/#/root/' + encodeURIComponent(center));
   const vp = page.viewportSize()!;
-  // In the ring: قول sits near رحم.
+  // In the ring: عمل sits near أمن.
   await expect
     .poll(
       async () => {
         const all = await labels(page);
         const a = all.get(moving);
-        const c = all.get(RAHMA);
+        const c = all.get(center);
         return a && c ? distance(a, c) : Infinity;
       },
       { timeout: 45_000 },
@@ -96,13 +98,13 @@ test('closing the panel sends the ring stars back to their places', async ({ pag
 
   await page.getByRole('button', { name: 'Close root details' }).click();
   await expect(page.getByLabel('Root details', { exact: true })).toHaveCount(0);
-  // Back home, قول is about as far from رحم as يوم is (ratio about 0.8); in the ring it was below 0.2.
+  // Back home, عمل is about as far from أمن as يوم is (ratio about 1.2); in the ring it is far below.
   await expect
     .poll(
       async () => {
         if ((await page.locator('body').getAttribute('data-focus')) !== 'still') return 0;
         const all = await labels(page);
-        const [a, b, c] = [all.get(moving), all.get(still), all.get(RAHMA)];
+        const [a, b, c] = [all.get(moving), all.get(still), all.get(center)];
         return a && b && c ? distance(a, c) / distance(b, c) : 0;
       },
       { timeout: 45_000 },

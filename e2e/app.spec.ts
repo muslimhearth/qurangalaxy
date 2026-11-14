@@ -170,3 +170,21 @@ test('connected roots show the strongest first, the rest on demand', async ({ pa
   await page.getByRole('button', { name: /^Show all [\d,]+ connected roots$/ }).click();
   expect(await list.count()).toBeGreaterThan(12);
 });
+
+test('a connected root count shows the verses both roots share', async ({ page, isMobile }) => {
+  await page.goto('/#/root/' + encodeURIComponent('وصي'));
+  // Ranked by score: سدس (one-sixth) leads, from the inheritance verses.
+  const first = page.getByRole('list', { name: 'Connected roots' }).getByRole('listitem').first();
+  await expect(first).toContainText('سدس');
+  const count = first.getByRole('button', { name: /^Show the \d+ verses shared with/ });
+  const box = (await count.boundingBox())!;
+  if (isMobile) {
+    // Touch screens get a 44 px tap target.
+    expect(box.height).toBeGreaterThanOrEqual(44);
+    await count.tap();
+  } else await count.click();
+  const shared = page.getByRole('region', { name: 'Verses with وصي and سدس' });
+  await expect(shared.locator('.verse')).toHaveCount(2);
+  await expect(shared.locator('.verse-ar mark.alt').first()).toBeVisible();
+  await expect(shared.locator('.verse-ar mark:not(.alt)').first()).toBeVisible();
+});
