@@ -19,6 +19,13 @@ describe('markedSnippet', () => {
     expect(hits(markedSnippet('Walillahi ma fee alssamawati', 'samawati', 'tr', 200))).toEqual(['alssamawati']);
   });
 
+  it('marks typo matches only when typos are on', () => {
+    const tr = 'Rabbana wahab lana min ladunka rahmatan';
+    expect(hits(markedSnippet(tr, 'rahmah', 'tr', 200))).toEqual([]);
+    expect(hits(markedSnippet(tr, 'rahmah', 'tr', 200, true))).toEqual(['rahmatan']);
+    expect(hits(markedSnippet('seek help through patience', 'patiance', 'en', 200, true))).toEqual(['patience']);
+  });
+
   it('cuts long text around the first hit, at word edges', () => {
     const long = `${'word '.repeat(40)}patience ${'more '.repeat(40)}`.trim();
     const segs = markedSnippet(long, 'patience', 'en', 60);
