@@ -10,6 +10,7 @@ import { useSemanticSearch } from '../semantic/useSemanticSearch';
 import { getWorkerService } from '../semantic/workerService';
 import { parseVerseQuery } from '../verses/verseKey';
 import { useVerseWeight } from '../verses/verseWeight';
+import { BookmarksButton } from '../bookmarks/BookmarksButton';
 import { HistoryList } from './HistoryList';
 import { ModeSwitch } from './ModeSwitch';
 import { SearchSettings } from './SearchSettings';
@@ -265,6 +266,7 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
           }}
         />
         <SearchSettings {...settings} />
+        <BookmarksButton />
       </div>
       {open && (
         <ul

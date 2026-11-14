@@ -3,6 +3,7 @@ import { loadOccurrences } from '../data/load';
 import type { Occurrences } from '../data/types';
 import { useGalaxyStore } from '../state/store';
 import { rootsInVerse } from '../verses/verseRoots';
+import { BookmarkButton } from '../bookmarks/BookmarkButton';
 import { useNewTabGesture } from '../tabs/useNewTabGesture';
 import { TranslitText } from './TranslitText';
 import { useTranslit } from './useTranslit';
@@ -78,6 +79,7 @@ export function VersePanel() {
           </p>
         </div>
         <div className="head-buttons">
+          <BookmarkButton target={{ verse: key }} />
           <button
             type="button"
             className="sheet-size"

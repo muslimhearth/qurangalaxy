@@ -6,6 +6,7 @@ import { useGalaxyStore } from '../state/store';
 import { resetLoadCache } from '../data/load';
 import { fixtureGalaxy } from '../data/fixture';
 import { useVerseFocus } from './verseFocus';
+import { resetBookmarks, useBookmarks } from '../bookmarks/store';
 
 describe('RootPanel', () => {
   beforeEach(() => {
@@ -16,6 +17,15 @@ describe('RootPanel', () => {
     useGalaxyStore.getState().setGalaxy(fixtureGalaxy);
   });
   afterEach(cleanup);
+
+  it('bookmarks the root from the header', () => {
+    localStorage.clear();
+    resetBookmarks();
+    useGalaxyStore.getState().select(2);
+    render(<RootPanel />);
+    fireEvent.click(screen.getByRole('button', { name: 'Bookmark رحم' }));
+    expect(useBookmarks.getState().has({ root: 2 })).toBe(true);
+  });
 
   it('renders nothing without a selection', () => {
     const { container } = render(<RootPanel />);

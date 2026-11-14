@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Occurrence, Verses } from '../data/types';
+import { BookmarkButton } from '../bookmarks/BookmarkButton';
 import { verseWords } from './helpers';
 import { useVerseFocus, type VerseFocusRequest } from './verseFocus';
 
@@ -46,6 +47,7 @@ export function VerseList({ occurrences, verses, others }: VerseListProps) {
           return (
             <li key={occ.v} className={flash?.key === occ.v ? 'verse flash' : 'verse'} data-verse={occ.v}>
               <span className="verse-key">{occ.v}</span>
+              <BookmarkButton target={{ verse: occ.v }} className="verse-bookmark" />
               <p className="verse-ar" dir="rtl" lang="ar">
                 {verseWords(verse.ar, occ.w, otherWords.get(occ.v)).map((word, i) => (
                   // Spaces between words are kept as text nodes so copy/paste stays natural.
