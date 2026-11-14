@@ -41,6 +41,10 @@ const RECIPES: Recipe[] = [
   { ...PLAIN, self: 0.8, shortSelf: 0.5, lengthPower: 0.1 },
   { ...PLAIN, self: 0.7, shortSelf: 0.5, lengthPower: 0.1 },
   { ...PLAIN, self: 0.7, shortSelf: 0.5, lengthPower: 0.2 },
+  { ...PLAIN, self: 0.75, shortSelf: 0.75 },
+  { ...PLAIN, self: 0.7, shortSelf: 0.7, lengthPower: 0.1 },
+  { ...PLAIN, self: 0.7, shortSelf: 0.7, lengthPower: 0.2 },
+  { ...PLAIN, self: 0.8, shortSelf: 0.6, lengthPower: 0.1 },
   SHIPPED,
 ];
 
