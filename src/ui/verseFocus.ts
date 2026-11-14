@@ -8,7 +8,7 @@ export interface VerseFocusRequest {
   tick: number;
 }
 
-/** Verse focus requests from other views (e.g. a tap on the Mushaf mosaic) to the verse list. */
+/** Verse focus requests from other views (e.g. a verse search result) to the verse list. */
 export interface VerseFocusState {
   request: VerseFocusRequest | null;
   /** Asks the verse list to show, scroll to and flash verse `key`. */

@@ -42,7 +42,7 @@ export function RootPanel() {
   const resize = (next: SheetSize) => root && setSized({ id: root.id, size: next });
   const collapsed = size === 'min';
 
-  // A verse focus request (e.g. a tap on the Mushaf mosaic) opens a minimized sheet.
+  // A verse focus request (e.g. a tap on a verse search result) opens a minimized sheet.
   const focus = useVerseFocus((s) => s.request);
   const seenFocus = useRef(focus?.tick ?? 0);
   useEffect(() => {

@@ -9,8 +9,7 @@ export function RecenterButton() {
   const root = useGalaxyStore((s) => (s.selectedId === null ? undefined : s.galaxy?.roots[s.selectedId]));
   const away = useGalaxyStore((s) => s.awayFromSelection);
   const recenter = useGalaxyStore((s) => s.recenter);
-  const galaxyLayout = useGalaxyStore((s) => s.layout === 'galaxy');
-  if (!root || !away || !galaxyLayout) return null;
+  if (!root || !away) return null;
   return (
     <button type="button" className="recenter panel" aria-label={`Back to ${root.ar}`} onClick={recenter}>
       <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">

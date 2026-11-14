@@ -32,17 +32,6 @@ describe('useHashSync', () => {
     expect(window.location.hash).toBe('');
   });
 
-  it('reads and writes the Mushaf layout in the hash', () => {
-    window.history.replaceState(null, '', '/#/mushaf' + rhm.slice(1));
-    useGalaxyStore.getState().setGalaxy(fixtureGalaxy);
-    renderHook(() => useHashSync());
-    expect(useGalaxyStore.getState().layout).toBe('mushaf');
-    expect(useGalaxyStore.getState().selectedId).toBe(2);
-    act(() => useGalaxyStore.getState().setLayout('galaxy'));
-    expect(window.location.hash).toBe(rhm);
-    act(() => useGalaxyStore.getState().setLayout('mushaf'));
-    expect(window.location.hash).toBe('#/mushaf' + rhm.slice(1));
-  });
 
   it('follows back/forward navigation', () => {
     useGalaxyStore.getState().setGalaxy(fixtureGalaxy);
