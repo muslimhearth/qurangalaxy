@@ -16,12 +16,15 @@ test('roots: an inflected Quran word finds its root, with the Quran word shown',
 test('verses: Arabic words search the Arabic text and mark the matched words', async ({ page, isMobile }, info) => {
   await page.goto('/');
   await expect(page.getByRole('combobox')).toBeVisible({ timeout: 15_000 });
+  // Phones show "Roots | Verses" only while the field has focus.
+  await press(page.getByRole('combobox'), isMobile);
   await press(page.getByRole('radio', { name: 'Verses' }), isMobile);
   const search = page.getByRole('combobox', { name: 'Search verses' });
   // Exact only: keeps the test free of the 36 MB model download (unit tests cover the hybrid mix).
-  await press(page.getByRole('button', { name: /search mode/i }), isMobile);
-  await page.getByRole('slider', { name: /search mode/i }).fill('0');
-  await press(page.getByRole('button', { name: /search mode/i }), isMobile);
+  const gear = page.getByRole('button', { name: /search settings/i });
+  await press(gear, isMobile);
+  await press(page.getByRole('radio', { name: 'Exact' }), isMobile);
+  await press(gear, isMobile);
   await search.fill('يسألونك');
   const hit = page.getByRole('option').filter({ hasText: '2:189' });
   await expect(hit).toBeVisible({ timeout: 15_000 });
