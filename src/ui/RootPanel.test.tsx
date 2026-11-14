@@ -88,7 +88,7 @@ describe('RootPanel', () => {
     useGalaxyStore.getState().setGalaxy({
       ...fixtureGalaxy,
       roots: [...fixtureGalaxy.roots, ...extra],
-      edges: [...fixtureGalaxy.edges, ...extra.map((r) => ({ source: 2, target: r.id, weight: 1 }))],
+      edges: [...fixtureGalaxy.edges, ...extra.map((r) => ({ source: 2, target: r.id, weight: 1, score: 1 }))],
     });
     useGalaxyStore.getState().select(2);
     render(<RootPanel />);
@@ -104,8 +104,8 @@ describe('RootPanel', () => {
   it('shows the full list again collapsed for the next root', () => {
     const many = Array.from({ length: 20 }, (_, i) => ({ ...fixtureGalaxy.roots[3]!, id: 6 + i, ar: `ج${i}` }));
     const edges = many.flatMap((r) => [
-      { source: 1, target: r.id, weight: 1 },
-      { source: 2, target: r.id, weight: 1 },
+      { source: 1, target: r.id, weight: 1, score: 1 },
+      { source: 2, target: r.id, weight: 1, score: 1 },
     ]);
     useGalaxyStore.getState().setGalaxy({ ...fixtureGalaxy, roots: [...fixtureGalaxy.roots, ...many], edges: [...fixtureGalaxy.edges, ...edges] });
     useGalaxyStore.getState().select(2);

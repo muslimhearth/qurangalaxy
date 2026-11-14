@@ -3,7 +3,7 @@ import { aggregateRoots, type RootStats } from './aggregate';
 import { findMismatches, type Mismatch } from './align';
 import { emptyCache, type WikiCache } from './glosses/cache';
 import { buildGlosses, glossStats } from './glosses/glosses';
-import { cooccurrenceEdges } from './edges';
+import { buildEdges } from './edges';
 import { layoutGalaxy } from './layout';
 import { parseMorphology, type RootWord } from './morphology';
 import { parseTanzil, stripBasmala } from './tanzil';
@@ -64,7 +64,9 @@ export function buildDataset(
   const occurrences = aggregate.occurrences.map((list) =>
     list.map((o) => ({ v: o.v, w: o.w.map((n) => toTextPosition(o.v, n)) })),
   );
-  const edges = cooccurrenceEdges(occurrences, EDGES_PER_ROOT);
+  // The layout keeps the raw-weight edges, so star positions do not move; galaxy.json gets the
+  // links ranked by score (see buildEdges).
+  const edges = buildEdges(occurrences, EDGES_PER_ROOT, Object.keys(verses).length);
   const glosses = buildGlosses({
     roots,
     wiki,
@@ -72,7 +74,7 @@ export function buildDataset(
     lemmaTexts: lemmaVerseTexts(roots, morph.rootWords, verses),
     allTexts: Object.values(verses).map((v) => v.en),
   });
-  const layout = layoutGalaxy({ counts: roots.map((r) => r.count), edges });
+  const layout = layoutGalaxy({ counts: roots.map((r) => r.count), edges: edges.layout });
 
   const galaxy: Galaxy = {
     version: 1,
@@ -87,7 +89,7 @@ export function buildDataset(
       pos: layout.positions[r.id]!,
       cluster: layout.clusters[r.id]!,
     })),
-    edges,
+    edges: edges.links,
     clusterCount: layout.clusterCount,
   };
 

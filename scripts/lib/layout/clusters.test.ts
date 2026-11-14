@@ -6,7 +6,7 @@ import { syntheticGraph } from './synthetic';
 /** All edges of a clique over the given nodes. */
 function clique(nodes: number[], weight: number): Edge[] {
   const edges: Edge[] = [];
-  for (const a of nodes) for (const b of nodes) if (a < b) edges.push({ source: a, target: b, weight });
+  for (const a of nodes) for (const b of nodes) if (a < b) edges.push({ source: a, target: b, weight, score: 0 });
   return edges;
 }
 
@@ -20,7 +20,7 @@ function sizes(clusters: number[], clusterCount: number): number[] {
 describe('detectClusters', () => {
   it('finds two cliques joined by one weak edge', () => {
     const edges = [...clique([0, 1, 2, 3, 4, 5], 5), ...clique([6, 7, 8, 9, 10, 11], 5)];
-    edges.push({ source: 5, target: 6, weight: 1 });
+    edges.push({ source: 5, target: 6, weight: 1, score: 0 });
     const { clusters, clusterCount } = detectClusters(12, edges);
     expect(clusterCount).toBe(2);
     expect(new Set(clusters.slice(0, 6)).size).toBe(1);
@@ -30,7 +30,7 @@ describe('detectClusters', () => {
 
   it('numbers clusters by size, largest first', () => {
     const edges = [...clique([0, 1, 2, 3], 5), ...clique([4, 5, 6, 7, 8, 9, 10], 5)];
-    edges.push({ source: 3, target: 4, weight: 1 });
+    edges.push({ source: 3, target: 4, weight: 1, score: 0 });
     const { clusters, clusterCount } = detectClusters(11, edges);
     expect(clusterCount).toBe(2);
     expect(clusters[4]).toBe(0);
@@ -57,9 +57,9 @@ describe('detectClusters', () => {
     // Two big cliques; nodes 20 and 21 form a pair tied strongly to clique B.
     const a = Array.from({ length: 10 }, (_, i) => i);
     const b = Array.from({ length: 10 }, (_, i) => i + 10);
-    const edges = [...clique(a, 5), ...clique(b, 5), { source: 9, target: 10, weight: 1 }];
-    edges.push({ source: 20, target: 21, weight: 50 });
-    edges.push({ source: 0, target: 20, weight: 1 }, { source: 15, target: 21, weight: 3 });
+    const edges = [...clique(a, 5), ...clique(b, 5), { source: 9, target: 10, weight: 1, score: 0 }];
+    edges.push({ source: 20, target: 21, weight: 50, score: 0 });
+    edges.push({ source: 0, target: 20, weight: 1, score: 0 }, { source: 15, target: 21, weight: 3, score: 0 });
     const { clusters, clusterCount } = detectClusters(22, edges);
     expect(clusterCount).toBe(2);
     expect(clusters[20]).toBe(clusters[10]);
@@ -67,7 +67,7 @@ describe('detectClusters', () => {
   });
 
   it('puts isolated nodes into the largest cluster (0)', () => {
-    const edges = [...clique([0, 1, 2, 3, 4], 2), ...clique([5, 6, 7], 2), { source: 4, target: 5, weight: 1 }];
+    const edges = [...clique([0, 1, 2, 3, 4], 2), ...clique([5, 6, 7], 2), { source: 4, target: 5, weight: 1, score: 0 }];
     const { clusters } = detectClusters(10, edges);
     expect(clusters[8]).toBe(0);
     expect(clusters[9]).toBe(0);

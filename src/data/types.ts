@@ -45,6 +45,11 @@ export interface Edge {
   target: number;
   /** Number of verses that contain both roots. */
   weight: number;
+  /**
+   * Link strength against chance: lift × log2(1 + weight), where lift = how many times more
+   * often the two roots share a verse than if they were placed at random. Ranks links in the app.
+   */
+  score: number;
 }
 
 /** Contents of public/data/galaxy.json. Loaded at startup. */

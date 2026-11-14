@@ -18,7 +18,7 @@ function sample() {
   const galaxy: Galaxy = {
     version: 1,
     roots: [root(0), root(1)],
-    edges: [{ source: 0, target: 1, weight: 1 }],
+    edges: [{ source: 0, target: 1, weight: 1, score: 0 }],
     clusterCount: 1,
   };
   const occurrences: Occurrences = [[{ v: '1:1', w: [2] }], [{ v: '1:1', w: [1] }]];
@@ -50,7 +50,7 @@ describe('validateData', () => {
 
   it('reports bad edges and a wrong occurrence list length', () => {
     const { galaxy, occurrences, verses } = sample();
-    galaxy.edges = [{ source: 1, target: 0, weight: 1 }, { source: 0, target: 7, weight: 1 }];
+    galaxy.edges = [{ source: 1, target: 0, weight: 1, score: 0 }, { source: 0, target: 7, weight: 1, score: 0 }];
     occurrences.pop();
     expect(validateData(galaxy, occurrences, verses)).toEqual([
       'occurrences has 1 lists for 2 roots',

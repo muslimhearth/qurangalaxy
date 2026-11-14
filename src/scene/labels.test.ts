@@ -36,7 +36,7 @@ describe('labelIds', () => {
   });
 
   it('labels by default exactly the strongest links that light up (TOP_LINKS)', () => {
-    const hub = buildAdjacency(40, Array.from({ length: 39 }, (_, i) => ({ source: 0, target: i + 1, weight: 40 - i })));
+    const hub = buildAdjacency(40, Array.from({ length: 39 }, (_, i) => ({ source: 0, target: i + 1, weight: 40 - i, score: 40 - i })));
     expect(labelIds(hub, [], 0, null)).toHaveLength(TOP_LINKS + 1);
   });
 });

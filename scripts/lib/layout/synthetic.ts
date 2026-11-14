@@ -24,7 +24,7 @@ export function syntheticGraph(n: number, edgeCount: number, groups: number, see
   }
   const edges: Edge[] = [...weights].map(([key, weight]) => {
     const [source, target] = key.split(',').map(Number) as [number, number];
-    return { source, target, weight };
+    return { source, target, weight, score: weight };
   });
   return { counts, edges };
 }

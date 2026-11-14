@@ -24,7 +24,7 @@ describe('starColors', () => {
 
   it('dims neighbors past the link cap more than the strongest neighbors', () => {
     const n = TOP_LINKS + 3;
-    const hub = Array.from({ length: n - 1 }, (_, i) => ({ source: 0, target: i + 1, weight: n - i }));
+    const hub = Array.from({ length: n - 1 }, (_, i) => ({ source: 0, target: i + 1, weight: n - i, score: n - i }));
     const hubAdj = buildAdjacency(n, hub);
     const c = starColors(new Float32Array(n * 3).fill(0.5), hubAdj, { id: 0, strong: true });
     expect(c[1 * 3]).toBeCloseTo(0.5); // strongest neighbor keeps its color
@@ -40,7 +40,7 @@ describe('starColors', () => {
 
   it('keeps every connected root clearly brighter than unrelated roots', () => {
     const n = TOP_LINKS + 3;
-    const hub = Array.from({ length: n - 2 }, (_, i) => ({ source: 0, target: i + 1, weight: n - i }));
+    const hub = Array.from({ length: n - 2 }, (_, i) => ({ source: 0, target: i + 1, weight: n - i, score: n - i }));
     const hubAdj = buildAdjacency(n, hub);
     const c = starColors(new Float32Array(n * 3).fill(0.5), hubAdj, { id: 0, strong: true });
     const weakestNeighbor = c[(n - 2) * 3]!; // past the link cap
@@ -92,7 +92,7 @@ describe('edgeColors', () => {
   it('lights only the strongest links of a hub, brighter for more shared verses', () => {
     // Root 0 linked to 1..40 with weight 41 - i: neighbor 1 is the strongest.
     const n = 41;
-    const hub = Array.from({ length: n - 1 }, (_, i) => ({ source: 0, target: i + 1, weight: n - 1 - i }));
+    const hub = Array.from({ length: n - 1 }, (_, i) => ({ source: 0, target: i + 1, weight: n - 1 - i, score: n - 1 - i }));
     const hubAdj = buildAdjacency(n, hub);
     const hubBase = new Float32Array(n * 3).fill(0.5);
     const c = edgeColors(hub, hubBase, hubAdj, { id: 0, strong: true });

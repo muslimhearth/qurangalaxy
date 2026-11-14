@@ -36,8 +36,8 @@ describe('layoutGalaxy', () => {
   it('separates two dense cliques joined by one weak edge', () => {
     const edges: Edge[] = [];
     for (const base of [0, 8])
-      for (let a = 0; a < 8; a++) for (let b = a + 1; b < 8; b++) edges.push({ source: base + a, target: base + b, weight: 5 });
-    edges.push({ source: 7, target: 8, weight: 1 });
+      for (let a = 0; a < 8; a++) for (let b = a + 1; b < 8; b++) edges.push({ source: base + a, target: base + b, weight: 5, score: 0 });
+    edges.push({ source: 7, target: 8, weight: 1, score: 0 });
     const counts = Array.from({ length: 16 }, (_, i) => 1 + i * 10);
     const result = layoutGalaxy({ counts, edges });
     expectValid(result, 16);
@@ -87,7 +87,7 @@ describe('layoutGalaxy', () => {
     expect(layoutGalaxy({ counts: [], edges: [] })).toEqual({ positions: [], clusters: [], clusterCount: 0 });
     expect(layoutGalaxy({ counts: [42], edges: [] })).toEqual({ positions: [[0, 0, 0]], clusters: [0], clusterCount: 1 });
     expectValid(layoutGalaxy({ counts: [1, 5, 100, 3], edges: [] }), 4);
-    const mixed = layoutGalaxy({ counts: [3, 3, 3, 1, 1], edges: [{ source: 0, target: 1, weight: 2 }, { source: 1, target: 2, weight: 2 }] });
+    const mixed = layoutGalaxy({ counts: [3, 3, 3, 1, 1], edges: [{ source: 0, target: 1, weight: 2, score: 0 }, { source: 1, target: 2, weight: 2, score: 0 }] });
     expectValid(mixed, 5);
   });
 });

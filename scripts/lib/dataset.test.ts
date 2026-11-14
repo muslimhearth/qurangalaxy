@@ -34,8 +34,8 @@ describe('buildDataset', () => {
     expect(data.galaxy.clusterCount).toBeGreaterThan(0);
   });
 
-  it('links roots that share a verse', () => {
-    expect(data.galaxy.edges).toEqual([{ source: 0, target: 1, weight: 1 }]);
+  it('does not link roots that share only one verse', () => {
+    expect(data.galaxy.edges).toEqual([]);
   });
 
   it('builds verses with the basmala removed and English attached', () => {
