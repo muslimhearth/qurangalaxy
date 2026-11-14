@@ -47,6 +47,8 @@ Per-goal detail: `docs/progress/`.
 
 - G12 dense selection view: a selected root lights only its 20 strongest links (brightness by shared verses); those 20 roots glide into an oval ring around it (stronger = closer) and glide home on close. Links not touching the selection are not drawn. Idle rotation pauses while a root is selected. Idle rotation no longer jumps after a hidden tab. See `docs/progress/G12-dense-view.md`.
 
+- G13 Mushaf of Light: a second, 2D layout (Galaxy | Mushaf switch; `#/mushaf/root/<root>`). One dot per verse in Mushaf order on one canvas; the selected root's verses glow; surah numbers per row; hover or press shows surah name and verse key; tap opens the verse in the panel. Empty mosaic: alternating surah shades and root chips. On phones the switch is one icon beside search. See `docs/progress/G13-mushaf.md`.
+
 ## Known issues
 - R3F still bundles three's `WebGLRenderer` (unused) and logs two library deprecation warnings (`THREE.Clock`, `PCFSoftShadowMap`). These come from the library and go away when R3F updates.
 - Some Wiktionary senses are wrong or rare (ربب "many a man", شُحُوم "gagea reticulata"); 1,417 lemmas (5.4% of words) have no meaning. See `docs/progress/g8.md`.
@@ -54,4 +56,5 @@ Per-goal detail: `docs/progress/`.
 - Headless software rendering is slow: under parallel load some browser tests need generous timeouts.
 - Desktop focus view: a few dim stars near the camera show as large soft discs at the screen edge (needs a near-fade in the star shader).
 - iPhone: ring labels are tight (about 4 px apart); `tap.spec` "a tap near a star selects it" fails on WebKit, also before G12.
+- Mushaf on phones: dots shrink to about 2.5 px while the sheet is at normal size. No UI yet for a compare root (the view supports it).
 - Hub roots still show a bright core where hundreds of links meet. This is expected for additive lines.

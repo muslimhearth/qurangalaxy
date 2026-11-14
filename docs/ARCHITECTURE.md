@@ -42,6 +42,7 @@ Raw downloads are cached in `data/raw/` (gitignored). Generated JSON in `public/
 | `src/semantic/*`, `src/search/blend.ts`, `scripts/models.ts`, `scripts/build-embeddings.ts`, `scripts/eval-semantic.ts` | G9 | Meaning search: worker, int8 cosine search, verse→root scores, blend |
 | `src/scene/focus/*`, `src/scene/drawnEdges.ts` | G12 | Focus view: ring plan for the 20 strongest neighbors, glide, one position source for stars, links, labels and picking; selection-only link drawing |
 | `src/scene/intro/*` | G11 + main | Opening: stars start in a small core and spread to their places with an ease-in (inner first). Skips: deep link, reduced motion, `?nointro`, automated browsers (`?intro` forces it) |
+| `src/mushaf/*` | G13 | Mushaf of Light: verse mosaic layout and hit test, lit states, canvas drawing, tooltip, empty-state prompt, Galaxy/Mushaf toggle, layout hash |
 | `scripts/corpus-wbw.ts`, `scripts/corpus-glosses.ts`, `scripts/lib/corpus-wbw/*` | G10 | Polite, resumable scraper of the corpus word-by-word glosses; per-lemma/root aggregation; `loadCorpusGlosses` hook (not wired into the data build) |
 | `deploy/Caddyfile.site`, `scripts/ship.sh` | main | Deploy |
 
@@ -63,6 +64,7 @@ Headless browsers have no GPU: Chromium and WebKit run the WebGL 2 fallback in s
 - **Lazy detail data.** Only `galaxy.json` loads at startup. Verses and occurrences load on first selection.
 - **WebGPU first.** three.js `WebGPURenderer` falls back to WebGL 2 automatically.
 - **One store.** Scene and UI talk only through the Zustand store.
+- **Two layouts.** `layout` in the store picks the 3D galaxy or the 2D Mushaf mosaic. The mosaic is one 2D canvas (6,236 dots), hit-tested with math; it never loads three.js.
 - **Lazy 3D chunk.** `App` loads `GalaxyScene` with `React.lazy`: the UI (74 kB gzip) paints first, three.js (461 kB gzip) follows.
 - **Focus ring.** On selection the 20 strongest neighbors glide (1.2 s) into an oval ring sized in screen pixels for the free area; `Glide.positions` is the single source for star matrices, link ends, labels and tap picking. Only the top 20 links are bright (`0.3 + 0.7·√(w/max)`).
 - **Labels without overlap.** Each frame, `LabelTracker` projects the candidate labels and `declutter` keeps them greedily in priority order (selection, hover, neighbors, frequent roots). It also skips the screen area under the root panel.
