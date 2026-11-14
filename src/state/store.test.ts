@@ -56,4 +56,14 @@ describe('galaxy store', () => {
     s().select(3);
     expect(s().awayFromSelection).toBe(false);
   });
+
+  it('switches the search mode and opens a verse', () => {
+    const s = useGalaxyStore.getState;
+    expect(s().searchMode).toBe('roots');
+    s().setSearchMode('verses');
+    expect(s().searchMode).toBe('verses');
+    expect(s().openVerse).toBeNull();
+    s().setOpenVerse('3:109');
+    expect(s().openVerse).toBe('3:109');
+  });
 });
