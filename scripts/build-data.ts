@@ -8,6 +8,7 @@ import { join } from 'node:path';
 import { buildDataset } from './lib/dataset';
 import { readCached } from './lib/raw-cache';
 import { ensureWiktionary } from './fetch-glosses';
+import { writeMorphFiles } from './build-morph';
 
 const RAW_DIR = 'data/raw';
 const OUT_DIR = 'public/data';
@@ -61,6 +62,8 @@ async function main(): Promise<void> {
     const kb = statSync(join(OUT_DIR, name)).size / 1024;
     console.log(`  ${name}: ${kb.toFixed(0)} KB`);
   }
+  // Word card data (morph/, particles.json); checks every Corpus word against its Tanzil word.
+  writeMorphFiles(morph!, data.galaxy, data.verses);
 }
 
 main().catch((err: unknown) => {
