@@ -4,6 +4,12 @@ import type { Galaxy, VerseKey } from '../data/types';
 /** What the search field finds: roots (stars) or verses. */
 export type SearchMode = 'roots' | 'verses';
 
+/** A surah open in the reader, scrolled to one verse. Both numbers are 1-based. */
+export interface ReaderPlace {
+  surah: number;
+  verse: number;
+}
+
 /** App-wide state shared by the 3D scene and the 2D UI. */
 export interface GalaxyState {
   /** Loaded galaxy, or null while loading. */
@@ -24,6 +30,8 @@ export interface GalaxyState {
   searchMode: SearchMode;
   /** Verse shown in the verse panel (verse search), or null. */
   openVerse: VerseKey | null;
+  /** Surah shown in the full-surah reader, or null. */
+  reader: ReaderPlace | null;
   setGalaxy: (galaxy: Galaxy) => void;
   select: (id: number | null) => void;
   hover: (id: number | null) => void;
@@ -33,6 +41,7 @@ export interface GalaxyState {
   recenter: () => void;
   setSearchMode: (mode: SearchMode) => void;
   setOpenVerse: (key: VerseKey | null) => void;
+  setReader: (place: ReaderPlace | null) => void;
 }
 
 export const useGalaxyStore = create<GalaxyState>()((set) => ({
@@ -45,6 +54,7 @@ export const useGalaxyStore = create<GalaxyState>()((set) => ({
   recenterTick: 0,
   searchMode: 'roots',
   openVerse: null,
+  reader: null,
   setGalaxy: (galaxy) => set({ galaxy }),
   // A new selection is framed by the camera, so it is not "away".
   select: (selectedId) => set({ selectedId, awayFromSelection: false }),
@@ -55,4 +65,5 @@ export const useGalaxyStore = create<GalaxyState>()((set) => ({
   recenter: () => set((s) => ({ recenterTick: s.recenterTick + 1, awayFromSelection: false })),
   setSearchMode: (searchMode) => set({ searchMode }),
   setOpenVerse: (openVerse) => set({ openVerse }),
+  setReader: (reader) => set({ reader }),
 }));

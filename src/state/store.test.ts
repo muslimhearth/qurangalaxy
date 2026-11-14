@@ -66,4 +66,13 @@ describe('galaxy store', () => {
     s().setOpenVerse('3:109');
     expect(s().openVerse).toBe('3:109');
   });
+
+  it('opens and closes the surah reader', () => {
+    const s = useGalaxyStore.getState;
+    expect(s().reader).toBeNull();
+    s().setReader({ surah: 2, verse: 17 });
+    expect(s().reader).toEqual({ surah: 2, verse: 17 });
+    s().setReader(null);
+    expect(s().reader).toBeNull();
+  });
 });
