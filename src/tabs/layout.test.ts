@@ -23,8 +23,8 @@ function fakeMedia(matches: boolean) {
 describe('useTabLayout', () => {
   afterEach(() => vi.unstubAllGlobals());
 
-  it('asks for a fine pointer and at least 900 px', () => {
-    expect(TAB_STRIP_QUERY).toBe('(min-width: 900px) and (pointer: fine)');
+  it('asks for a fine pointer and at least 1024 px', () => {
+    expect(TAB_STRIP_QUERY).toBe('(min-width: 1024px) and (pointer: fine)');
   });
 
   it('shows the strip on wide screens with a mouse, else the counter', () => {
