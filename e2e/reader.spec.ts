@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page, type TestInfo } from '@playwright/test';
+import { tabCounter } from './tabHelpers';
 
 /** Screenshot path per project; SHOT_DIR moves them out of test-results. */
 const shot = (info: TestInfo, name: string) => `${process.env.SHOT_DIR ?? 'test-results'}/${info.project.name}-${name}.png`;
@@ -31,7 +32,8 @@ test('a verse key opens the surah reader; prev/next, back and browser back', asy
   await expect(current.locator('mark')).toHaveCount(2);
   await expect(rootPanel(page)).toHaveCount(0);
   expect(await hash(page)).toBe('#/surah/2/17');
-  await expect(page.getByRole('tab', { name: 'Al-Baqara 2:17' })).toBeVisible();
+  if (isMobile) await expect(tabCounter(page)).toBeVisible();
+  else await expect(page.getByRole('tab', { name: 'Al-Baqara 2:17' })).toBeVisible();
   await page.screenshot({ path: shot(info, 'reader') });
 
   await press(r.getByRole('button', { name: /^Next surah/ }), isMobile);
@@ -104,8 +106,9 @@ test('Escape closes the reader first, then the root panel; the tab follows', asy
   await expect(rootPanel(page)).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(rootPanel(page)).toHaveCount(0);
-  // One empty tab: the tab bar hides.
+  // One empty tab: the tab rail and the counter hide.
   await expect(page.getByRole('tablist')).toHaveCount(0);
+  await expect(tabCounter(page)).toHaveCount(0);
 });
 
 test('a surah name search opens the reader at the start of the surah', async ({ page, isMobile }) => {

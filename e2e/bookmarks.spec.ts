@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { tabNames } from './tabHelpers';
 
 // Long flows on software WebGL: give them room when the machine is busy.
 test.describe.configure({ timeout: 120_000 });
@@ -7,7 +8,6 @@ const rootPanel = (page: Page) => page.getByLabel('Root details', { exact: true 
 const versePanel = (page: Page) => page.getByLabel('Verse details', { exact: true });
 const list = (page: Page) => page.getByRole('dialog', { name: 'Bookmarks' });
 const rows = (page: Page) => list(page).getByRole('listitem');
-const tabNames = (page: Page) => page.getByRole('tab').allTextContents();
 
 /** Clicks on desktop, taps on phones. */
 async function press(target: Locator, isMobile: boolean) {
@@ -72,7 +72,7 @@ test('bookmark a root and a verse: list, open, new tab, reload', async ({ page, 
     await expect(list(page)).toHaveCount(0);
   }
   // The first tab still has رحم selected under the verse, so it keeps the root's label.
-  await expect.poll(() => tabNames(page)).toEqual(['رحم', 'رحم']);
+  await expect.poll(() => tabNames(page, isMobile), { timeout: 30_000 }).toEqual(['رحم', 'رحم']);
 
   // Bookmarks survive a reload.
   await page.reload();
@@ -104,5 +104,5 @@ test('a verse search result opens in a new tab', async ({ page, isMobile }) => {
     await option.click({ modifiers: ['ControlOrMeta'] });
     await expect(versePanel(page)).toHaveCount(0);
   }
-  await expect.poll(() => tabNames(page)).toEqual(['“mercy”', key]);
+  await expect.poll(() => tabNames(page, isMobile), { timeout: 30_000 }).toEqual(['“mercy”', key]);
 });
