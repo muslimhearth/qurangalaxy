@@ -101,3 +101,30 @@ for (const name of ['light', 'dark'] as const) {
     await page.screenshot({ path: shot(info, `${name}-reader`) });
   });
 }
+
+test('text size: XL makes verse text larger, Arabic more than English, and a reload keeps it', async ({ page, isMobile }) => {
+  await page.goto('/#/surah/16/1');
+  const verse = page.locator('.reader-verses .verse').first();
+  await expect(verse.locator('.verse-ar')).toBeVisible({ timeout: 15_000 });
+  const size = (sel: string) => verse.locator(sel).evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+  const chrome = () => page.locator('.reader-nav button').first().evaluate((el) => getComputedStyle(el).fontSize);
+  const [ar, en, ui] = [await size('.verse-ar'), await size('.verse-en'), await chrome()];
+  expect(await page.evaluate(() => document.documentElement.dataset.textSize)).toBe('M');
+
+  await press(gear(page), isMobile);
+  const settings = page.getByRole('dialog', { name: 'Search settings' });
+  await expect(settings.getByRole('radio', { name: 'Medium' })).toHaveAttribute('aria-checked', 'true');
+  await press(settings.getByRole('radio', { name: 'Extra large' }), isMobile);
+  const arXL = await size('.verse-ar');
+  const enXL = await size('.verse-en');
+  expect(arXL / ar).toBeGreaterThan(enXL / en);
+  expect(enXL).toBeGreaterThan(en);
+  // UI chrome keeps its size.
+  expect(await chrome()).toBe(ui);
+
+  await page.reload();
+  // Applied before the app runs: no jump.
+  expect(await page.evaluate(() => document.documentElement.dataset.textSize)).toBe('XL');
+  await expect(verse.locator('.verse-ar')).toBeVisible({ timeout: 15_000 });
+  expect(await size('.verse-ar')).toBeCloseTo(arXL, 1);
+});

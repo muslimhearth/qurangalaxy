@@ -5,6 +5,7 @@ import { useGalaxyStore } from '../state/store';
 import { HISTORY_KEY, useSearchHistory } from '../history/history';
 import { MEANINGS_KEY, useMeanings } from './meanings';
 import { THEME_KEY, useTheme } from '../theme/theme';
+import { TEXT_SIZE_KEY, useTextSize } from '../theme/textSize';
 
 describe('SearchSettings', () => {
   beforeEach(() => {
@@ -13,6 +14,7 @@ describe('SearchSettings', () => {
     useSearchHistory.setState({ saving: true, entries: [] });
     useMeanings.setState({ show: true });
     useTheme.setState({ pref: 'system' });
+    useTextSize.setState({ size: 'M' });
   });
   afterEach(cleanup);
 
@@ -135,5 +137,17 @@ describe('SearchSettings', () => {
     expect(localStorage.getItem(THEME_KEY)).toBe('light');
     expect(screen.getByRole('radio', { name: 'Light' })).toHaveAttribute('aria-checked', 'true');
     expect(screen.getByRole('radio', { name: 'System' })).toHaveAttribute('aria-checked', 'false');
+  });
+
+  it('has an "S | M | L | XL" text size switch, M by default, applied to <html>', () => {
+    render(<SearchSettings status="off" progress={0} />);
+    fireEvent.click(button());
+    expect(screen.getByRole('radiogroup', { name: 'Text size' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Medium' })).toHaveAttribute('aria-checked', 'true');
+    fireEvent.click(screen.getByRole('radio', { name: 'Extra large' }));
+    expect(useTextSize.getState().size).toBe('XL');
+    expect(localStorage.getItem(TEXT_SIZE_KEY)).toBe('XL');
+    expect(document.documentElement.dataset.textSize).toBe('XL');
+    expect(screen.getByRole('radio', { name: 'Extra large' })).toHaveAttribute('aria-checked', 'true');
   });
 });

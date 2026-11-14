@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { useSearchHistory } from '../history/history';
 import { useGalaxyStore } from '../state/store';
 import type { SemanticStatus } from '../semantic/useSemanticSearch';
+import { TextSizeSwitch } from '../theme/TextSizeSwitch';
 import { ThemeSwitch } from '../theme/ThemeSwitch';
 import { MatchSwitch, matchMode } from './MatchSwitch';
 import { useMeanings } from './meanings';
@@ -20,7 +21,7 @@ interface Props {
 /**
  * Gear button at the right end of the search bar. It opens a popover with the
  * "Exact | Hybrid | Meaning" switch, the "Save search history" switch, "Clear history",
- * the "Show meanings" switch and the "System | Light | Dark" theme switch.
+ * the "Show meanings" switch, the "S | M | L | XL" text size and the "System | Light | Dark" theme switch.
  * Escape or a click outside closes it.
  */
 export function SearchSettings({ status, progress, error, weight: ownWeight, onWeight }: Props) {
@@ -126,6 +127,7 @@ export function SearchSettings({ status, progress, error, weight: ownWeight, onW
               onChange={(e) => setShowMeanings(e.target.checked)}
             />
           </label>
+          <TextSizeSwitch />
           <ThemeSwitch />
         </div>
       )}

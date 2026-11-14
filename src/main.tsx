@@ -6,9 +6,11 @@ import '@fontsource/amiri-quran/arabic-400.css';
 import '@fontsource/noto-naskh-arabic/arabic-400.css';
 import './styles.css';
 import { startTheme } from './theme/theme';
+import { applyTextSize, useTextSize } from './theme/textSize';
 
 // Before React renders: public/theme-init.js set the first theme; this keeps it in sync.
 startTheme();
+applyTextSize(useTextSize.getState().size);
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

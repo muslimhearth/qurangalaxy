@@ -410,14 +410,20 @@ input.switch:checked::before { left: 19px; background: var(--switch-knob-on); }
 /* Verses */
 .verse-list { list-style: none; margin: 0; padding: 0; }
 .verse { padding: 12px 0; border-bottom: 1px solid var(--border); }
+/* Text size setting (src/theme/textSize.ts): scales verse text only, not the UI chrome.
+   Arabic takes larger steps than English: its letters and marks need the room. */
+:root { --ar-scale: 1; --en-scale: 1; }
+:root[data-text-size='S'] { --ar-scale: 0.86; --en-scale: 0.92; }
+:root[data-text-size='L'] { --ar-scale: 1.22; --en-scale: 1.1; }
+:root[data-text-size='XL'] { --ar-scale: 1.45; --en-scale: 1.22; }
 .verse-key { font-size: 0.75rem; color: var(--accent); font-variant-numeric: tabular-nums; }
-.verse-ar { margin: 4px 0 6px; font-size: 1.4rem; line-height: 2.1; }
+.verse-ar { margin: 4px 0 6px; font-size: calc(1.4rem * var(--ar-scale)); line-height: 2.1; }
 .verse-ar mark {
   background: none;
   color: var(--accent);
   text-shadow: 0 0 12px var(--accent-glow);
 }
-.verse-en { margin: 0; font-size: 0.88rem; line-height: 1.5; color: var(--fg-3); }
+.verse-en { margin: 0; font-size: calc(0.88rem * var(--en-scale)); line-height: 1.5; color: var(--fg-3); }
 .show-more {
   display: block; width: 100%; margin-top: 12px; padding: 10px;
   border-radius: 10px; border: 1px solid var(--border); background: var(--chip-bg);
@@ -575,12 +581,12 @@ input.switch:checked::before { left: 19px; background: var(--switch-knob-on); }
 .verse-option .verse-key { padding-top: 2px; }
 .verse-hit { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .verse-hit-en {
-  font-size: 0.86rem; line-height: 1.4; color: var(--fg-hit);
+  font-size: calc(0.86rem * var(--en-scale)); line-height: 1.4; color: var(--fg-hit);
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden;
 }
-.verse-hit-tr { font-size: 0.8rem; color: var(--muted); font-style: italic; }
+.verse-hit-tr { font-size: calc(0.8rem * var(--en-scale)); color: var(--muted); font-style: italic; }
 .verse-hit-ar {
-  font-size: 1.1rem; line-height: 1.9; color: var(--accent); text-align: right;
+  font-size: calc(1.1rem * var(--ar-scale)); line-height: 1.9; color: var(--accent); text-align: right;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .verse-hit mark { background: var(--accent-soft); color: var(--accent); border-radius: 3px; padding: 0 1px; }
@@ -604,8 +610,8 @@ input.switch:checked::before { left: 19px; background: var(--switch-knob-on); }
 }
 .verse-title { margin: 0; padding: 10px 0 0; font-size: 1.6rem; font-weight: 500; color: var(--accent); font-variant-numeric: tabular-nums; }
 .verse-panel .root-head { padding-bottom: 10px; }
-.verse-panel-ar { margin-top: 14px; font-size: 1.7rem; line-height: 2.2; }
-.verse-tr { margin: 0 0 10px; font-size: 0.92rem; line-height: 1.6; color: var(--fg-3); font-style: italic; }
+.verse-panel-ar { margin-top: 14px; font-size: calc(1.7rem * var(--ar-scale)); line-height: 2.2; }
+.verse-tr { margin: 0 0 10px; font-size: calc(0.92rem * var(--en-scale)); line-height: 1.6; color: var(--fg-3); font-style: italic; }
 .tr-u { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--underline); }
 .tr-b { opacity: 0.55; }
 .tr-strong { font-weight: 700; }
