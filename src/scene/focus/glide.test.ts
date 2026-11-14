@@ -70,4 +70,18 @@ describe('Glide', () => {
     g.step(0.5);
     expect(moved(g)).toEqual([0, 1]);
   });
+
+  it('jumps to the end state at the next step when asked (tab restore), then glides normally again', () => {
+    const g = new Glide(home(), 1);
+    g.setTargets([1], new Float32Array([10, 5, 0]), true);
+    expect(g.animating).toBe(true);
+    g.step(7);
+    expect(pos(g, 1)).toEqual([10, 5, 0]);
+    expect(moved(g)).toEqual([1]);
+    expect(g.animating).toBe(false);
+    g.setTargets([], new Float32Array(0));
+    g.step(8);
+    g.step(8.5);
+    expect(pos(g, 1)[1]).toBeCloseTo(2.5);
+  });
 });

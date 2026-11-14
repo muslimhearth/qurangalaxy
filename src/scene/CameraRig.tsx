@@ -24,6 +24,9 @@ import type { IntroState } from './intro/state';
 import { viewFrame, type Inset } from './inset';
 import type { SceneModel } from './model';
 import { createWheelClassifier } from './wheel';
+import { getPose, prunePoses, savePose, type TabPose } from '../tabs/poses';
+import { activeTab } from '../tabs/model';
+import { useTabsStore } from '../tabs/store';
 
 /** The user moved the view: with a root selected, offer "Back to …". */
 function markAway() {
@@ -155,22 +158,79 @@ export function CameraRig({
     };
   }, [canvas, clock, camera]);
 
+  // View direction the focus ring was laid out for (null: no ring). Saved with the tab's pose.
+  const ringDir = useRef<Vec3 | null>(null);
+  // Set when a tab switch restored a saved pose: the selection effects below keep that view (no
+  // fly-to) while the selection and the recenter tick stay as they were at the restore.
+  const restored = useRef<{ selectedId: number | null; tick: number } | null>(null);
+  const lastSelected = useRef<number | null>(null);
+  // Latest props for the tab-switch listener, which lives outside React's render.
+  const latest = useRef({ roots, model, size, inset });
+  latest.current = { roots, model, size, inset };
+
+  /**
+   * Lays out the focus ring of `id` facing `dir` (from the root to the camera) and returns the
+   * ring view. `instant` puts the ring stars in place at once.
+   */
+  const layoutRing = (id: number, dir: Vec3, instant: boolean) => {
+    const { roots: rs, model: m, size: sz, inset: ins } = latest.current;
+    const frame = viewFrame(camera.fov, sz.width, sz.height, ins);
+    const freeW = sz.width - ins.right;
+    const freeH = sz.height - ins.bottom - ins.top;
+    const view = ringView(ringRadius(m.radiusRange.max), frame.fov, freeW, freeH);
+    const plan = focusPlan(rs, m.adjacency, id, dir, view.aspect, m.radii);
+    focus.glide.setTargets(plan.ids, plan.targets, instant);
+    ringDir.current = dir;
+    return view;
+  };
+
+  // Tabs keep their galaxy view: every frame saves the active tab's pose (camera end values, ring,
+  // "Back to"); switching to a tab with a saved pose puts it back at once, with no animation.
+  // A tab never shown has no pose and flies to its root as before.
+  useEffect(() => {
+    return useTabsStore.subscribe((s, prev) => {
+      prunePoses(s.tabs.map((t) => t.id));
+      if (s.activeId === prev.activeId) return;
+      const pose = getPose(s.activeId);
+      const c = controls.current;
+      if (!pose || !c) {
+        restored.current = null;
+        return;
+      }
+      const id = activeTab(s).selectedId;
+      const valid = id !== null && !!latest.current.roots[id];
+      c.stop(); // drop any running ease or drag inertia
+      void c.setLookAt(...pose.position, ...pose.target, false);
+      if (valid && pose.ringDir) layoutRing(id, pose.ringDir, true);
+      else {
+        focus.glide.setTargets([], new Float32Array(0), true);
+        ringDir.current = null;
+      }
+      restored.current = { selectedId: id, tick: useGalaxyStore.getState().recenterTick };
+      lastSelected.current = id;
+      lastInteraction.current = clock.elapsedTime;
+      // After every listener ran (the tab sync's select() clears "away"): put "Back to" back.
+      queueMicrotask(() => {
+        const g = useGalaxyStore.getState();
+        if (g.selectedId === id && g.awayFromSelection !== pose.away) g.setAwayFromSelection(pose.away);
+      });
+    });
+    // layoutRing reads its inputs from refs, so it needs no dependency.
+  }, [camera, clock, focus]);
+
   // Fly to the selected root while its strongest neighbors glide into a ring around it.
   // The ring faces the camera's (kept) viewing direction and fills the free area beside the panel.
   useEffect(() => {
     if (selectedId === null || !roots[selectedId]) return;
+    const r = restored.current;
+    if (r && r.selectedId === selectedId && r.tick === recenterTick) return; // a restored tab keeps its view
+    restored.current = null;
     const c = controls.current!;
     // End values of any running ease: the direction the camera will look from.
     const pos = c.getPosition(camera.position.clone()).toArray() as Vec3;
     const target = c.getTarget(camera.position.clone()).toArray() as Vec3;
-    const frame = viewFrame(camera.fov, size.width, size.height, inset);
-    const freeW = size.width - inset.right;
-    const freeH = size.height - inset.bottom - inset.top;
-    const radius = ringRadius(model.radiusRange.max);
-    const view = ringView(radius, frame.fov, freeW, freeH);
     const dir = viewDirection(pos, target);
-    const plan = focusPlan(roots, model.adjacency, selectedId, dir, view.aspect, model.radii);
-    focus.glide.setTargets(plan.ids, plan.targets);
+    const view = layoutRing(selectedId, dir, false);
     // Look a little above the root: the labels over the ring need more room than the stars below.
     const root = roots[selectedId].pos;
     const { up } = viewBasis(dir);
@@ -182,13 +242,14 @@ export function CameraRig({
   }, [selectedId, recenterTick, roots, model, camera, clock, size, inset, focus]);
 
   // Closing the panel flies back out to the whole galaxy, keeping the current viewing direction.
-  const lastSelected = useRef<number | null>(null);
   useEffect(() => {
     const was = lastSelected.current;
     lastSelected.current = selectedId;
     if (selectedId !== null || was === null) return;
+    restored.current = null;
     // The ring stars glide back to their galaxy places.
     focus.glide.setTargets([], new Float32Array(0));
+    ringDir.current = null;
     const c = controls.current!;
     const pos = c.getPosition(camera.position.clone()).toArray() as Vec3;
     const target = c.getTarget(camera.position.clone()).toArray() as Vec3;
@@ -199,7 +260,36 @@ export function CameraRig({
     lastInteraction.current = clock.elapsedTime;
   }, [selectedId, model, camera, clock, focus]);
 
+  // Saves the active tab's pose each frame (see the tab-switch listener above).
+  const poseVecs = useRef({ pos: new Vector3(), target: new Vector3() });
+  const savedPose = useRef<TabPose>({ position: [0, 0, 0], target: [0, 0, 0], ringDir: null, away: false });
+
+  // Browser tests read the camera here (dev server only; removed from production builds).
+  useEffect(() => {
+    if (!import.meta.env.DEV) return;
+    const w = window as unknown as { __qrgCamera?: () => { position: number[]; target: number[] } };
+    w.__qrgCamera = () => ({
+      position: camera.position.toArray(),
+      target: controls.current!.getTarget(new Vector3(), false).toArray(),
+    });
+    return () => {
+      delete w.__qrgCamera;
+    };
+  }, [camera]);
+
   useFrame((_, dt) => {
+    const c = controls.current;
+    if (c) {
+      const { pos, target } = poseVecs.current;
+      const p = savedPose.current;
+      c.getPosition(pos);
+      c.getTarget(target);
+      p.position = pos.toArray() as Vec3;
+      p.target = target.toArray() as Vec3;
+      p.ringDir = ringDir.current;
+      p.away = useGalaxyStore.getState().awayFromSelection;
+      savePose(useTabsStore.getState().activeId, p);
+    }
     // Slide the view center toward the middle of the free area.
     const frame = viewFrame(camera.fov, size.width, size.height, inset);
     const o = offset.current;

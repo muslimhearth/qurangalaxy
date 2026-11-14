@@ -120,3 +120,81 @@ test('tab pills sit next to the search bar and clear of the root panel', async (
   }
   await page.screenshot({ path: `test-results/${info.project.name}-tab-pills.png` });
 });
+
+type Cam = { position: number[]; target: number[] };
+/** Camera position and look-at target (dev-only hook in CameraRig). */
+const camera = (page: Page) => page.evaluate(() => (window as unknown as { __qrgCamera: () => Cam }).__qrgCamera());
+/** Largest coordinate difference between two camera reads, relative to the camera distance. */
+function drift(a: Cam, b: Cam): number {
+  const dist = Math.hypot(...a.position.map((v, i) => v - a.target[i]!));
+  const d = [...a.position, ...a.target].map((v, i) => Math.abs(v - [...b.position, ...b.target][i]!));
+  return Math.max(...d) / dist;
+}
+/** Waits until the camera stops moving and the focus ring is in place; returns the pose. */
+async function settled(page: Page): Promise<Cam> {
+  // The 3D scene loads after the UI.
+  await page.waitForFunction(() => '__qrgCamera' in window, null, { timeout: 30_000 });
+  let last = await camera(page);
+  // Three still reads in a row: software rendering can skip frames, so one still read proves little.
+  let stillReads = 0;
+  await expect
+    .poll(
+      async () => {
+        const now = await camera(page);
+        const still = drift(now, last) < 1e-5 && (await page.locator('body').getAttribute('data-focus')) === 'still';
+        stillReads = still ? stillReads + 1 : 0;
+        last = now;
+        return stillReads >= 3;
+      },
+      { timeout: 20_000, intervals: [400] },
+    )
+    .toBe(true);
+  return last;
+}
+
+test('a tab keeps its galaxy view: switching back restores the camera at once, with no fly-to', async ({ page, isMobile }) => {
+  test.slow(); // software rendering: each wait for a still camera takes seconds
+  await page.goto('/');
+  await expect(page.getByRole('combobox')).toBeVisible({ timeout: 15_000 });
+  await search(page, 'رحم');
+  await expect(panelRoot(page)).toHaveText('رحم');
+  const framed = await settled(page);
+
+  // Zoom out with the wheel over the galaxy: the view moves away from the root.
+  const canvas = page.locator('canvas');
+  const box = (await canvas.boundingBox())!;
+  await canvas.evaluate(
+    (el, at) => {
+      for (let i = 0; i < 4; i++)
+        el.dispatchEvent(new WheelEvent('wheel', { deltaY: 120, deltaMode: 0, clientX: at.x, clientY: at.y, bubbles: true, cancelable: true }));
+    },
+    { x: box.x + box.width * 0.3, y: box.y + box.height * 0.3 },
+  );
+  const moved = await settled(page);
+  expect(drift(moved, framed)).toBeGreaterThan(0.01);
+  await expect(page.getByRole('button', { name: 'Back to رحم' })).toBeVisible();
+
+  // A second tab with another root flies there as before.
+  await press(page.getByRole('button', { name: 'New tab' }), isMobile);
+  await search(page, 'علم');
+  await expect(panelRoot(page)).toHaveText('علم');
+  const other = await settled(page);
+  expect(drift(other, moved)).toBeGreaterThan(0.01);
+
+  // Back to the first tab: the camera is where the user left it from the first frame on.
+  await press(page.getByRole('tab', { name: 'رحم' }), isMobile);
+  await expect(panelRoot(page)).toHaveText('رحم');
+  const drifts: number[] = [];
+  for (let i = 0; i < 5; i++) {
+    drifts.push(drift(await camera(page), moved));
+    await page.waitForTimeout(150);
+  }
+  expect(Math.max(...drifts)).toBeLessThan(1e-3);
+  expect(await page.locator('body').getAttribute('data-focus')).toBe('still');
+  // "Back to" comes back too, and still flies to the root.
+  const back = page.getByRole('button', { name: 'Back to رحم' });
+  await expect(back).toBeVisible();
+  await press(back, isMobile);
+  await expect(back).toHaveCount(0);
+  await expect.poll(async () => drift(await camera(page), moved), { timeout: 10_000 }).toBeGreaterThan(0.01);
+});

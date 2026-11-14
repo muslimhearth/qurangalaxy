@@ -21,6 +21,8 @@ export class Glide {
   /** Time of the first step of the current glide; null until that step. */
   private start: number | null = null;
   private running = false;
+  /** The current glide jumps to its end at the first step. */
+  private instant = false;
 
   /** `home`: 3 floats per star. `duration`: glide time in seconds; 0 jumps (reduced motion). */
   constructor(
@@ -41,9 +43,10 @@ export class Glide {
 
   /**
    * Sends star `ids[k]` to `targets[k * 3 .. k * 3 + 2]`, and every other star that is away
-   * back home. The glide starts at the next `step`.
+   * back home. The glide starts at the next `step`. `instant` puts the stars at their places in
+   * that step, with no glide (a tab restore shows the ring as it was).
    */
-  setTargets(ids: readonly number[], targets: Float32Array): void {
+  setTargets(ids: readonly number[], targets: Float32Array, instant = false): void {
     const all = [...new Set([...this.ids, ...ids])];
     for (const id of all) {
       for (let c = 0; c < 3; c++) {
@@ -54,6 +57,7 @@ export class Glide {
     ids.forEach((id, k) => this.to.set(targets.subarray(k * 3, k * 3 + 3), id * 3));
     this.ids = all;
     this.start = null;
+    this.instant = instant;
     this.running = all.length > 0;
   }
 
@@ -62,7 +66,7 @@ export class Glide {
     this.movedCount = 0;
     if (!this.running) return;
     this.start ??= now;
-    const p = this.duration > 0 ? easeInOutCubic((now - this.start) / this.duration) : 1;
+    const p = this.duration > 0 && !this.instant ? easeInOutCubic((now - this.start) / this.duration) : 1;
     const { positions, from, to, moved, ids } = this;
     for (let i = 0; i < ids.length; i++) {
       const id = ids[i]!;
