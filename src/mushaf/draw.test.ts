@@ -28,10 +28,15 @@ const layout = mushafLayout(VERSE_COUNTS, 800, 600);
 const occ = (...keys: string[]) => keys.map((v) => ({ v: v as `${number}:${number}`, w: [1] }));
 
 describe('drawMosaic', () => {
-  it('draws every verse as a dim dot and labels the rows', () => {
+  it('draws every verse as a dim dot, alternating two shades by surah, and labels the rows', () => {
     const { ctx, fills, texts } = fakeContext();
     drawMosaic(ctx, layout, 800, 600, { lit: litStates(undefined, undefined), alpha: 1, surah: null, active: -1 });
-    expect(fills).toEqual([{ color: COLORS.dim, dots: 6236, composite: 'source-over' }]);
+    // Odd surahs (1, 3, …) take the base shade, even surahs the alternate one, so surah blocks show.
+    const odd = VERSE_COUNTS.filter((_, i) => i % 2 === 0).reduce((a, b) => a + b, 0);
+    expect(fills).toEqual([
+      { color: COLORS.dim, dots: odd, composite: 'source-over' },
+      { color: COLORS.dimAlt, dots: 6236 - odd, composite: 'source-over' },
+    ]);
     expect(texts[0]).toBe('1');
   });
 
@@ -39,7 +44,7 @@ describe('drawMosaic', () => {
     const { ctx, fills } = fakeContext();
     const lit = litStates(occ('1:1', '1:2', '2:255'), occ('2:255', '3:1'));
     drawMosaic(ctx, layout, 800, 600, { lit, alpha: 1, surah: null, active: -1 });
-    expect(fills.slice(1)).toEqual([
+    expect(fills.slice(2)).toEqual([
       { color: COLORS.a, dots: 2, composite: 'source-over' },
       { color: COLORS.b, dots: 1, composite: 'source-over' },
       { color: COLORS.both, dots: 1, composite: 'source-over' },
@@ -52,6 +57,7 @@ describe('drawMosaic', () => {
     // The outline's inside is erased, then 286 brighter dots for Al-Baqarah.
     expect(fills[0]!.composite).toBe('destination-out');
     expect(fills).toContainEqual({ color: COLORS.dimSurah, dots: 286, composite: 'source-over' });
-    expect(fills).toContainEqual({ color: COLORS.dim, dots: 6236 - 286, composite: 'source-over' });
+    const dims = fills.filter((f) => f.color === COLORS.dim || f.color === COLORS.dimAlt);
+    expect(dims.reduce((t, f) => t + f.dots, 0)).toBe(6236 - 286);
   });
 });

@@ -5,6 +5,8 @@ import { surahStarts, VERSE_COUNTS } from './surahs';
 /** Mosaic colors (from the approved design). */
 export const COLORS = {
   dim: '#1a1e31',
+  /** Dim dots of every second surah, so surah blocks show even with nothing lit. */
+  dimAlt: '#232946',
   /** Dim dots of the surah under the pointer. */
   dimSurah: '#2c3352',
   a: '#ffc35a',
@@ -33,6 +35,9 @@ export interface DrawState {
   /** Verse index under the pointer, or -1. */
   active: number;
 }
+
+/** Surah index (0-based) of every verse, in Mushaf order. */
+const SURAH_OF = VERSE_COUNTS.flatMap((n, s) => Array<number>(n).fill(s));
 
 /** Adds one dot's square to the current path, with corners rounded like the design. */
 function addDot(ctx: CanvasRenderingContext2D, x: number, y: number, d: number) {
@@ -91,15 +96,15 @@ export function drawMosaic(
   ctx.textBaseline = 'middle';
   for (const l of layout.labels) ctx.fillText(String(l.surah), layout.left + layout.gutter - 6, l.y);
 
-  // Dim dots: one path per color keeps this to a few draw calls.
-  const inSurah = (i: number) =>
-    s.surah !== null && i >= surahStarts[s.surah - 1]! && i < surahStarts[s.surah - 1]! + VERSE_COUNTS[s.surah - 1]!;
-  for (const [color, wantSurah] of [[COLORS.dim, false], [COLORS.dimSurah, true]] as const) {
+  // Dim dots: one path per shade keeps this to a few draw calls.
+  // Shade 0 = odd surahs, 1 = even surahs, 2 = the surah under the pointer.
+  const shade = (i: number) => (s.surah !== null && SURAH_OF[i] === s.surah - 1 ? 2 : SURAH_OF[i]! % 2);
+  for (const [color, want] of [[COLORS.dim, 0], [COLORS.dimAlt, 1], [COLORS.dimSurah, 2]] as const) {
     ctx.beginPath();
     let any = false;
     for (let i = 0; i < x.length; i++) {
       // Lit dots are drawn over their dim square, so a fading dot never shows a hole.
-      if (inSurah(i) !== wantSurah) continue;
+      if (shade(i) !== want) continue;
       addDot(ctx, x[i]!, y[i]!, dot);
       any = true;
     }
