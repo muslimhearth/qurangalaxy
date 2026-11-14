@@ -6,6 +6,7 @@ import { SearchBox } from './SearchBox';
 import { useGalaxyStore } from '../state/store';
 import { fixtureGalaxy } from '../data/fixture';
 import { useSearchHistory } from '../history/history';
+import { useUnmarked } from '../reader/openSurah';
 
 describe('SearchBox', () => {
   beforeEach(() => {
@@ -114,6 +115,33 @@ describe('SearchBox', () => {
     expect(useSearchHistory.getState().entries).toEqual([{ query: 'rhm', mode: 'roots' }]);
   });
 
+  it('shows a matching surah as the first row; picking it opens the reader at verse 1 and records it', () => {
+    useSearchHistory.setState({ saving: true, entries: [] });
+    render(<SearchBox />);
+    input().focus();
+    fireEvent.change(input(), { target: { value: 'baqara' } });
+    const row = screen.getAllByRole('option')[0]!;
+    expect(row).toHaveTextContent('البقرة');
+    expect(row).toHaveTextContent('Al-Baqara');
+    expect(row).toHaveTextContent('The Cow');
+    fireEvent.keyDown(input(), { key: 'Enter' });
+    expect(useGalaxyStore.getState().reader).toEqual({ surah: 2, verse: 1 });
+    expect(useUnmarked.getState().key).toBe('2:1');
+    expect(useSearchHistory.getState().entries).toEqual([{ query: 'baqara', mode: 'roots' }]);
+    expect(screen.queryByRole('option')).toBeNull();
+    expect(input()).not.toHaveFocus();
+  });
+
+  it('keeps root results below the surah rows, and no surah row for a verse key', () => {
+    render(<SearchBox />);
+    fireEvent.change(input(), { target: { value: 'surah 1' } });
+    expect(screen.getAllByRole('option')[0]).toHaveTextContent('Al-Faatiha');
+    fireEvent.change(input(), { target: { value: 'rhm' } });
+    expect(screen.getAllByRole('option')).toHaveLength(1);
+    fireEvent.change(input(), { target: { value: '1:2' } });
+    expect(screen.queryByText('Al-Faatiha')).toBeNull();
+  });
+
   it('shows the number of matching roots at the end of the field', () => {
     render(<SearchBox />);
     expect(screen.queryByTestId('search-count')).toBeNull();
@@ -124,7 +152,7 @@ describe('SearchBox', () => {
   });
 
   describe('with more than 8 matching roots', () => {
-    // Test data: 12 roots that all mean "light".
+    // Test data: 12 roots that all mean "glow" (not a surah name).
     const many = {
       ...fixtureGalaxy,
       roots: Array.from({ length: 12 }, (_, id) => ({
@@ -132,7 +160,7 @@ describe('SearchBox', () => {
         id,
         tr: `l-${id}`,
         ar: `ن${id}`,
-        en: ['light'],
+        en: ['glow'],
         lemmas: [],
         count: 100 - id,
       })),
@@ -142,7 +170,7 @@ describe('SearchBox', () => {
 
     it('shows "8 of 12 roots" and a "Show all" row that expands the list', () => {
       render(<SearchBox />);
-      fireEvent.change(input(), { target: { value: 'light' } });
+      fireEvent.change(input(), { target: { value: 'glow' } });
       expect(screen.getByTestId('search-count')).toHaveTextContent('8 of 12 roots');
       const more = screen.getByRole('option', { name: 'Show all 12 roots' });
       expect(screen.getAllByRole('option')).toHaveLength(9);
@@ -151,13 +179,13 @@ describe('SearchBox', () => {
       expect(screen.getByTestId('search-count')).toHaveTextContent('12 roots');
       expect(useGalaxyStore.getState().selectedId).toBeNull();
       // A new query starts with the short list again.
-      fireEvent.change(input(), { target: { value: 'ligh' } });
+      fireEvent.change(input(), { target: { value: 'glo' } });
       expect(screen.getAllByRole('option')).toHaveLength(9);
     });
 
     it('expands with Enter on the "Show all" row', () => {
       render(<SearchBox />);
-      fireEvent.change(input(), { target: { value: 'light' } });
+      fireEvent.change(input(), { target: { value: 'glow' } });
       fireEvent.keyDown(input(), { key: 'ArrowUp' });
       expect(screen.getByRole('option', { name: 'Show all 12 roots' })).toHaveAttribute('aria-selected', 'true');
       fireEvent.keyDown(input(), { key: 'Enter' });

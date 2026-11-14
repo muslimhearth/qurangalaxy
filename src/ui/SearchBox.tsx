@@ -23,6 +23,9 @@ import { useVerseTexts } from './useVerseTexts';
 import { useNewTabGesture } from '../tabs/useNewTabGesture';
 import type { TargetLike } from '../tabs/target';
 import { VerseOption } from './VerseOption';
+import { openSurah } from '../reader/openSurah';
+import { searchSurahs } from '../reader/surahSearch';
+import { surahAt } from '../reader/surahs';
 
 /** Number of root results in the list. */
 const LIMIT = 8;
@@ -107,6 +110,8 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
   const keyVerses = useVerseTexts(verseQuery.kind === 'verse');
 
   const roots = galaxy?.roots ?? [];
+  // Surah names match in both modes; they come first in the list.
+  const surahs = useMemo(() => searchSurahs(text), [text]);
 
   const chooseRoot = (id: number) => {
     record({ query, mode });
@@ -130,7 +135,37 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
     input.current?.blur();
   };
 
+  const chooseSurah = (n: number) => {
+    record({ query, mode });
+    openSurah(n);
+    setListOpen(false);
+    setHistoryOpen(false);
+    input.current?.blur();
+  };
+
   const options: Option[] = [];
+  for (const { surah: n } of surahs) {
+    const s = surahAt(n)!;
+    options.push({
+      id: `surah-option-${n}`,
+      className: 'search-option surah-option',
+      choose: () => chooseSurah(n),
+      body: (
+        <>
+          <span className="ar" lang="ar" dir="rtl">
+            {s.ar}
+          </span>
+          <span className="tr">
+            {s.tr}
+            <span className="note">
+              {s.en} · {s.verses} verses
+            </span>
+          </span>
+          <span className="count surah-badge">Surah {n}</span>
+        </>
+      ),
+    });
+  }
   if (verseQuery.kind === 'verse') {
     const key = verseQuery.key;
     options.push({

@@ -107,3 +107,23 @@ test('Escape closes the reader first, then the root panel; the tab follows', asy
   // One empty tab: the tab bar hides.
   await expect(page.getByRole('tablist')).toHaveCount(0);
 });
+
+test('a surah name search opens the reader at the start of the surah', async ({ page, isMobile }) => {
+  await page.goto('/');
+  const search = page.getByRole('combobox');
+  await search.click();
+  await search.fill('baqara');
+  const row = page.getByRole('option').first();
+  await expect(row).toContainText('Al-Baqara');
+  await expect(row).toContainText('The Cow');
+  await press(row, isMobile);
+
+  const r = reader(page);
+  await expect(r).toBeVisible({ timeout: 15_000 });
+  await expect(r.getByRole('heading', { level: 2 })).toContainText('البقرة');
+  await expect(r.locator('[data-verse="2:1"]')).toBeInViewport();
+  // Verse 1 is not marked: the user picked the surah, not a verse.
+  await expect(r.locator('[aria-current="true"]')).toHaveCount(0);
+  expect(await hash(page)).toBe('#/surah/2/1');
+  await expect(search).toHaveValue('baqara');
+});

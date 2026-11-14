@@ -5,6 +5,7 @@ import { resetLoadCache } from '../data/load';
 import { useGalaxyStore } from '../state/store';
 import { useMeanings } from '../ui/meanings';
 import { useVerseFocus } from '../ui/verseFocus';
+import { openSurah, useUnmarked } from './openSurah';
 import { SurahReader } from './SurahReader';
 
 const g = () => useGalaxyStore.getState();
@@ -17,6 +18,7 @@ describe('SurahReader', () => {
     useGalaxyStore.setState(useGalaxyStore.getInitialState());
     g().setGalaxy(fixtureGalaxy);
     useMeanings.setState({ show: true });
+    useUnmarked.setState({ key: null });
   });
   afterEach(() => {
     cleanup();
@@ -96,6 +98,14 @@ describe('SurahReader', () => {
     expect(document.querySelector('[aria-current]')).toHaveAttribute('data-verse', '1:2');
     act(() => g().setReader({ surah: 1, verse: 1 }));
     expect(document.querySelector('[aria-current]')).toHaveAttribute('data-verse', '1:1');
+  });
+
+  it('opens a surah from outside (name search) at verse 1, unmarked and scrolled to the top', async () => {
+    render(<SurahReader />);
+    act(() => openSurah(1));
+    expect(g().reader).toEqual({ surah: 1, verse: 1 });
+    await screen.findByText('Fixture translation of 1:1');
+    expect(document.querySelector('[aria-current]')).toBeNull();
   });
 
   it('has a bookmark star on each verse row', async () => {

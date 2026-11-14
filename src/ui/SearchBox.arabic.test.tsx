@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { fixtureGalaxy, fixtureOccurrences, fixtureVerses } from '../data/fixture';
 import type { SemanticService } from '../semantic/service';
 import { DEBOUNCE_MS } from '../semantic/useSemanticSearch';
@@ -36,7 +36,12 @@ describe('SearchBox Arabic search', () => {
   it('roots mode: an inflected Quran word finds its root once the word forms load', async () => {
     render(<SearchBox semanticService={fakeService} />);
     fireEvent.change(input(), { target: { value: 'الرحمن' } });
-    const option = await screen.findByRole('option');
+    // Surah 55 (Ar-Rahmaan) comes first; the root follows.
+    const option = await waitFor(() => {
+      const found = screen.getAllByRole('option').find((o) => o.id === 'root-option-2');
+      if (!found) throw new Error('no root yet');
+      return found;
+    });
     expect(option).toHaveTextContent('رحم');
     // The note shows the Quran word that matched.
     expect(option).toHaveTextContent(fixtureVerses['1:3']!.ar.split(' ')[0]!);
@@ -51,7 +56,7 @@ describe('SearchBox Arabic search', () => {
     fireEvent.change(input(), { target: { value: 'الرحمن' } });
     await act(async () => vi.advanceTimersByTime(DEBOUNCE_MS * 2));
     expect(service.search).not.toHaveBeenCalled();
-    expect(options().map((o) => o.id)).toEqual(['root-option-2']);
+    expect(options().map((o) => o.id)).toEqual(['surah-option-55', 'root-option-2']);
     expect(useGalaxyStore.getState().semanticWeight).toBe(1);
   });
 

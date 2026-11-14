@@ -35,6 +35,15 @@ describe('SearchBox verse search', () => {
     window.history.replaceState(null, '', '/');
   });
 
+  it('shows surah rows in Verses mode too, above the verses', async () => {
+    useGalaxyStore.getState().setSearchMode('verses');
+    render(<SearchBox semanticService={fakeService} />);
+    fireEvent.change(input(), { target: { value: 'the opening' } });
+    expect(options()[0]).toHaveTextContent('Al-Faatiha');
+    fireEvent.click(options()[0]!);
+    expect(useGalaxyStore.getState().reader).toEqual({ surah: 1, verse: 1 });
+  });
+
   it('switches to verses and finds them by English words, with the words marked', async () => {
     render(<SearchBox semanticService={fakeService} />);
     fireEvent.click(screen.getByRole('radio', { name: 'Verses' }));

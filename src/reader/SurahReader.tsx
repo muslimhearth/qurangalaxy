@@ -7,6 +7,7 @@ import { verseWords } from '../ui/helpers';
 import { MeaningsToggle, useMeanings } from '../ui/meanings';
 import { useVerseTexts } from '../ui/useVerseTexts';
 import { useVerseFocus } from '../ui/verseFocus';
+import { openSurah, useUnmarked } from './openSurah';
 import { surahAt, surahVerseKeys } from './surahs';
 import { growWindow, initialWindow, isFull, type VerseWindow } from './verseWindow';
 
@@ -112,14 +113,13 @@ export function SurahReader() {
   const ready = verses !== null;
   const verse = place?.verse ?? 0;
   const currentKey: VerseKey = `${surah}:${verse}`;
-  // Previous/next surah opens verse 1 without marking it: only a verse the user opened is marked.
-  // Any other place (a verse key, the URL, closing) clears this again.
-  const [unmarked, setUnmarked] = useState<string | null>(null);
-  if (unmarked !== null && (!place || unmarked !== currentKey)) setUnmarked(null);
-  const goToSurah = (n: number) => {
-    setUnmarked(`${n}:1`);
-    setReader({ surah: n, verse: 1 });
-  };
+  // Previous/next surah (and a surah name search) opens verse 1 without marking it: only a verse
+  // the user opened is marked. Any other place (a verse key, the URL) clears this again.
+  const unmarked = useUnmarked((s) => s.key);
+  useEffect(() => {
+    if (unmarked !== null && place && unmarked !== currentKey) useUnmarked.setState({ key: null });
+  }, [unmarked, place, currentKey]);
+  const goToSurah = openSurah;
   const win = useVerseWindow(keys.length, verse, `${surah}:${verse}`, ready);
 
   // Verses added above keep the reading position: move the scroll by how far the first verse

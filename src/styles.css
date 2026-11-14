@@ -236,6 +236,8 @@ a { color: var(--accent); }
   display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2;
 }
 .search-option .verse-note .refs { color: var(--accent); }
+/* Surah name rows: first in the list, with a small "Surah N" tag at the end. */
+.surah-badge { white-space: nowrap; font-size: 0.75rem; }
 
 /* Search bar row: icon, field, result count, Roots | Verses, tools (bookmarks slot, gear). */
 .search-row { display: flex; align-items: center; gap: 8px; min-height: 52px; padding: 0 6px 0 14px; }
