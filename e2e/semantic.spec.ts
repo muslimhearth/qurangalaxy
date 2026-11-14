@@ -6,7 +6,7 @@ const modelFile = `public/models/${MODEL.id}/onnx/model_quantized.onnx`;
 
 test('meaning search finds صبر for "patience" without third-party requests', async ({ page, isMobile, baseURL }) => {
   test.skip(!existsSync(modelFile), `Model missing (${modelFile}). Run \`pnpm models\` first.`);
-  // First use downloads the model (22 MB) and the runtime (14 MB) and starts it in software.
+  // First use downloads the model (34 MB) and the runtime (14 MB) and starts it in software.
   test.setTimeout(150_000);
 
   // Our own host: localhost in dev, the real domain when testing a deployed site.
@@ -29,7 +29,7 @@ test('meaning search finds صبر for "patience" without third-party requests', 
   if (isMobile) await meaning.tap();
   else await meaning.click();
   await expect(meaning).toHaveAttribute('aria-checked', 'true');
-  await expect(gear).toHaveAccessibleName(/Meaning/);
+  await expect(gear).toHaveAccessibleName(/Semantic/);
   await page.screenshot({ path: `test-results/${test.info().project.name}-search-mode.png` });
 
   const search = page.getByRole('combobox');
