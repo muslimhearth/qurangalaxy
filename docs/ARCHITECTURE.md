@@ -63,7 +63,7 @@ Headless browsers have no GPU: Chromium and WebKit run the WebGL 2 fallback in s
 
 ## Key decisions
 - **Search = scored matchers + blend.** Each matcher (Arabic, root letters, Latin spelling, English) returns scores in 0..1; the best per root wins. Real English meanings outrank accidental Latin spellings. The slider blends: `w × semantic + (1 − w) × exact`.
-- **Meaning search off the main thread.** all-MiniLM-L6-v2 (q8) runs in a Web Worker through transformers.js and loads only when the slider leaves 0. The model, the ONNX runtime wasm and the verse vectors (int8, 2.4 MB) are self-hosted. Root score = sum of the similarities of the top 20 verses × inverse verse frequency.
+- **Meaning search off the main thread.** snowflake-arctic-embed-s (q8, 34 MB) runs in a Web Worker through transformers.js and loads only when Hybrid or Semantic is picked. The model, the ONNX runtime wasm and the verse vectors (int8, 2.4 MB; each verse mixed with its neighbours, short verses damped; see G25) are self-hosted. Root score = sum of the similarities of the top 20 verses × inverse verse frequency.
 - **English meanings from Wiktionary.** Lemmas are matched to entries by root, letters, vowels and word class; the translation only chooses between candidate senses. Fallback: distinctive translation words.
 - **Precomputed layout.** The force layout runs at build time, so the app starts instantly and looks the same for every user.
 - **Lazy detail data.** Only `galaxy.json` loads at startup. Verses and occurrences load on first selection.
