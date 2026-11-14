@@ -5,6 +5,7 @@ import type { Occurrences, VerseKey } from '../data/types';
 import { useGalaxyStore } from '../state/store';
 import { verseWords } from '../ui/helpers';
 import { VerseWords } from '../morph/VerseWords';
+import { loadMorphTags, loadSurahMorph } from '../morph/word';
 import { MeaningsToggle, useMeanings } from '../ui/meanings';
 import { useVerseTexts } from '../ui/useVerseTexts';
 import { useVerseFocus } from '../ui/verseFocus';
@@ -110,6 +111,15 @@ export function SurahReader() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, [open]);
+
+  // Fetch the surah's word card data ahead of the first tap (once the verses are in).
+  useEffect(() => {
+    if (!open || verses === null || surah < 1) return;
+    const timer = setTimeout(() => {
+      Promise.all([loadSurahMorph(surah), loadMorphTags()]).catch(() => {}); // A tap retries.
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [open, verses, surah]);
 
   const ready = verses !== null;
   const verse = place?.verse ?? 0;
