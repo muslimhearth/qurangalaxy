@@ -17,6 +17,7 @@ import { snippet } from './snippet';
 import { useVerseResults } from './useVerseResults';
 import { useVerseTexts } from './useVerseTexts';
 import { useNewTabGesture } from '../tabs/useNewTabGesture';
+import type { TargetLike } from '../tabs/target';
 import { VerseOption } from './VerseOption';
 
 /** Number of root results in the list. */
@@ -27,8 +28,8 @@ interface Option {
   id: string;
   className: string;
   choose: () => void;
-  /** Root results: the root a long-press or middle-click opens in a new tab. */
-  rootId?: number;
+  /** The root id or verse a long-press or middle-click opens in a new tab. */
+  target?: TargetLike;
   body: ReactNode;
 }
 
@@ -117,6 +118,7 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
       id: `verse-option-${key.replace(':', '-')}`,
       className: 'search-option verse-option',
       choose: () => chooseVerse(key),
+      target: { verse: key },
       body: <VerseOption verseKey={key} verse={keyVerses?.[key]} query="" source="semantic" />,
     });
   }
@@ -126,7 +128,7 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
       options.push({
         id: `root-option-${root.id}`,
         className: 'search-option',
-        rootId: root.id,
+        target: root.id,
         choose: () => chooseRoot(root.id),
         body: (
           <>
@@ -148,6 +150,7 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
         id: `verse-option-${m.key.replace(':', '-')}`,
         className: 'search-option verse-option',
         choose: () => chooseVerse(m.key),
+        target: { verse: m.key },
         body: (
           <VerseOption
             verseKey={m.key}
@@ -279,9 +282,9 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
               aria-selected={i === active}
               className={opt.className}
               onClick={opt.choose}
-              // Roots also open in a new tab on long-press or middle-click (this click handler replaces
-              // the one above); the mouse-down handler below still wins.
-              {...(opt.rootId === undefined ? {} : newTab(opt.rootId, opt.choose))}
+              // Roots and verses also open in a new tab on long-press or middle-click (this click handler
+              // replaces the one above); the mouse-down handler below still wins.
+              {...(opt.target === undefined ? {} : newTab(opt.target, opt.choose))}
               // Keep focus in the input while clicking.
               onMouseDown={(e) => e.preventDefault()}
               onMouseEnter={() => setActive(i)}

@@ -4,6 +4,7 @@ import { fixtureGalaxy } from '../data/fixture';
 import { useGalaxyStore } from '../state/store';
 import { resetTranslit } from '../verses/translit';
 import { VersePanel } from './VersePanel';
+import { resetTabs, useTabsStore } from '../tabs/store';
 
 describe('VersePanel', () => {
   beforeEach(() => {
@@ -41,6 +42,16 @@ describe('VersePanel', () => {
     const list = await screen.findByRole('list', { name: 'Roots in this verse' });
     fireEvent.click(within(list).getAllByRole('button')[0]!);
     expect(useGalaxyStore.getState()).toMatchObject({ openVerse: null, query: '', selectedId: 3 });
+  });
+
+  it('a root chip opens in a background tab on Ctrl-click; the verse stays', async () => {
+    resetTabs();
+    useGalaxyStore.setState({ openVerse: '1:2' });
+    render(<VersePanel />);
+    const list = await screen.findByRole('list', { name: 'Roots in this verse' });
+    fireEvent.click(within(list).getAllByRole('button')[0]!, { ctrlKey: true });
+    expect(useTabsStore.getState().tabs.map((t) => t.selectedId)).toEqual([null, 3]);
+    expect(useGalaxyStore.getState().openVerse).toBe('1:2');
   });
 
   it('closes with the close button and with Escape', () => {

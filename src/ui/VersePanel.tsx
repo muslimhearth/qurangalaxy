@@ -3,6 +3,7 @@ import { loadOccurrences } from '../data/load';
 import type { Occurrences } from '../data/types';
 import { useGalaxyStore } from '../state/store';
 import { rootsInVerse } from '../verses/verseRoots';
+import { useNewTabGesture } from '../tabs/useNewTabGesture';
 import { TranslitText } from './TranslitText';
 import { useTranslit } from './useTranslit';
 import { useVerseTexts } from './useVerseTexts';
@@ -36,6 +37,7 @@ export function VersePanel() {
   const verses = useVerseTexts(key !== null);
   const { translit } = useTranslit(key !== null);
   const occurrences = useOccurrences();
+  const newTab = useNewTabGesture();
   // Phones: the sheet can shrink to its header (kept per verse, so a new verse opens full).
   const [collapsedKey, setCollapsedKey] = useState<string | null>(null);
   const collapsed = key !== null && collapsedKey === key;
@@ -119,7 +121,7 @@ export function VersePanel() {
             <ul className="chips" aria-label="Roots in this verse">
               {roots.map((r) => (
                 <li key={r.id}>
-                  <button type="button" className="chip chip-link" onClick={() => openRoot(r.id)}>
+                  <button type="button" className="chip chip-link" {...newTab(r.id, () => openRoot(r.id))}>
                     <span lang="ar" dir="rtl">
                       {r.ar}
                     </span>
