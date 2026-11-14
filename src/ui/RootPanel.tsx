@@ -181,10 +181,11 @@ export function RootPanel({ hidden = false }: { hidden?: boolean }) {
 /** "N verses with <lemma>" above a filtered verse list, with a button that clears the filter. */
 function LemmaFilterHead(props: { lemma: string; count: number | null; failed: boolean; onClear: () => void }) {
   const ref = useRef<HTMLDivElement>(null);
-  // Phones: the chips can fill the sheet; bring the filtered list into view.
+  // Phones: the chips can fill the sheet; bring the filtered list to the top of the panel body.
   useEffect(() => {
-    ref.current?.scrollIntoView?.({ block: 'nearest' });
-  }, [props.lemma]);
+    ref.current?.scrollIntoView?.({ block: 'start' });
+    // Again once the list is there: while lemmas.json loads, the body is too short to scroll.
+  }, [props.lemma, props.count !== null]);
   return (
     <div className="lemma-filter" ref={ref}>
       <p role="status">
