@@ -3,6 +3,10 @@ import type { Verses } from '../data/types';
 import type { SemanticService } from '../semantic/service';
 import { useSemanticVerses, type SemanticState } from '../semantic/useSemanticSearch';
 import type { VerseHit } from '../semantic/aggregate';
+import { isArabicQuery } from '../search/arabicKey';
+import { meaningWeight } from '../search/blend';
+import { useWordForms } from '../search/useWordForms';
+import { arabicIndexFor, arabicVerseMatches } from '../verses/arabic';
 import { blendVerseMatches } from '../verses/blend';
 import { buildVerseIndex, exactVerseMatches, type VerseMatch } from '../verses/exact';
 import type { Translit } from '../verses/translit';
@@ -28,7 +32,8 @@ export interface VerseResults {
 
 /**
  * Verse search for `query` while `enabled`: exact words in English and transliteration,
- * blended with meaning (semantic) search by `weight`.
+ * blended with meaning (semantic) search by `weight`. Arabic queries search the Arabic text
+ * (words and other forms of their roots) without meaning search.
  */
 export function useVerseResults(
   query: string,
@@ -43,12 +48,20 @@ export function useVerseResults(
 
   // Exact search reads every verse; let typing stay smooth while it catches up.
   const q = useDeferredValue(enabled ? query.trim() : '');
-  const exact = useMemo(() => (index && q ? exactVerseMatches(index, q, EXACT_POOL) : []), [index, q]);
+  const arabic = isArabicQuery(q);
+  // Root forms of an Arabic word come from the word-form index (loaded on the first Arabic query).
+  const forms = useWordForms(enabled && isArabicQuery(query));
+  const exact = useMemo(() => {
+    if (!index || !q) return [];
+    return arabic ? arabicVerseMatches(arabicIndexFor(verses!), q, forms, EXACT_POOL) : exactVerseMatches(index, q, EXACT_POOL);
+  }, [index, verses, q, arabic, forms]);
   const semantic = useSemanticVerses(enabled ? query : '', enabled ? weight : 0, getService);
+  // The slider keeps its value; Arabic queries just use exact search alone.
+  const mix = meaningWeight(q, weight);
   const matches = useMemo(
-    () => blendVerseMatches(exact, semantic.matches ?? [], weight, VERSE_LIMIT),
-    [exact, semantic.matches, weight],
+    () => blendVerseMatches(exact, semantic.matches ?? [], mix, VERSE_LIMIT),
+    [exact, semantic.matches, mix],
   );
-  const pending = enabled && weight > 0 && semantic.matches === null && semantic.status !== 'error';
+  const pending = enabled && mix > 0 && semantic.matches === null && semantic.status !== 'error';
   return { ready, matches, verses, translit, semantic, pending };
 }
