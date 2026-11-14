@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Verses } from '../../../src/data/types';
+import type { MorphRow } from '../../../src/morph/types';
 import { buildMorph } from './build';
 
 const MORPH = [
@@ -38,14 +39,15 @@ describe('buildMorph', () => {
   });
 
   it('marks the second word of a joined pair with the first word position', () => {
-    expect(out.surahs[0]![1]![0]![0]).toBe(2);
+    expect((out.surahs[0]![1]![0] as MorphRow)[0]).toBe(2);
     expect(out.surahs[0]![1]![1]).toBe(1);
   });
 
   it('gives root-less words a particle lemma and lists their global word indices', () => {
     const fi = out.particles.lemmas.indexOf('فِي');
-    expect(out.surahs[0]![0]![1]![1]).toBe(fi);
-    expect(out.surahs[0]![0]![1]![0]).toBe(-1);
+    const row = out.surahs[0]![0]![1] as MorphRow;
+    expect(row[1]).toBe(fi);
+    expect(row[0]).toBe(-1);
     // Global Tanzil words: 1:1 has 0-1, 1:2 has 2-5. فِي is at 1 and 5: deltas 1, 4.
     expect(out.particles.words[fi]).toEqual([1, 4]);
   });
