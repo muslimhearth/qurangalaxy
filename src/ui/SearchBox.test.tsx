@@ -132,6 +132,21 @@ describe('SearchBox', () => {
     expect(input()).not.toHaveFocus();
   });
 
+  it('Enter still takes the first root when a surah row sits above it; ArrowUp reaches the surah', () => {
+    render(<SearchBox />);
+    input().focus();
+    fireEvent.change(input(), { target: { value: 'رحم' } });
+    const ids = screen.getAllByRole('option').map((o) => o.id);
+    expect(ids).toEqual(['surah-option-55', 'root-option-2']);
+    expect(screen.getAllByRole('option')[1]).toHaveAttribute('aria-selected', 'true');
+    fireEvent.keyDown(input(), { key: 'ArrowUp' });
+    expect(screen.getAllByRole('option')[0]).toHaveAttribute('aria-selected', 'true');
+    fireEvent.keyDown(input(), { key: 'ArrowDown' });
+    fireEvent.keyDown(input(), { key: 'Enter' });
+    expect(useGalaxyStore.getState().selectedId).toBe(2);
+    expect(useGalaxyStore.getState().reader).toBeNull();
+  });
+
   it('keeps root results below the surah rows, and no surah row for a verse key', () => {
     render(<SearchBox />);
     fireEvent.change(input(), { target: { value: 'surah 1' } });

@@ -64,7 +64,8 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
   const verseWeight = useVerseWeight((s) => s.weight);
   const setVerseWeight = useVerseWeight((s) => s.setWeight);
   const record = useSearchHistory((s) => s.record);
-  const [active, setActive] = useState(0);
+  // Highlighted row; null: the default row (see `active` below).
+  const [picked, setActive] = useState<number | null>(null);
   const newTab = useNewTabGesture();
   // False after a verse is picked: the list hides until the user types or focuses again.
   const [listOpen, setListOpen] = useState(true);
@@ -230,6 +231,11 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
     }
   }
 
+  // Enter takes the first root or verse by default, so a root search ("rahma", "رحم") still selects
+  // its root with Enter; the surah rows above are one ArrowUp (or a tap) away.
+  const firstResult = options.findIndex((o) => !o.id.startsWith('surah-option-'));
+  const active = picked ?? Math.max(0, firstResult);
+
   let empty: string;
   if (verseQuery.kind === 'invalid') empty = verseQuery.message;
   else if (rootsOn) empty = rootsPending ? 'Searching by meaning…' : 'No roots match.';
@@ -251,7 +257,7 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
   const showHistory = historyOpen && query === '';
 
   const reopen = () => {
-    setActive(0);
+    setActive(null);
     setListOpen(true);
   };
 
@@ -268,7 +274,7 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
       if (!open) return reopen();
       if (options.length === 0) return;
       const step = e.key === 'ArrowDown' ? 1 : -1;
-      setActive((a) => (a + step + options.length) % options.length);
+      setActive((a) => ((a ?? active) + step + options.length) % options.length);
     } else if (e.key === 'Enter') {
       if (query.trim() === '') return;
       const option = options[active] ?? options[0];

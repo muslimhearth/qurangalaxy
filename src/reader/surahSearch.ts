@@ -93,7 +93,7 @@ export function searchSurahs(query: string): SurahMatch[] {
   if (isArabicQuery(q)) {
     const key = arKey(q);
     KEYS.forEach((k, i) => {
-      const score = nameScore(k.ar, key, 2);
+      const score = nameScore(k.ar, key, 3);
       if (score) found.push({ surah: i + 1, score });
     });
   } else {
