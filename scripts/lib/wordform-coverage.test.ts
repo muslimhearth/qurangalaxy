@@ -5,8 +5,8 @@ import { wordFormCoverage } from './wordform-coverage';
 
 // First words of Tanzil verses (Uthmani and Simple Clean), cut for the test.
 const verses: Verses = {
-  '2:189': { ar: 'يَسْـَٔلُونَكَ عَنِ ٱلْأَهِلَّةِ قُلْ', en: '' },
-  '2:215': { ar: 'يَسْـَٔلُونَكَ مَاذَا يُنفِقُونَ قُلْ', en: '' },
+  '2:189': { ar: 'يَسْـَٔلُونَكَ عَنِ ٱلْأَهِلَّةِ قُلْ', en: '' },
+  '2:215': { ar: 'يَسْـَٔلُونَكَ مَاذَا يُنفِقُونَ قُلْ', en: '' },
 };
 const typed = new Map<VerseKey, string>([
   ['2:189', 'يسألونك عن الأهلة قل'],

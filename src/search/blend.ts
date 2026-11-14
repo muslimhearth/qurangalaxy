@@ -1,5 +1,6 @@
 /** Mixes exact and semantic search results by the slider weight. */
 import type { Root } from '../data/types';
+import { isArabicQuery } from './arabicKey';
 import { rankMatches } from './exact';
 import type { Match } from './types';
 
@@ -31,4 +32,12 @@ export function blendMatches(
     out.push(s?.verses ? { id, score, reason, verses: s.verses } : { id, score, reason });
   }
   return rankMatches(roots, out, limit);
+}
+
+/**
+ * The meaning weight to use for `query`: the slider weight, but 0 for Arabic queries. The
+ * meaning model knows English only, so Arabic gets exact results alone. The slider keeps its value.
+ */
+export function meaningWeight(query: string, weight: number): number {
+  return isArabicQuery(query) ? 0 : weight;
 }
