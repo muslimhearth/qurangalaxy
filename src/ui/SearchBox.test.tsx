@@ -89,16 +89,29 @@ describe('SearchBox', () => {
     expect(options[0]).toHaveTextContent('r-ḥ-m');
   });
 
-  it('selects a result on click, clears the query and leaves the field', () => {
+  it('selects a result on click, keeps the query, closes the list and leaves the field', () => {
     render(<SearchBox />);
     input().focus();
     fireEvent.change(input(), { target: { value: 'rhm' } });
     fireEvent.click(screen.getByRole('option'));
     expect(useGalaxyStore.getState().selectedId).toBe(2);
-    expect(useGalaxyStore.getState().query).toBe('');
+    expect(useGalaxyStore.getState().query).toBe('rhm');
+    expect(input()).toHaveValue('rhm');
     expect(screen.queryByRole('option')).toBeNull();
     // No list or history comes back over the galaxy.
     expect(input()).not.toHaveFocus();
+    // Focus again: the same results come back, so the user can pick another one.
+    fireEvent.focus(input());
+    expect(screen.getAllByRole('option')).toHaveLength(1);
+  });
+
+  it('records a picked root search once in the history', () => {
+    useSearchHistory.setState({ saving: true, entries: [] });
+    render(<SearchBox />);
+    input().focus();
+    fireEvent.change(input(), { target: { value: 'rhm' } });
+    fireEvent.keyDown(input(), { key: 'Enter' });
+    expect(useSearchHistory.getState().entries).toEqual([{ query: 'rhm', mode: 'roots' }]);
   });
 
   it('shows the number of matching roots at the end of the field', () => {

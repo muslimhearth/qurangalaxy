@@ -112,8 +112,9 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
     record({ query, mode });
     setOpenVerse(null);
     select(id);
-    setQuery('');
+    // The text stays: focusing the field again shows the same results, to pick another root.
     // The user just picked something: no list or history over the galaxy.
+    setListOpen(false);
     setHistoryOpen(false);
     input.current?.blur();
   };

@@ -150,8 +150,9 @@ describe('SearchBox verse search', () => {
       fireEvent.focus(input());
       fireEvent.change(input(), { target: { value: 'rh' } });
       fireEvent.keyDown(input(), { key: 'Enter' });
-      expect(useGalaxyStore.getState().query).toBe('');
+      expect(useGalaxyStore.getState().query).toBe('rh');
       expect(screen.queryByText('Recent searches')).toBeNull();
+      expect(screen.queryByRole('option')).toBeNull();
     });
   });
 
