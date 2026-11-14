@@ -65,7 +65,7 @@ test('two roots in two tabs: switch, reload, close', async ({ page, isMobile }) 
 test('a connected root opens in a new tab (Ctrl-click / long-press)', async ({ page, isMobile }, info) => {
   await page.goto('/#/root/' + encodeURIComponent('رحم'));
   await expect(panelRoot(page)).toHaveText('رحم', { timeout: 15_000 });
-  const chips = page.getByRole('list', { name: 'Connected roots' }).getByRole('button');
+  const chips = page.getByRole('list', { name: 'Connected roots' }).locator('.chip-name');
   const first = chips.nth(0);
   const second = chips.nth(1);
   const firstAr = (await first.locator('[lang="ar"]').textContent())!;

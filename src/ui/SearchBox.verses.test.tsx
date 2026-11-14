@@ -130,6 +130,15 @@ describe('SearchBox verse search', () => {
       fireEvent.keyDown(input(), { key: 'Enter' });
       expect(useSearchHistory.getState().entries[0]).toEqual({ query: 'rh', mode: 'roots' });
     });
+
+    it('does not open the history after a root is picked', () => {
+      render(<SearchBox semanticService={fakeService} />);
+      fireEvent.focus(input());
+      fireEvent.change(input(), { target: { value: 'rh' } });
+      fireEvent.keyDown(input(), { key: 'Enter' });
+      expect(useGalaxyStore.getState().query).toBe('');
+      expect(screen.queryByText('Recent searches')).toBeNull();
+    });
   });
 
   describe('auto focus', () => {

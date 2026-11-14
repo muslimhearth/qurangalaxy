@@ -95,6 +95,8 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
     setOpenVerse(null);
     select(id);
     setQuery('');
+    // The field is empty now, but the user just picked something: no history over the galaxy.
+    setHistoryOpen(false);
   };
 
   const chooseVerse = (key: VerseKey) => {
@@ -103,6 +105,7 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
     // A typed key has nothing more to show; a word search keeps its results for the next pick.
     if (verseQuery.kind === 'verse') setQuery('');
     else setListOpen(false);
+    setHistoryOpen(false);
     // Phones: close the keyboard so the verse sheet is visible.
     if (!hasFinePointer()) input.current?.blur();
   };
