@@ -10,7 +10,7 @@ export function ModeSwitch({ onSwitch }: { onSwitch?: (mode: SearchMode) => void
   const mode = useGalaxyStore((s) => s.searchMode);
   const setMode = useGalaxyStore((s) => s.setSearchMode);
   return (
-    <div className="mode-switch" role="radiogroup" aria-label="Search for">
+    <div className="segmented mode-switch" role="radiogroup" aria-label="Search for">
       {MODES.map((m) => (
         <button
           key={m.mode}
@@ -24,7 +24,7 @@ export function ModeSwitch({ onSwitch }: { onSwitch?: (mode: SearchMode) => void
             onSwitch?.(m.mode);
           }}
         >
-          <span>{m.label}</span>
+          {m.label}
         </button>
       ))}
     </div>
