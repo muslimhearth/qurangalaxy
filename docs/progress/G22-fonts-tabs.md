@@ -16,9 +16,10 @@
   restarts from the switch time.
 - **Roots search keeps its text.** After a root pick, the text stays, the list closes and the field
   blurs. Focus shows the same results again. Escape and × still clear the text. History records once.
+  A query set from outside (tab switch, reload, desktop auto focus) does not open the list.
 - **Reader header.** The number is a round badge. It sits on one line with the Arabic name, both
-  centered. The Arabic has a fixed line box (1.35) with top padding, so it no longer crowds the
-  "An-Nahl · The Bee · 128 verses" line. Checked on a phone in light and dark, at M and XL.
+  centered. The Arabic name now uses Noto Naskh Arabic with line-height 1.3. Amiri Quran draws
+  below its line box, and that caused the overlap with the "An-Nahl · The Bee · 128 verses" line. Checked on a phone in light and dark, at M and XL.
 - **Surah name search.** `src/reader/surahSearch.ts` matches the transliterated name (any case,
   article optional, hyphens, apostrophes and doubled letters ignored, "oo"→u, "ee"→i, final "ah"),
   the English name ("cow", "the cow"), the Arabic name (G18 `arabicKey`, "ال" optional), and
