@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { modeLabel, SearchSettings } from './SearchSettings';
 import { useGalaxyStore } from '../state/store';
+import { HISTORY_KEY, useSearchHistory } from '../history/history';
 
 describe('modeLabel', () => {
   it('names the current search mode in one short word', () => {
@@ -73,5 +74,29 @@ describe('SearchSettings', () => {
     fireEvent.click(button());
     fireEvent.focusIn(screen.getByLabelText('field'));
     expect(screen.queryByRole('slider')).toBeNull();
+  });
+
+  it('shows a given mix instead of the root search mix', () => {
+    let seen = -1;
+    render(<SearchSettings status="off" progress={0} weight={0.5} onWeight={(w) => (seen = w)} />);
+    expect(button()).toHaveTextContent('Hybrid');
+    fireEvent.click(button());
+    fireEvent.change(screen.getByRole('slider'), { target: { value: '0' } });
+    expect(seen).toBe(0);
+    expect(useGalaxyStore.getState().semanticWeight).toBe(0);
+  });
+
+  it('turns search history saving off and on', () => {
+    localStorage.clear();
+    useSearchHistory.setState({ saving: true, entries: [{ query: 'light', mode: 'roots' }] });
+    render(<SearchSettings status="off" progress={0} />);
+    fireEvent.click(button());
+    const toggle = screen.getByRole('switch', { name: 'Save search history' });
+    expect(toggle).toBeChecked();
+    fireEvent.click(toggle);
+    expect(useSearchHistory.getState()).toMatchObject({ saving: false, entries: [] });
+    expect(localStorage.getItem(HISTORY_KEY)).toBeNull();
+    fireEvent.click(toggle);
+    expect(useSearchHistory.getState().saving).toBe(true);
   });
 });

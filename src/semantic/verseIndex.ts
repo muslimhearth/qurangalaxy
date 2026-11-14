@@ -1,7 +1,7 @@
 /** The semantic search over verses: a query vector in, scored roots out. */
 import type { EmbeddingsMeta, Occurrences, VerseKey } from '../data/types';
 import type { Match } from '../search/types';
-import { buildVerseRoots, rootWeights, versesToRoots } from './aggregate';
+import { buildVerseRoots, rootWeights, versesToRoots, type VerseHit } from './aggregate';
 import { cosineScores, topK } from './similarity';
 
 /** Everything the search needs, prepared once after loading. */
@@ -40,4 +40,16 @@ export function searchIndex(index: SemanticIndex, query: Float32Array, text: str
   const scores = cosineScores(query, matrix, meta.scale, meta.dims);
   const hits = topK(scores, opts.topVerses ?? TOP_VERSES).map((i) => ({ key: meta.keys[i]!, sim: scores[i]! }));
   return versesToRoots(hits, index.verseRoots, index.weights, text);
+}
+
+/** Number of verses a verse search returns by default. */
+export const VERSE_HITS = 40;
+
+/** The `k` verses closest to a unit-length query vector, best first; only positive similarities. */
+export function searchVerses(index: SemanticIndex, query: Float32Array, k: number = VERSE_HITS): VerseHit[] {
+  const { meta, matrix } = index;
+  const scores = cosineScores(query, matrix, meta.scale, meta.dims);
+  return topK(scores, k)
+    .map((i) => ({ key: meta.keys[i]!, sim: scores[i]! }))
+    .filter((h) => h.sim > 0);
 }

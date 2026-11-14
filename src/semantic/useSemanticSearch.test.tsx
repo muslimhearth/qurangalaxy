@@ -3,7 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Match } from '../search/types';
 import type { ProgressListener } from './embedder';
 import type { SemanticService } from './service';
-import { DEBOUNCE_MS, useSemanticSearch } from './useSemanticSearch';
+import { DEBOUNCE_MS, useSemanticSearch, useSemanticVerses } from './useSemanticSearch';
 
 const hit = (q: string): Match[] => [{ id: 1, score: 1, reason: { kind: 'semantic', text: q }, verses: ['1:1'] }];
 
@@ -19,6 +19,7 @@ function fakeService() {
         }),
     ),
     search: vi.fn(async (q: string) => hit(q)),
+    searchVerses: vi.fn(async (q: string) => [{ key: '1:1' as const, sim: q.length / 10 }]),
   };
   let progress: ProgressListener = () => {};
   const subscribe = (l: ProgressListener) => {
@@ -82,5 +83,13 @@ describe('useSemanticSearch', () => {
     await act(async () => vi.advanceTimersByTime(DEBOUNCE_MS));
     rerender({ q: 'sea' });
     expect(result.current.matches).toBeNull();
+  });
+
+  it('finds verses with the verse variant', async () => {
+    const f = fakeService();
+    const { result } = renderHook(() => useSemanticVerses('patience', 1, () => f.service, f.subscribe));
+    await act(async () => vi.advanceTimersByTime(DEBOUNCE_MS));
+    expect(f.service.search).not.toHaveBeenCalled();
+    expect(result.current.matches).toEqual([{ key: '1:1', sim: 0.8 }]);
   });
 });

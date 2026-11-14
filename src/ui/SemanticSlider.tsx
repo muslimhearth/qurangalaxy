@@ -12,9 +12,24 @@ export function sliderText(weight: number): string {
  * Search-mode slider: 0 = exact search, 1 = semantic search (by meaning), anything between
  * is a hybrid that blends both scores. The share of semantic shows under the thumb.
  */
-export function SemanticSlider({ status, progress, error }: { status: SemanticStatus; progress: number; error?: string }) {
-  const weight = useGalaxyStore((s) => s.semanticWeight);
-  const setWeight = useGalaxyStore((s) => s.setSemanticWeight);
+export function SemanticSlider({
+  status,
+  progress,
+  error,
+  weight: ownWeight,
+  onWeight,
+}: {
+  status: SemanticStatus;
+  progress: number;
+  error?: string;
+  /** Mix to show instead of the root search mix in the store (verse search has its own). */
+  weight?: number;
+  onWeight?: (w: number) => void;
+}) {
+  const storeWeight = useGalaxyStore((s) => s.semanticWeight);
+  const setStoreWeight = useGalaxyStore((s) => s.setSemanticWeight);
+  const weight = ownWeight ?? storeWeight;
+  const setWeight = onWeight ?? setStoreWeight;
   return (
     <div className="semantic">
       <div className="semantic-ends" aria-hidden="true">

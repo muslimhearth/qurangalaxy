@@ -1,6 +1,7 @@
 /** React hook: debounced semantic search that loads the model only when first needed. */
 import { useEffect, useState } from 'react';
 import type { Match } from '../search/types';
+import type { VerseHit } from './aggregate';
 import type { ProgressListener } from './embedder';
 import type { SemanticService } from './service';
 import { getWorkerService, onModelProgress } from './workerService';
@@ -11,15 +12,21 @@ export const DEBOUNCE_MS = 250;
 /** off: never used yet. loading: model downloading. ready: model loaded. error: load failed. */
 export type SemanticStatus = 'off' | 'loading' | 'ready' | 'error';
 
-/** What the search box shows about semantic search. */
-export interface SemanticState {
+/** What the search box shows about semantic search; `T` is a root match or a verse hit. */
+export interface SemanticState<T = Match> {
   status: SemanticStatus;
   /** Model download progress, 0..1. */
   progress: number;
   /** Matches for the current query, or null while none are ready (or weight is 0). */
-  matches: Match[] | null;
+  matches: T[] | null;
   error?: string;
 }
+
+/** Runs one search on the service. */
+type Run<T> = (service: SemanticService, query: string) => Promise<T[]>;
+
+const runRoots: Run<Match> = (s, q) => s.search(q);
+const runVerses: Run<VerseHit> = (s, q) => s.searchVerses(q);
 
 /**
  * Runs semantic search for `query` while `weight` > 0. The model starts loading the first
@@ -31,12 +38,32 @@ export function useSemanticSearch(
   getService: () => SemanticService = getWorkerService,
   subscribe: (l: ProgressListener) => () => void = onModelProgress,
 ): SemanticState {
+  return useSemanticQuery(query, weight, getService, subscribe, runRoots);
+}
+
+/** Like `useSemanticSearch`, but finds verses (closest in meaning) instead of roots. */
+export function useSemanticVerses(
+  query: string,
+  weight: number,
+  getService: () => SemanticService = getWorkerService,
+  subscribe: (l: ProgressListener) => () => void = onModelProgress,
+): SemanticState<VerseHit> {
+  return useSemanticQuery(query, weight, getService, subscribe, runVerses);
+}
+
+function useSemanticQuery<T>(
+  query: string,
+  weight: number,
+  getService: () => SemanticService,
+  subscribe: (l: ProgressListener) => () => void,
+  run: Run<T>,
+): SemanticState<T> {
   const enabled = weight > 0;
   const q = query.trim();
   const [status, setStatus] = useState<SemanticStatus>('off');
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<string>();
-  const [result, setResult] = useState<{ query: string; matches: Match[] } | null>(null);
+  const [result, setResult] = useState<{ query: string; matches: T[] } | null>(null);
 
   // Load the model on first use, and again after a failed load.
   useEffect(() => {
@@ -60,8 +87,7 @@ export function useSemanticSearch(
     if (!enabled || !q) return;
     let cancelled = false;
     const timer = setTimeout(() => {
-      getService()
-        .search(q)
+      run(getService(), q)
         .then((matches) => !cancelled && setResult({ query: q, matches }))
         .catch(() => {}); // A load error is shown by the status; exact results stay usable.
     }, DEBOUNCE_MS);
@@ -69,7 +95,7 @@ export function useSemanticSearch(
       cancelled = true;
       clearTimeout(timer);
     };
-    // getService is fixed for the life of the component (tests pass a fake).
+    // getService and run are fixed for the life of the component (tests pass a fake).
   }, [enabled, q]);
 
   const matches = enabled && result?.query === q ? result.matches : null;

@@ -4,6 +4,7 @@ import { useHashSync } from './useHashSync';
 import { About } from './About';
 import { SearchBox } from './SearchBox';
 import { RootPanel } from './RootPanel';
+import { VersePanel } from './VersePanel';
 import { HoverHint } from './HoverHint';
 import { TabBar } from '../tabs/TabBar';
 import { useTabSync } from '../tabs/useTabSync';
@@ -15,6 +16,7 @@ import { useTabSync } from '../tabs/useTabSync';
 export function Overlay() {
   const galaxy = useGalaxyStore((s) => s.galaxy);
   const error = useLoadError((s) => s.error);
+  const openVerse = useGalaxyStore((s) => s.openVerse);
   useTabSync();
   useHashSync();
 
@@ -49,7 +51,8 @@ export function Overlay() {
       <About />
       <SearchBox />
       <TabBar />
-      <RootPanel />
+      {/* An open verse takes the panel's place; closing it shows the root again. */}
+      {openVerse ? <VersePanel /> : <RootPanel />}
       <HoverHint />
     </div>
   );

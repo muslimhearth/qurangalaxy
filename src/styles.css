@@ -415,3 +415,65 @@ a { color: var(--accent); }
 @media (prefers-reduced-motion: reduce) {
   .verse.flash { animation: none; background: rgba(255, 195, 90, 0.12); }
 }
+
+/* Verse search (G15): mode switch, verse results, history, settings switch, verse panel. */
+.mode-switch { display: inline-flex; flex: none; }
+/* 44 px tap target; the visible pill is the inner span. */
+.mode-switch button {
+  min-height: 44px; min-width: 44px; padding: 0 2px;
+  background: none; border: none; color: var(--muted); font-size: 0.78rem;
+}
+.mode-switch button span {
+  display: inline-block; padding: 4px 9px; border-radius: 999px; border: 1px solid var(--border);
+}
+.mode-switch button:hover span { color: var(--fg); border-color: var(--accent); }
+.mode-switch button[aria-checked='true'] span { color: var(--accent); background: var(--accent-soft); border-color: rgba(242, 199, 110, 0.45); }
+.search-option.verse-option { grid-template-columns: 3.2rem 1fr; align-items: start; padding: 8px 12px; }
+.verse-option .verse-key { padding-top: 2px; }
+.verse-hit { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.verse-hit-en {
+  font-size: 0.86rem; line-height: 1.4; color: #dcd9e8;
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden;
+}
+.verse-hit-tr { font-size: 0.8rem; color: var(--muted); font-style: italic; }
+.verse-hit-ar {
+  font-size: 1.1rem; line-height: 1.9; color: var(--accent); text-align: right;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.verse-hit mark { background: var(--accent-soft); color: var(--accent); border-radius: 3px; padding: 0 1px; }
+.search-history { border-top: 1px solid var(--border); padding: 4px; max-height: 50vh; overflow-y: auto; }
+.search-history-title {
+  margin: 6px 12px 2px; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted);
+}
+.search-history ul { list-style: none; margin: 0; padding: 0; }
+.search-history li { display: flex; align-items: center; }
+.history-run {
+  flex: 1; min-width: 0; min-height: 44px; display: flex; align-items: center; gap: 10px;
+  padding: 0 12px; background: none; border: none; border-radius: 10px; text-align: left;
+}
+.history-run:hover, .history-remove:hover { background: var(--accent-soft); }
+.history-query { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.history-mode { font-size: 0.75rem; color: var(--muted); }
+.history-remove {
+  flex: none; width: 44px; height: 44px; background: none; border: none; border-radius: 10px;
+  color: var(--muted); font-size: 1.2rem;
+}
+.setting-row {
+  display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 4px 16px 6px;
+  border-top: 1px solid var(--border); font-size: 0.85rem; cursor: pointer;
+}
+.setting-row input { width: 18px; height: 18px; margin: 0; accent-color: var(--accent); }
+.verse-title { margin: 0; padding: 10px 0 0; font-size: 1.6rem; font-weight: 500; color: var(--accent); font-variant-numeric: tabular-nums; }
+.verse-panel .root-head { padding-bottom: 10px; }
+.verse-panel-ar { margin-top: 14px; font-size: 1.7rem; line-height: 2.2; }
+.verse-tr { margin: 0 0 10px; font-size: 0.92rem; line-height: 1.6; color: #c9c7d6; font-style: italic; }
+.tr-u { text-decoration: underline; text-underline-offset: 3px; text-decoration-color: rgba(242, 199, 110, 0.6); }
+.tr-b { opacity: 0.55; }
+.tr-strong { font-weight: 700; }
+.verse-panel .chip-link { min-height: 44px; }
+@media (max-width: 480px) {
+  /* Narrow phones: the settings chip shows only its icon, so the field keeps room to type. */
+  .mode-chip .mode-name { display: none; }
+  .mode-chip { min-width: 44px; min-height: 44px; justify-content: center; border-color: transparent; }
+  .search-row { gap: 2px; padding-right: 6px; }
+}
