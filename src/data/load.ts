@@ -23,11 +23,17 @@ async function fetchJson<T>(file: string): Promise<T> {
 }
 
 function loadOnce<T>(file: string, fixture: T): Promise<T> {
-  if (isFixtureMode()) return Promise.resolve(fixture);
+  return isFixtureMode() ? Promise.resolve(fixture) : loadJson<T>(file);
+}
+
+/**
+ * Loads any file under public/data/ once (shared promise, retried after a failure).
+ * No fixture: for lazy extras such as the word card data.
+ */
+export function loadJson<T>(file: string): Promise<T> {
   let promise = cache.get(file) as Promise<T> | undefined;
   if (!promise) {
     promise = fetchJson<T>(file);
-    // Forget a failed load so a later call can retry.
     promise.catch(() => cache.delete(file));
     cache.set(file, promise);
   }

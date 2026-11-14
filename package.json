@@ -18,6 +18,7 @@
     "models": "tsx scripts/models.ts",
     "eval:semantic": "tsx scripts/eval-semantic.ts",
     "embeddings": "tsx scripts/build-embeddings.ts",
+    "data:morph": "tsx scripts/build-morph.ts",
     "data:reader": "tsx scripts/build-reader-data.ts",
     "data:translit": "tsx scripts/build-translit.ts",
     "data:wordforms": "tsx scripts/build-wordforms.ts",

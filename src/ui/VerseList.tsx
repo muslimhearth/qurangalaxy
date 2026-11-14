@@ -3,6 +3,7 @@ import type { Occurrence, VerseKey, Verses } from '../data/types';
 import { VerseKeyButton } from '../reader/VerseKeyButton';
 import { BookmarkButton } from '../bookmarks/BookmarkButton';
 import { verseWords } from './helpers';
+import { VerseWords } from '../morph/VerseWords';
 import { useMeanings } from './meanings';
 import { useVerseFocus, type VerseFocusRequest } from './verseFocus';
 
@@ -57,13 +58,7 @@ export function VerseList({ occurrences, verses, others, actions }: VerseListPro
                 {actions?.(occ.v)}
               </div>
               <p className="verse-ar" dir="rtl" lang="ar">
-                {verseWords(verse.ar, occ.w, otherWords.get(occ.v)).map((word, i) => (
-                  // Spaces between words are kept as text nodes so copy/paste stays natural.
-                  <span key={i}>
-                    {i > 0 && ' '}
-                    {word.hit ? <mark>{word.text}</mark> : word.alt ? <mark className="alt">{word.text}</mark> : word.text}
-                  </span>
-                ))}
+                <VerseWords verseKey={occ.v} words={verseWords(verse.ar, occ.w, otherWords.get(occ.v))} />
               </p>
               {showMeanings && <p className="verse-en">{verse.en}</p>}
             </li>
