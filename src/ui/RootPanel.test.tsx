@@ -6,6 +6,9 @@ import { useGalaxyStore } from '../state/store';
 import { resetLoadCache } from '../data/load';
 import { fixtureGalaxy } from '../data/fixture';
 import { useVerseFocus } from './verseFocus';
+import { connectTabs } from '../tabs/connect';
+import { resetTabs, useTabsStore } from '../tabs/store';
+import { activeTab, tabLabel } from '../tabs/model';
 
 describe('RootPanel', () => {
   beforeEach(() => {
@@ -14,8 +17,12 @@ describe('RootPanel', () => {
     window.history.replaceState(null, '', '/?fixture');
     useGalaxyStore.setState(useGalaxyStore.getInitialState());
     useGalaxyStore.getState().setGalaxy(fixtureGalaxy);
+    resetTabs();
   });
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    localStorage.clear();
+  });
 
   it('renders nothing without a selection', () => {
     const { container } = render(<RootPanel />);
@@ -70,14 +77,70 @@ describe('RootPanel', () => {
     expect(useGalaxyStore.getState().selectedId).toBe(1);
   });
 
-  it('explains a link in the chip title: shared verses and how far above chance', () => {
+  it('gives a connected root chip the root’s meaning as its title', () => {
     useGalaxyStore.getState().select(2);
     render(<RootPanel />);
-    // Link 0-2: 2 shared verses, score 4.5 = lift × log2(3), so lift ≈ 2.8.
-    expect(screen.getByRole('button', { name: 'سمو' })).toHaveAttribute(
-      'title',
-      's-m-w: 2 shared verses, 2.8× more often than chance',
-    );
+    expect(screen.getByRole('button', { name: 'سمو' })).toHaveAttribute('title', 's-m-w · name, sky');
+    expect(screen.getByRole('button', { name: 'أله' })).toHaveAttribute('title', 'ʾ-l-h · god');
+  });
+
+  it('a lemma chip filters the verses to that word; a second tap or Clear shows all again', async () => {
+    useGalaxyStore.getState().select(2);
+    const { container } = render(<RootPanel />);
+    await screen.findByText('1:3');
+    const rahim = screen.getByRole('button', { name: /رَحِيم/ });
+    const rahman = screen.getByRole('button', { name: /رَحْمٰن/ });
+    expect(rahim).toHaveAttribute('aria-pressed', 'false');
+    fireEvent.click(rahim);
+    expect(rahim).toHaveAttribute('aria-pressed', 'true');
+    expect(await screen.findByText(/2 verses with/)).toHaveTextContent('2 verses with رَحِيم');
+    // Only the lemma's words are gold: word 4 of 1:1 (رَحِيم), not word 3 (رَحْمٰن).
+    const marks = () => [...container.querySelectorAll('[data-verse="1:1"] mark')].map((m) => m.textContent);
+    expect(marks()).toEqual(['ٱلرَّحِيمِ']);
+    // Tapping another lemma switches the filter.
+    fireEvent.click(rahman);
+    expect(rahim).toHaveAttribute('aria-pressed', 'false');
+    expect(rahman).toHaveAttribute('aria-pressed', 'true');
+    expect(marks()).toEqual(['ٱلرَّحْمَٰنِ']);
+    // A second tap clears it.
+    fireEvent.click(rahman);
+    expect(screen.queryByText(/verses with/)).toBeNull();
+    expect(marks()).toEqual(['ٱلرَّحْمَٰنِ', 'ٱلرَّحِيمِ']);
+    // The clear button clears it too.
+    fireEvent.click(rahim);
+    fireEvent.click(await screen.findByRole('button', { name: 'Show all verses' }));
+    expect(rahim).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('has a "Show meanings" toggle in the verses header', () => {
+    useGalaxyStore.getState().select(2);
+    render(<RootPanel />);
+    expect(screen.getByRole('button', { name: 'Show meanings' })).toBeInTheDocument();
+  });
+
+  it('stays mounted but hidden under the reader, and leaves Escape to it', () => {
+    useGalaxyStore.getState().select(2);
+    const { container } = render(<RootPanel hidden />);
+    expect(container.querySelector('aside')).not.toBeVisible();
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(useGalaxyStore.getState().selectedId).toBe(2);
+  });
+
+  it('Escape also clears leftover search text, so the tab becomes "New tab"', () => {
+    const disconnect = connectTabs();
+    try {
+      // Typed "أحد", then picked a root another way (a star or a chip): the text stays.
+      act(() => {
+        useGalaxyStore.getState().setQuery('أحد');
+        useGalaxyStore.getState().select(2);
+      });
+      render(<RootPanel />);
+      fireEvent.keyDown(window, { key: 'Escape' });
+      expect(useGalaxyStore.getState()).toMatchObject({ selectedId: null, query: '' });
+      expect(tabLabel(activeTab(useTabsStore.getState()), fixtureGalaxy)).toBe('New tab');
+    } finally {
+      disconnect();
+    }
   });
 
   it('shows the verses both roots share on a tap on the count, with both roots marked', async () => {

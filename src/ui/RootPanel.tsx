@@ -2,7 +2,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useGalaxyStore } from '../state/store';
 import { ConnectedRoots } from './ConnectedRoots';
 import { RecenterButton } from './RecenterButton';
+import { LemmaChips } from './LemmaChips';
+import { MeaningsToggle } from './meanings';
 import { neighbors } from './helpers';
+import { useLemmaVerses } from './useLemmaVerses';
 import { useRootDetails } from './useRootDetails';
 import { VerseList } from './VerseList';
 import { useVerseFocus } from './verseFocus';
@@ -28,11 +31,15 @@ const Chevron = ({ up }: { up: boolean }) => (
   </svg>
 );
 
-/** Side panel (bottom sheet on phones) with the selected root's lemmas, links and verses. */
-export function RootPanel() {
+/**
+ * Side panel (bottom sheet on phones) with the selected root's lemmas, links and verses.
+ * `hidden`: kept mounted but not shown (under the surah reader), so its state survives.
+ */
+export function RootPanel({ hidden = false }: { hidden?: boolean }) {
   const galaxy = useGalaxyStore((s) => s.galaxy);
   const selectedId = useGalaxyStore((s) => s.selectedId);
   const select = useGalaxyStore((s) => s.select);
+  const setQuery = useGalaxyStore((s) => s.setQuery);
   const details = useRootDetails(selectedId);
   const root = selectedId === null ? undefined : galaxy?.roots[selectedId];
   const links = useMemo(() => (galaxy && root ? neighbors(galaxy, root.id) : []), [galaxy, root]);
@@ -41,6 +48,11 @@ export function RootPanel() {
   const size: SheetSize = root && sized?.id === root.id ? sized.size : 'normal';
   const resize = (next: SheetSize) => root && setSized({ id: root.id, size: next });
   const collapsed = size === 'min';
+  // Lemma filter ("Words from this root"): the picked lemma index, kept per root.
+  const [picked, setPicked] = useState<{ id: number; lemma: number } | null>(null);
+  const lemma = root && picked?.id === root.id ? picked.lemma : null;
+  const pickLemma = (next: number | null) => root && setPicked(next === null ? null : { id: root.id, lemma: next });
+  const filtered = useLemmaVerses(root?.id ?? -1, details.occurrences, lemma);
 
   // A verse focus request (e.g. a tap on a verse search result) opens a minimized sheet.
   const focus = useVerseFocus((s) => s.request);
@@ -52,13 +64,18 @@ export function RootPanel() {
   }, [focus, collapsed, root]);
 
   useEffect(() => {
-    if (!root) return;
+    if (!root || hidden) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') select(null);
+      if (e.key !== 'Escape') return;
+      select(null);
+      // Search text left in the field (e.g. typed, then a star was clicked) would keep the tab
+      // labelled with it. Escape means "back to nothing", so the tab becomes "New tab".
+      // (Inside the search field, the first Escape only clears the text; see SearchBox.)
+      setQuery('');
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [root, select]);
+  }, [root, hidden, select, setQuery]);
 
   if (!root) return null;
 
@@ -66,6 +83,7 @@ export function RootPanel() {
     <aside
       className={`root-panel panel${collapsed ? ' collapsed' : ''}${size === 'max' ? ' max' : ''}`}
       aria-label="Root details"
+      hidden={hidden}
     >
       {/* A tap anywhere on a minimized sheet's header opens it (the buttons keep their own job). */}
       <header
@@ -122,35 +140,70 @@ export function RootPanel() {
       <div className="root-body" hidden={collapsed}>
         <section>
           <h3>Words from this root</h3>
-          <ul className="chips" aria-label="Lemmas">
-            {root.lemmas.map((l) => (
-              <li key={l.ar} className="chip">
-                <span lang="ar" dir="rtl">
-                  {l.ar}
-                </span>
-                {l.en[0] && <span className="chip-en">{l.en[0]}</span>}
-                <span className="count">{fmt(l.count)}</span>
-              </li>
-            ))}
-          </ul>
+          <LemmaChips lemmas={root.lemmas} picked={lemma} onPick={pickLemma} />
         </section>
 
         {links.length > 0 && <ConnectedRoots key={root.id} root={root} links={links} />}
 
         <section>
-          <h3>Verses</h3>
+          <div className="section-head">
+            <h3>Verses</h3>
+            <MeaningsToggle />
+          </div>
           {details.status === 'loading' && <p className="muted">Loading verses…</p>}
           {details.status === 'error' && (
             <p className="error" role="alert">
               Could not load verses. {details.error}
             </p>
           )}
-          {details.status === 'ready' && details.verses && (
-            // key resets "show more" when the root changes.
-            <VerseList key={root.id} occurrences={details.occurrences} verses={details.verses} />
+          {details.status === 'ready' && details.verses && lemma !== null && (
+            <LemmaFilterHead
+              lemma={root.lemmas[lemma]?.ar ?? ''}
+              count={filtered.status === 'ready' ? filtered.occurrences.length : null}
+              failed={filtered.status === 'error'}
+              onClear={() => pickLemma(null)}
+            />
+          )}
+          {details.status === 'ready' && details.verses && (lemma === null || filtered.status === 'ready') && (
+            // key resets "show more" when the root or the lemma filter changes.
+            <VerseList
+              key={`${root.id}-${lemma}`}
+              occurrences={filtered.status === 'ready' ? filtered.occurrences : details.occurrences}
+              verses={details.verses}
+            />
           )}
         </section>
       </div>
     </aside>
+  );
+}
+
+/** "N verses with <lemma>" above a filtered verse list, with a button that clears the filter. */
+function LemmaFilterHead(props: { lemma: string; count: number | null; failed: boolean; onClear: () => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+  // Phones: the chips can fill the sheet; bring the filtered list into view.
+  useEffect(() => {
+    ref.current?.scrollIntoView?.({ block: 'nearest' });
+  }, [props.lemma]);
+  return (
+    <div className="lemma-filter" ref={ref}>
+      <p role="status">
+        {props.failed ? (
+          'Could not load the word filter.'
+        ) : props.count === null ? (
+          'Loading…'
+        ) : (
+          <>
+            {fmt(props.count)} {props.count === 1 ? 'verse' : 'verses'} with{' '}
+            <mark lang="ar" dir="rtl">
+              {props.lemma}
+            </mark>
+          </>
+        )}
+      </p>
+      <button type="button" className="close" aria-label="Show all verses" title="Show all verses" onClick={props.onClear}>
+        ×
+      </button>
+    </div>
   );
 }
