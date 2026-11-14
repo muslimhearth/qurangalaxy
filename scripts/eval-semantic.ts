@@ -3,8 +3,9 @@
  *
  *   pnpm eval:semantic                    shipped files (public/data/embeddings.*), per-query hits
  *   pnpm eval:semantic --files <base>     another embedding set (<base>.bin + <base>.json)
- *   pnpm eval:semantic --sweep [--model id] [--verbose]
- *                                         every downloaded model × every recipe in RECIPES
+ *   pnpm eval:semantic --sweep [--model id] [--window] [--verbose]
+ *                                         every downloaded model × every recipe in RECIPES;
+ *                                         --window adds WINDOW_RECIPES (embeds verse windows too)
  *
  * Verse search: scripts/semantic/verse-eval.json (recall@10, hit@10, MRR over the top 40).
  * Root search: scripts/semantic/eval-set.ts (hit@1, hit@5, MRR), as in G9.
@@ -41,6 +42,16 @@ const RECIPES: Recipe[] = [
   { ...PLAIN, self: 0.7, shortSelf: 0.5, lengthPower: 0.1 },
   { ...PLAIN, self: 0.7, shortSelf: 0.5, lengthPower: 0.2 },
   SHIPPED,
+];
+
+/** Recipes that also need window vectors (previous + verse + next as one text). */
+const WINDOW_RECIPES: Recipe[] = [
+  { ...PLAIN, window: 0.3 },
+  { ...PLAIN, window: 0.5 },
+  { ...PLAIN, window: 0.7 },
+  { ...PLAIN, window: 1 },
+  { ...PLAIN, window: 0.5, lengthPower: 0.1 },
+  { ...PLAIN, window: 0.5, lengthPower: 0.2 },
 ];
 
 const pct = (x: number) => `${(x * 100).toFixed(0)}%`.padStart(4);
@@ -114,7 +125,7 @@ function printRow(label: string, s: Score): void {
   );
 }
 
-async function sweep(specs: ModelSpec[], verbose: boolean): Promise<void> {
+async function sweep(specs: ModelSpec[], verbose: boolean, withWindow: boolean): Promise<void> {
   const galaxy = readJson<Galaxy>('public/data/galaxy.json');
   const occurrences = readJson<Occurrences>('public/data/occurrences.json');
   const verses = readVerses();
@@ -126,9 +137,10 @@ async function sweep(specs: ModelSpec[], verbose: boolean): Promise<void> {
     }
     console.log(`\n${spec.id}`);
     const { keys, vectors } = await rawVerseVectors(spec, verses);
+    const windows = withWindow ? (await rawVerseVectors(spec, verses, 'window')).vectors : undefined;
     const q = await embedQueries(spec);
-    for (const r of RECIPES) {
-      const { meta, bin } = applyRecipe(spec.id, keys, vectors, counts, r);
+    for (const r of withWindow ? [...RECIPES, ...WINDOW_RECIPES] : RECIPES) {
+      const { meta, bin } = applyRecipe(spec.id, keys, vectors, counts, r, windows);
       const index = buildIndex(meta, new Int8Array(bin.buffer, bin.byteOffset, bin.byteLength), occurrences);
       printRow(describeRecipe(r), evaluate(index, q, galaxy, verbose && r === SHIPPED));
     }
@@ -159,6 +171,7 @@ async function main(): Promise<void> {
     await sweep(
       Object.values(MODELS).filter((m) => !only || m.id === only),
       args.includes('--verbose'),
+      args.includes('--window'),
     );
   } else {
     await evalFiles(arg('--files') ?? 'public/data/embeddings');

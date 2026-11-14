@@ -25,12 +25,23 @@ describe('applyRecipe', () => {
     const { bin } = applyRecipe('m', keys, vectors, [4, 2], r);
     expect(ints(bin)).toEqual([127, 0, 0, 64]);
   });
+
+  it('mixes in the window vector by its weight', () => {
+    const windows = [Float32Array.from([0, 1]), Float32Array.from([0, 1])];
+    const { bin } = applyRecipe('m', keys, vectors, [20, 20], { ...PLAIN, window: 0.5 }, windows);
+    expect(ints(bin)).toEqual([90, 90, 0, 127]);
+  });
+
+  it('needs window vectors for a window recipe', () => {
+    expect(() => applyRecipe('m', keys, vectors, [20, 20], { ...PLAIN, window: 0.5 })).toThrow(/window/);
+  });
 });
 
 describe('describeRecipe', () => {
   it('names the plain recipe and the changed settings', () => {
     expect(describeRecipe(PLAIN)).toBe('plain');
-    expect(describeRecipe({ self: 0.8, shortSelf: 0.5, shortWords: 10, lengthPower: 0.3 })).toBe(
+    expect(describeRecipe({ ...PLAIN, window: 0.5 })).toBe('window 0.5');
+    expect(describeRecipe({ window: 0, self: 0.8, shortSelf: 0.5, shortWords: 10, lengthPower: 0.3 })).toBe(
       'self 0.8/0.5 pow 0.3 <10w',
     );
   });

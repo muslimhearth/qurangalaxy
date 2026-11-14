@@ -24,21 +24,36 @@ export function readVerses(): Verses {
   return JSON.parse(readFileSync('public/data/verses.json', 'utf8')) as Verses;
 }
 
+const surahOf = (key: VerseKey) => key.slice(0, key.indexOf(':'));
+
+/** Each verse's English text with the previous and next verse of the same surah around it. */
+export function windowTexts(keys: readonly VerseKey[], verses: Verses): string[] {
+  return keys.map((k, i) => {
+    const near = (j: number) => (keys[j] && surahOf(keys[j]!) === surahOf(k) ? verses[keys[j]!]!.en : '');
+    return [near(i - 1), verses[k]!.en, near(i + 1)].filter(Boolean).join(' ');
+  });
+}
+
+/** What text each verse vector is made from: the verse alone, or the verse with its neighbours. */
+export type VerseText = 'verse' | 'window';
+
 /**
  * Float vectors of every verse's English text (one per key, in Quran order), from the cache
- * or freshly embedded (2 to 4 minutes per model on a laptop CPU).
+ * or freshly embedded (2 to 4 minutes per model on a laptop CPU; longer for windows).
  */
 export async function rawVerseVectors(
   spec: ModelSpec,
   verses: Verses,
+  text: VerseText = 'verse',
 ): Promise<{ keys: VerseKey[]; vectors: Float32Array[] }> {
   const keys = Object.keys(verses) as VerseKey[];
-  const file = `${CACHE}/${spec.id.replace('/', '__')}@${spec.revision.slice(0, 7)}.f32`;
+  const suffix = text === 'window' ? '.window' : '';
+  const file = `${CACHE}/${spec.id.replace('/', '__')}@${spec.revision.slice(0, 7)}${suffix}.f32`;
   if (!existsSync(file)) {
     const embedder = await nodeEmbedder(spec);
     const started = Date.now();
     const vectors = await embedder.embed(
-      keys.map((k) => verses[k]!.en),
+      text === 'window' ? windowTexts(keys, verses) : keys.map((k) => verses[k]!.en),
       'passage',
     );
     console.log(`  embedded ${keys.length} verses in ${((Date.now() - started) / 1000).toFixed(0)} s`);
