@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { isFixtureMode, loadGalaxy, loadLemmaIndex, loadOccurrences, loadVerses, resetLoadCache } from './load';
+import { isFixtureMode, loadGalaxy, loadJson, loadLemmaIndex, loadOccurrences, loadVerses, resetLoadCache } from './load';
 import { fixtureGalaxy, fixtureLemmaIndex, fixtureOccurrences, fixtureVerses } from './fixture';
 
 function okResponse(body: unknown) {
@@ -25,6 +25,16 @@ describe('data loaders', () => {
     vi.stubGlobal('fetch', fetchMock);
     await expect(loadLemmaIndex()).resolves.toEqual([[0]]);
     expect(fetchMock).toHaveBeenCalledWith(`${import.meta.env.BASE_URL}data/lemmas.json`);
+  });
+
+  it('fetches any data file once, also in fixture mode', async () => {
+    window.history.replaceState(null, '', '/?fixture');
+    const fetchMock = vi.fn(async () => okResponse(['V|PERF']));
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(loadJson('morph/tags.json')).resolves.toEqual(['V|PERF']);
+    await loadJson('morph/tags.json');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock).toHaveBeenCalledWith(`${import.meta.env.BASE_URL}data/morph/tags.json`);
   });
 
   it('fetches each file only once', async () => {
