@@ -76,6 +76,8 @@ export interface SearchHistoryState {
   /** Records a search (when saving is on). */
   record: (entry: HistoryEntry) => void;
   remove: (entry: HistoryEntry) => void;
+  /** Removes every entry; saving stays as it is. */
+  clear: () => void;
   /** Turns saving on or off; off also clears the history. */
   setSaving: (on: boolean) => void;
 }
@@ -93,6 +95,10 @@ export const useSearchHistory = create<SearchHistoryState>()((setState, getState
     const entries = removeEntry(getState().entries, entry);
     setState({ entries });
     set(HISTORY_KEY, JSON.stringify(entries));
+  },
+  clear: () => {
+    setState({ entries: [] });
+    set(HISTORY_KEY, null);
   },
   setSaving: (saving) => {
     set(SAVE_KEY, String(saving));
