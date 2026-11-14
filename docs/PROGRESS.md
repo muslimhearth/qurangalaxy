@@ -23,6 +23,7 @@
 | G18 Arabic word search | merged | Done: word-form index (99.99% of Quran words find their root), Arabic verse text search, no meaning search for Arabic |
 | G19 Panel and reader | merged | Done: surah reader (`#/surah/2/17`), lemma filter, Show meanings, chip title = meaning |
 | G20 Bookmarks | merged | Done: roots and verses, list near search, new tabs for verses |
+| G21 Light/dark theme | merged | Done: System/Light/Dark for the UI and reader; the galaxy stays dark |
 | Deploy | main | Live at https://quranic.space (Caddy, `pnpm ship`) |
 
 Per-goal detail: `docs/progress/`.
