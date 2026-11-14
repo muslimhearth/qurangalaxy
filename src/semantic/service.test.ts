@@ -20,6 +20,12 @@ describe('createSemanticService', () => {
     expect(matches[0]).toMatchObject({ id: 0, verses: ['1:1'], reason: { kind: 'semantic', text: 'east' } });
   });
 
+  it('finds verses by meaning', async () => {
+    const service = createSemanticService(embedder, async () => index);
+    const hits = await service.searchVerses('north');
+    expect(hits.map((h) => h.key)).toEqual(['1:2', '1:3']);
+  });
+
   it('warms up by loading the model and the index', async () => {
     const loadIndex = vi.fn(async () => index);
     await createSemanticService(embedder, loadIndex).warm();

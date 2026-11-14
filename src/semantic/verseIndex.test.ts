@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { EmbeddingsMeta, Occurrences } from '../data/types';
-import { buildIndex, searchIndex } from './verseIndex';
+import { buildIndex, searchIndex, searchVerses } from './verseIndex';
 
 // Four verses in 2D at scale 100: two point along x, one along y, one diagonal.
 const meta: EmbeddingsMeta = { model: 'm', dims: 2, encoding: 'int8', scale: 100, keys: ['1:1', '1:2', '1:3', '1:4'] };
@@ -35,5 +35,20 @@ describe('searchIndex', () => {
 
   it('rejects a matrix that does not fit the keys', () => {
     expect(() => buildIndex(meta, new Int8Array(3), occurrences)).toThrow(/size/);
+  });
+});
+
+describe('searchVerses', () => {
+  const index = buildIndex(meta, matrix, occurrences);
+
+  it('returns the closest verses with their similarity, best first', () => {
+    const hits = searchVerses(index, new Float32Array([1, 0]), 2);
+    expect(hits.map((h) => h.key)).toEqual(['1:1', '1:2']);
+    expect(hits[0]!.sim).toBeCloseTo(1);
+    expect(hits[1]!.sim).toBeCloseTo(0.99);
+  });
+
+  it('drops verses with no similarity', () => {
+    expect(searchVerses(index, new Float32Array([0, -1]), 4).every((h) => h.sim > 0)).toBe(true);
   });
 });

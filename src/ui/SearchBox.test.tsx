@@ -94,6 +94,7 @@ describe('SearchBox', () => {
     /** Fake semantic search: every query finds حمد (id 3) through verses 1:2 and 1:1. */
     const fakeService = (): SemanticService => ({
       warm: vi.fn(async () => {}),
+      searchVerses: vi.fn(async () => []),
       search: vi.fn(async (q: string) => [
         { id: 3, score: 1, reason: { kind: 'semantic' as const, text: q }, verses: ['1:2' as const, '1:1' as const] },
       ]),
