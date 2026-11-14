@@ -392,6 +392,6 @@ a { color: var(--accent); }
 @media (max-width: 480px) {
   /* Narrow phones: the settings chip shows only its icon, so the field keeps room to type. */
   .mode-chip .mode-name { display: none; }
-  .mode-chip { min-width: 36px; min-height: 36px; justify-content: center; }
+  .mode-chip { min-width: 44px; min-height: 44px; justify-content: center; border-color: transparent; }
   .search-row { gap: 2px; padding-right: 6px; }
 }

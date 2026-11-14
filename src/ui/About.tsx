@@ -27,7 +27,7 @@ export function About() {
           <p className="sources">
             Sources: <a href="https://corpus.quran.com/" target="_blank" rel="noreferrer">Quranic Arabic Corpus</a>{' '}
             (morphology), <a href="https://tanzil.net/" target="_blank" rel="noreferrer">Tanzil.net</a> (Uthmani text,
-            Saheeh International translation),{' '}
+            Saheeh International translation, English transliteration),{' '}
             <a href="https://en.wiktionary.org/" target="_blank" rel="noreferrer">
               Wiktionary
             </a>{' '}
