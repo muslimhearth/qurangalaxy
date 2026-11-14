@@ -3,6 +3,8 @@ import { loadOccurrences } from '../data/load';
 import type { Occurrences } from '../data/types';
 import { useGalaxyStore } from '../state/store';
 import { rootsInVerse } from '../verses/verseRoots';
+import { VerseKeyButton } from '../reader/VerseKeyButton';
+import { MeaningsToggle, useMeanings } from './meanings';
 import { TranslitText } from './TranslitText';
 import { useTranslit } from './useTranslit';
 import { useVerseTexts } from './useVerseTexts';
@@ -25,9 +27,11 @@ function useOccurrences(): Occurrences | null {
 
 /**
  * Side panel (bottom sheet on phones) for the open verse: Arabic, transliteration, English and
- * the roots it uses. A root chip selects that root in the galaxy and shows its panel.
+ * the roots it uses. A root chip selects that root in the galaxy and shows its panel. The verse
+ * key opens the surah reader. `hidden`: kept mounted but not shown (under the reader).
  */
-export function VersePanel() {
+export function VersePanel({ hidden = false }: { hidden?: boolean }) {
+  const showMeanings = useMeanings((s) => s.show);
   const key = useGalaxyStore((s) => s.openVerse);
   const galaxy = useGalaxyStore((s) => s.galaxy);
   const setOpenVerse = useGalaxyStore((s) => s.setOpenVerse);
@@ -41,13 +45,13 @@ export function VersePanel() {
   const collapsed = key !== null && collapsedKey === key;
 
   useEffect(() => {
-    if (!key) return;
+    if (!key || hidden) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setOpenVerse(null);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [key, setOpenVerse]);
+  }, [key, hidden, setOpenVerse]);
 
   if (!key) return null;
   const verse = verses?.[key];
@@ -62,7 +66,7 @@ export function VersePanel() {
 
   return (
     // Same frame as the root panel (side panel / bottom sheet), so it shares its styles.
-    <aside className={`root-panel verse-panel panel${collapsed ? ' collapsed' : ''}`} aria-label="Verse details">
+    <aside className={`root-panel verse-panel panel${collapsed ? ' collapsed' : ''}`} aria-label="Verse details" hidden={hidden}>
       <header
         className="root-head"
         onClick={(e) => {
@@ -70,12 +74,15 @@ export function VersePanel() {
         }}
       >
         <div>
-          <h2 className="verse-title">{key}</h2>
+          <h2 className="verse-title">
+            <VerseKeyButton verseKey={key} className="verse-title-key" />
+          </h2>
           <p className="root-stats">
             Surah {surah}, verse {ayah}
           </p>
         </div>
         <div className="head-buttons">
+          <MeaningsToggle />
           <button
             type="button"
             className="sheet-size"
@@ -110,7 +117,7 @@ export function VersePanel() {
                 <TranslitText raw={translit[key]} />
               </p>
             )}
-            <p className="verse-en">{verse.en}</p>
+            {showMeanings && <p className="verse-en">{verse.en}</p>}
           </>
         )}
         {roots.length > 0 && (

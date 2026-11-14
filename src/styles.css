@@ -477,3 +477,69 @@ a { color: var(--accent); }
   .mode-chip { min-width: 44px; min-height: 44px; justify-content: center; border-color: transparent; }
   .search-row { gap: 2px; padding-right: 6px; }
 }
+
+/* G19: surah reader, lemma filter, "Show meanings" toggle. */
+/* A panel kept mounted under the reader. */
+.root-panel[hidden] { display: none; }
+.verse-head { display: flex; align-items: center; gap: 6px; }
+/* A verse key opens the surah reader. The padding gives a bigger tap area without moving the text. */
+.verse-key-button {
+  padding: 4px 6px; margin: -4px -6px; border: 0; border-radius: 6px; background: none; cursor: pointer;
+}
+.verse-key-button:hover { background: var(--accent-soft); text-decoration: underline; text-underline-offset: 3px; }
+.verse-title .verse-title-key { font: inherit; color: inherit; }
+.lemma-chip { cursor: pointer; color: inherit; font: inherit; min-height: 34px; }
+.lemma-chip:hover { border-color: var(--accent); }
+.lemma-chip[aria-pressed='true'] { border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+@media (pointer: coarse) { .lemma-chip { min-height: 44px; } }
+.section-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.meanings-toggle {
+  flex: none; min-width: 32px; height: 28px; padding: 0 8px; border-radius: 999px;
+  border: 1px solid var(--border); background: transparent; color: var(--muted);
+  font-size: 0.7rem; font-weight: 600; letter-spacing: 0.06em; cursor: pointer;
+}
+.head-buttons .meanings-toggle { height: 32px; }
+.meanings-toggle:hover { border-color: var(--accent); }
+.meanings-toggle[aria-pressed='true'] { color: var(--accent); background: var(--accent-soft); border-color: rgba(242, 199, 110, 0.45); }
+.lemma-filter {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 4px; padding: 4px 4px 4px 12px;
+  border: 1px solid var(--border); border-radius: 10px;
+}
+.lemma-filter p { margin: 0; flex: 1; font-size: 0.85rem; color: var(--muted); }
+.lemma-filter mark { background: none; color: var(--accent); font-size: 1.1rem; }
+
+/* Surah reader: same frame as the root panel. */
+.reader-panel .root-head { gap: 12px; padding: 10px 18px; }
+.reader-back {
+  flex: none; display: inline-flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); background: transparent; cursor: pointer;
+}
+.reader-back:hover { border-color: var(--accent); color: var(--accent); }
+.reader-title h2 { margin: 0; display: flex; align-items: baseline; gap: 10px; font-weight: 400; }
+.reader-number { font-size: 1.1rem; color: var(--muted); font-variant-numeric: tabular-nums; }
+.reader-ar { font-size: 1.9rem; line-height: 1.5; color: var(--accent); }
+.reader-nav { display: flex; justify-content: space-between; gap: 8px; padding: 6px 18px; border-bottom: 1px solid var(--border); }
+.reader-nav[hidden] { display: none; }
+.reader-nav button {
+  display: inline-flex; align-items: center; gap: 4px; min-height: 36px; padding: 0 10px;
+  border-radius: 999px; border: 1px solid var(--border); background: transparent; font-size: 0.82rem; cursor: pointer;
+}
+.reader-nav button:hover { border-color: var(--accent); color: var(--accent); }
+.reader-nav .next { margin-left: auto; }
+/* Long surahs: the browser skips layout and paint of verses far off screen. */
+.reader-verses .verse { content-visibility: auto; contain-intrinsic-size: auto 150px; }
+.verse.current {
+  background: rgba(255, 195, 90, 0.08); box-shadow: inset 3px 0 0 var(--accent);
+  border-radius: 8px; padding-left: 12px; padding-right: 8px;
+}
+@media (pointer: coarse) {
+  .reader-nav button { min-height: 44px; }
+  .reader-back { width: 44px; height: 44px; }
+}
+@media (max-width: 720px) {
+  /* Phones: reading needs room, so the reader sheet opens tall (below the search field). */
+  .reader-panel { max-height: none; top: 74px; }
+  .overlay:has(.tab-bar) .reader-panel { top: 116px; }
+  .reader-panel.collapsed, .overlay:has(.tab-bar) .reader-panel.collapsed { top: auto; }
+  .reader-ar { font-size: 1.6rem; }
+}

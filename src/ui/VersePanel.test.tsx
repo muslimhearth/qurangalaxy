@@ -53,6 +53,30 @@ describe('VersePanel', () => {
     expect(useGalaxyStore.getState().openVerse).toBeNull();
   });
 
+  it('the verse key opens the surah reader at that verse', () => {
+    useGalaxyStore.getState().setOpenVerse('1:2');
+    render(<VersePanel />);
+    fireEvent.click(screen.getByRole('button', { name: 'Read 1:2 in its surah' }));
+    expect(useGalaxyStore.getState().reader).toEqual({ surah: 1, verse: 2 });
+  });
+
+  it('hides the English text with the "Show meanings" toggle', async () => {
+    useGalaxyStore.getState().setOpenVerse('1:2');
+    render(<VersePanel />);
+    expect(await screen.findByText('Fixture translation of 1:2')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Show meanings' }));
+    expect(screen.queryByText('Fixture translation of 1:2')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Show meanings' }));
+  });
+
+  it('stays mounted but hidden under the reader, and leaves Escape to it', () => {
+    useGalaxyStore.getState().setOpenVerse('1:1');
+    const { container } = render(<VersePanel hidden />);
+    expect(container.querySelector('aside')).toHaveAttribute('hidden');
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(useGalaxyStore.getState().openVerse).toBe('1:1');
+  });
+
   it('shows the transliteration with its markup as styles', async () => {
     window.history.replaceState(null, '', '/');
     vi.stubGlobal(

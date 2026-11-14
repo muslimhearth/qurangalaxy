@@ -6,6 +6,7 @@ import { SearchBox } from './SearchBox';
 import { RootPanel } from './RootPanel';
 import { VersePanel } from './VersePanel';
 import { HoverHint } from './HoverHint';
+import { SurahReader } from '../reader/SurahReader';
 import { TabBar } from '../tabs/TabBar';
 import { useTabSync } from '../tabs/useTabSync';
 
@@ -17,6 +18,7 @@ export function Overlay() {
   const galaxy = useGalaxyStore((s) => s.galaxy);
   const error = useLoadError((s) => s.error);
   const openVerse = useGalaxyStore((s) => s.openVerse);
+  const reading = useGalaxyStore((s) => s.reader !== null);
   useTabSync();
   useHashSync();
 
@@ -51,8 +53,11 @@ export function Overlay() {
       <About />
       <SearchBox />
       <TabBar />
-      {/* An open verse takes the panel's place; closing it shows the root again. */}
-      {openVerse ? <VersePanel /> : <RootPanel />}
+      {/* The reader comes first: the camera measures the first panel in the page. */}
+      <SurahReader />
+      {/* An open verse takes the panel's place; closing it shows the root again. Under the reader
+          the panel stays mounted but hidden, so its scroll, filters and "show more" survive. */}
+      {openVerse ? <VersePanel hidden={reading} /> : <RootPanel hidden={reading} />}
       <HoverHint />
     </div>
   );

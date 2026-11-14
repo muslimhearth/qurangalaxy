@@ -38,6 +38,28 @@ describe('Overlay', () => {
     expect(screen.queryByRole('complementary', { name: 'Root details' })).toBeNull();
   });
 
+  it('the reader takes the panel’s place and back shows the root panel as it was', async () => {
+    useGalaxyStore.getState().setGalaxy(fixtureGalaxy);
+    render(<Overlay />);
+    act(() => useGalaxyStore.getState().select(2));
+    fireEvent.click(await screen.findByRole('button', { name: 'Read 1:3 in its surah' }));
+    expect(screen.getByRole('complementary', { name: 'Surah reader' })).toBeInTheDocument();
+    // Kept mounted but hidden, so its scroll and filters survive.
+    expect(screen.queryByRole('complementary', { name: 'Root details' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Close the reader' }));
+    expect(screen.queryByRole('complementary', { name: 'Surah reader' })).toBeNull();
+    expect(screen.getByRole('complementary', { name: 'Root details' })).toBeInTheDocument();
+  });
+
+  it('Escape closes only the reader, not the root panel under it', async () => {
+    useGalaxyStore.getState().setGalaxy(fixtureGalaxy);
+    render(<Overlay />);
+    act(() => useGalaxyStore.getState().select(2));
+    act(() => useGalaxyStore.getState().setReader({ surah: 1, verse: 1 }));
+    fireEvent.keyDown(window, { key: 'Escape' });
+    expect(useGalaxyStore.getState()).toMatchObject({ reader: null, selectedId: 2 });
+  });
+
   it('shows an error screen when loading fails', () => {
     useLoadError.setState({ error: 'Could not load galaxy.json: HTTP 404' });
     render(<Overlay />);

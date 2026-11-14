@@ -80,4 +80,40 @@ describe('useHashSync', () => {
     });
     expect(useGalaxyStore.getState()).toMatchObject({ openVerse: null, selectedId: 2 });
   });
+
+  it('opens the deep-linked surah reader once the galaxy is ready', () => {
+    window.history.replaceState(null, '', '/#/surah/2/17');
+    renderHook(() => useHashSync());
+    act(() => useGalaxyStore.getState().setGalaxy(fixtureGalaxy));
+    expect(useGalaxyStore.getState().reader).toEqual({ surah: 2, verse: 17 });
+    expect(window.location.hash).toBe('#/surah/2/17');
+  });
+
+  it('writes the reader into the hash over the root, and the root again when it closes', () => {
+    useGalaxyStore.getState().setGalaxy(fixtureGalaxy);
+    renderHook(() => useHashSync());
+    act(() => useGalaxyStore.getState().select(2));
+    act(() => useGalaxyStore.getState().setReader({ surah: 1, verse: 3 }));
+    expect(window.location.hash).toBe('#/surah/1/3');
+    act(() => useGalaxyStore.getState().setReader({ surah: 2, verse: 1 }));
+    expect(window.location.hash).toBe('#/surah/2/1');
+    act(() => useGalaxyStore.getState().setReader(null));
+    expect(window.location.hash).toBe(rhm);
+  });
+
+  it('back/forward opens and closes the reader and keeps the root under it', () => {
+    useGalaxyStore.getState().setGalaxy(fixtureGalaxy);
+    renderHook(() => useHashSync());
+    act(() => useGalaxyStore.getState().select(2));
+    act(() => {
+      window.history.replaceState(null, '', '/#/surah/2/17');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+    expect(useGalaxyStore.getState()).toMatchObject({ reader: { surah: 2, verse: 17 }, selectedId: 2 });
+    act(() => {
+      window.history.replaceState(null, '', '/' + rhm);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+    expect(useGalaxyStore.getState()).toMatchObject({ reader: null, selectedId: 2 });
+  });
 });
