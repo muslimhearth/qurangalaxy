@@ -22,7 +22,9 @@ export function About() {
           <p>Each star is an Arabic root of the Quran. Bigger stars have more words; lines join roots that share verses.</p>
           <ul>
             <li>Drag or two-finger swipe to turn; pinch or scroll to zoom.</li>
-            <li>Tap a star, or search: رحم, noor, light. Use the gear for semantic search.</li>
+            <li>Tap a star, or search roots: رحم, noor, light.</li>
+            <li>Switch to Verses to search the translation or transliteration, or type 2:255.</li>
+            <li>Tap a surah name to read it. Use the gear for semantic search and text size.</li>
           </ul>
           <p className="sources">
             Sources: <a href="https://corpus.quran.com/" target="_blank" rel="noreferrer">Quranic Arabic Corpus</a>{' '}

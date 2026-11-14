@@ -13,6 +13,8 @@ describe('About', () => {
     expect(body).toHaveTextContent(/swipe/i);
     expect(body).toHaveTextContent(/noor/);
     expect(body).toHaveTextContent(/gear for semantic search/i);
+    expect(body).toHaveTextContent(/Switch to Verses/);
+    expect(body).toHaveTextContent(/2:255/);
     expect(screen.getByRole('link', { name: 'Wiktionary' })).toHaveAttribute('href', 'https://en.wiktionary.org/');
     expect(screen.getByRole('link', { name: 'Quranic Arabic Corpus' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Tanzil.net' })).toBeInTheDocument();
