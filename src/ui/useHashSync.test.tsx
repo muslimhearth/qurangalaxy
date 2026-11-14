@@ -47,4 +47,37 @@ describe('useHashSync', () => {
     });
     expect(useGalaxyStore.getState().selectedId).toBeNull();
   });
+
+  it('opens the deep-linked verse once the galaxy is ready', () => {
+    window.history.replaceState(null, '', '/#/verse/3:109');
+    renderHook(() => useHashSync());
+    act(() => useGalaxyStore.getState().setGalaxy(fixtureGalaxy));
+    expect(useGalaxyStore.getState().openVerse).toBe('3:109');
+    expect(window.location.hash).toBe('#/verse/3:109');
+  });
+
+  it('writes the open verse into the hash, and the root again when it closes', () => {
+    useGalaxyStore.getState().setGalaxy(fixtureGalaxy);
+    renderHook(() => useHashSync());
+    act(() => useGalaxyStore.getState().select(2));
+    act(() => useGalaxyStore.getState().setOpenVerse('1:2'));
+    expect(window.location.hash).toBe('#/verse/1:2');
+    act(() => useGalaxyStore.getState().setOpenVerse(null));
+    expect(window.location.hash).toBe(rhm);
+  });
+
+  it('follows back/forward between verses and roots', () => {
+    useGalaxyStore.getState().setGalaxy(fixtureGalaxy);
+    renderHook(() => useHashSync());
+    act(() => {
+      window.history.replaceState(null, '', '/#/verse/2:255');
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+    expect(useGalaxyStore.getState().openVerse).toBe('2:255');
+    act(() => {
+      window.history.replaceState(null, '', '/' + rhm);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+    expect(useGalaxyStore.getState()).toMatchObject({ openVerse: null, selectedId: 2 });
+  });
 });
