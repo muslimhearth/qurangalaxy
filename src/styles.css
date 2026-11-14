@@ -393,6 +393,19 @@ a { color: var(--accent); }
   .mushaf-toggle-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 }
 
+/* Empty mosaic: a short invitation with root chips, centered over the dots. */
+.mushaf-prompt {
+  position: absolute; z-index: 2;
+  left: 50%; top: 50%; transform: translate(-50%, -50%);
+  /* Own width, not half the screen (a centered absolute box shrinks otherwise). */
+  width: max-content; max-width: calc(100vw - 2 * var(--gap)); box-sizing: border-box;
+  padding: 16px 20px; text-align: center;
+}
+.mushaf-prompt p { margin: 0 0 12px; color: var(--fg); font-weight: 500; }
+.mushaf-prompt-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+.mushaf-prompt .chip { min-height: 44px; display: inline-flex; align-items: center; gap: 8px; }
+.mushaf-prompt .chip [lang='ar'] { line-height: 1; }
+
 /* A verse opened from the Mushaf mosaic flashes once in the verse list. */
 .verse.flash { animation: verse-flash 1.8s ease-out; border-radius: 8px; }
 @keyframes verse-flash {

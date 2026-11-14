@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
 import type { VerseKey } from '../data/types';
 import { useGalaxyStore } from '../state/store';
+import { MushafPrompt } from './MushafPrompt';
 import { useVerseFocus } from '../ui/verseFocus';
 import { drawMosaic } from './draw';
 import { PHONE_MAX } from './freeArea';
@@ -117,6 +118,7 @@ export function MushafView({ compareRootId }: MushafViewProps) {
 
   return (
     <section className="mushaf" aria-label="Mushaf view">
+      <MushafPrompt />
       <canvas
         ref={canvasRef}
         className="mushaf-canvas"
