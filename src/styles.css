@@ -526,6 +526,8 @@ a { color: var(--accent); }
 }
 .reader-nav button:hover { border-color: var(--accent); color: var(--accent); }
 .reader-nav .next { margin-left: auto; }
+/* The reader keeps its own scroll position when verses are added above (see SurahReader). */
+.reader-body { overflow-anchor: none; }
 /* Long surahs: the browser skips layout and paint of verses far off screen. */
 .reader-verses .verse { content-visibility: auto; contain-intrinsic-size: auto 150px; }
 .verse.current {

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { loadOccurrences } from '../data/load';
 import type { Occurrences, VerseKey } from '../data/types';
 import { useGalaxyStore } from '../state/store';
@@ -7,6 +7,7 @@ import { MeaningsToggle, useMeanings } from '../ui/meanings';
 import { useVerseTexts } from '../ui/useVerseTexts';
 import { useVerseFocus } from '../ui/verseFocus';
 import { surahAt, surahVerseKeys } from './surahs';
+import { growWindow, initialWindow, isFull, type VerseWindow } from './verseWindow';
 
 /** Loads occurrences.json (shared, cached) once `enabled` turns true; null until then or on error. */
 function useOccurrences(enabled: boolean): Occurrences | null {
@@ -23,6 +24,32 @@ function useOccurrences(enabled: boolean): Occurrences | null {
     };
   }, [enabled, occ]);
   return occ;
+}
+
+/**
+ * The verses to render for `count` verses opened at 1-based `verse`: a small window first, then one
+ * chunk more per idle moment (once `ready`) until the whole surah is there.
+ */
+function useVerseWindow(count: number, verse: number, id: string, ready: boolean): VerseWindow {
+  const [win, setWin] = useState(() => ({ id, ...initialWindow(count, verse - 1) }));
+  let current = win;
+  if (win.id !== id) {
+    // A new place: start over (state set during render, so the old window never paints).
+    current = { id, ...initialWindow(count, verse - 1) };
+    setWin(current);
+  }
+  const full = isFull(current, count);
+  useEffect(() => {
+    if (!ready || full) return;
+    const grow = () => setWin((w) => (w.id === id ? { id, ...growWindow(w, count) } : w));
+    if (typeof requestIdleCallback === 'function') {
+      const handle = requestIdleCallback(grow, { timeout: 300 });
+      return () => cancelIdleCallback(handle);
+    }
+    const timer = setTimeout(grow, 30);
+    return () => clearTimeout(timer);
+  }, [ready, full, current, id, count]);
+  return current;
 }
 
 /** Small chevron icon; `dir` is where it points. */
@@ -81,9 +108,24 @@ export function SurahReader() {
     return () => window.removeEventListener('keydown', onKey);
   }, [open]);
 
-  // Scroll to the open verse once the verses are there (and again when the place changes).
   const ready = verses !== null;
   const verse = place?.verse ?? 0;
+  const win = useVerseWindow(keys.length, verse, `${surah}:${verse}`, ready);
+
+  // Verses added above keep the reading position: move the scroll by how far the first verse
+  // that was rendered before has moved down (the CSS turns the browser's own anchoring off).
+  const anchor = useRef<{ key: string; top: number } | null>(null);
+  useLayoutEffect(() => {
+    const el = body.current;
+    if (!el) return;
+    const before = anchor.current;
+    const moved = before && el.querySelector<HTMLElement>(`[data-verse="${before.key}"]`);
+    if (before && moved) el.scrollTop += moved.offsetTop - before.top;
+    const first = el.querySelector<HTMLElement>('.reader-verses > li');
+    anchor.current = first ? { key: first.dataset.verse!, top: first.offsetTop } : null;
+  }, [win.start, ready, surah]);
+
+  // Scroll to the open verse once the verses are there (and again when the place changes).
   useEffect(() => {
     const el = body.current;
     if (!ready || !el) return;
@@ -161,7 +203,7 @@ export function SurahReader() {
         {!verses && <p className="muted">Loading the surah…</p>}
         {verses && (
           <ol className="verse-list reader-verses">
-            {keys.map((key) => {
+            {keys.slice(win.start, win.end).map((key) => {
               const v = verses[key];
               if (!v) return null;
               const current = key === currentKey;
