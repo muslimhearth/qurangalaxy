@@ -122,7 +122,10 @@ test('search history: recorded on Enter, shown on focus, rerun, removed, kept af
   await expect(page.getByLabel('Root details', { exact: true })).toBeVisible();
 
   await page.reload();
+  // The picked root's text is kept; history shows on an empty field.
+  await expect(search).toHaveValue('rhm', { timeout: 15_000 });
   await press(search, isMobile);
+  await search.fill('');
   const history = page.locator('.search-history');
   await expect(history.getByRole('button', { name: /^rhm/ })).toBeVisible();
   await press(history.getByRole('button', { name: /^rhm/ }), isMobile);
