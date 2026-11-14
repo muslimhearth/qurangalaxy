@@ -194,7 +194,9 @@ a { color: var(--accent); }
   border-radius: 10px;
 }
 .search input::placeholder { color: var(--muted); }
-.search input:focus-visible { outline: 2px solid var(--accent); }
+.search input:focus-visible { outline: none; }
+/* Focus shows as one thin ring on the whole bar, not a second box around the field. */
+.search:has(input:focus-visible) { border-color: var(--accent-line); box-shadow: 0 0 0 3px var(--accent-soft); }
 .search-results {
   list-style: none;
   margin: 0;
@@ -252,7 +254,8 @@ a { color: var(--accent); }
   width: 40px; height: 40px; border: none; border-radius: 10px;
   background: none; color: var(--muted);
 }
-.search-tool:hover { color: var(--fg); background: var(--hover); }
+/* Hover only with a mouse: touch screens keep :hover after a tap. */
+@media (hover: hover) { .search-tool:hover { color: var(--fg); background: var(--hover); } }
 .search-tool.on { color: var(--accent); }
 .search-tool[aria-expanded='true'] { color: var(--accent); background: var(--accent-soft); }
 /* Segmented control: one track, the checked part in gold. Used for Roots | Verses and the match mode. */
@@ -267,7 +270,6 @@ a { color: var(--accent); }
 .segmented button:hover { color: var(--fg); }
 .segmented button[aria-checked='true'] {
   color: var(--accent); background: var(--accent-soft); font-weight: 500;
-  box-shadow: inset 0 0 0 1px var(--accent-line);
 }
 @media (pointer: coarse) { .segmented button { min-height: 38px; } }
 /* Settings popover under the gear: labels left, controls right. */
@@ -637,6 +639,12 @@ input.switch:checked::before { left: 19px; background: var(--switch-knob-on); }
 }
 .bookmarks-button:hover, .bookmarks-button[aria-expanded='true'] { color: var(--fg); border-color: var(--accent); }
 .bookmarks-button.on { color: var(--accent); }
+/* In the search bar the bookmarks button looks like the gear: no circle, no border at rest. */
+.search-tools .bookmarks-button { width: 40px; height: 40px; border: none; border-radius: 10px; background: none; }
+.search-tools .bookmarks-button[aria-expanded='true'] { color: var(--accent); background: var(--accent-soft); }
+@media (hover: hover) { .search-tools .bookmarks-button:hover { color: var(--fg); background: var(--hover); } }
+@media (hover: none) { .search-tools .bookmarks-button:hover { background: none; } }
+@media (pointer: coarse) { .search-tool, .search-tools .bookmarks-button { width: 44px; height: 44px; } }
 .bookmarks-pop {
   position: fixed; z-index: 30;
   top: var(--pop-top); right: var(--pop-right);
