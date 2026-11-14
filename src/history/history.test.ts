@@ -91,6 +91,13 @@ describe('useSearchHistory', () => {
     expect(JSON.parse(localStorage.getItem(HISTORY_KEY)!)).toEqual([]);
   });
 
+  it('clears all entries and keeps saving on', () => {
+    useSearchHistory.getState().record({ query: 'light', mode: 'roots' });
+    useSearchHistory.getState().clear();
+    expect(useSearchHistory.getState()).toMatchObject({ entries: [], saving: true });
+    expect(localStorage.getItem(HISTORY_KEY)).toBeNull();
+  });
+
   it('turning saving off clears the history and stops recording', () => {
     useSearchHistory.getState().record({ query: 'light', mode: 'roots' });
     useSearchHistory.getState().setSaving(false);

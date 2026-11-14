@@ -1,38 +1,35 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { modeLabel, SearchSettings } from './SearchSettings';
+import { SearchSettings } from './SearchSettings';
 import { useGalaxyStore } from '../state/store';
 import { HISTORY_KEY, useSearchHistory } from '../history/history';
 
-describe('modeLabel', () => {
-  it('names the current search mode in one short word', () => {
-    expect(modeLabel(0)).toBe('Exact');
-    expect(modeLabel(0.4)).toBe('Hybrid');
-    expect(modeLabel(1)).toBe('Semantic');
-  });
-});
-
 describe('SearchSettings', () => {
-  beforeEach(() => useGalaxyStore.setState(useGalaxyStore.getInitialState()));
+  beforeEach(() => {
+    localStorage.clear();
+    useGalaxyStore.setState(useGalaxyStore.getInitialState());
+    useSearchHistory.setState({ saving: true, entries: [] });
+  });
   afterEach(cleanup);
 
-  const button = () => screen.getByRole('button', { name: /search mode/i });
+  const button = () => screen.getByRole('button', { name: /search settings/i });
+  const dialog = () => screen.queryByRole('dialog', { name: 'Search settings' });
 
-  it('shows the current mode on a small button and keeps the slider hidden', () => {
+  it('is a gear button that names the current mode and keeps the popover closed', () => {
     render(<SearchSettings status="off" progress={0} />);
-    expect(button()).toHaveTextContent('Exact');
+    expect(button()).toHaveAccessibleName('Search settings: Exact');
     expect(button()).toHaveAttribute('aria-expanded', 'false');
-    expect(screen.queryByRole('slider')).toBeNull();
+    expect(dialog()).toBeNull();
   });
 
-  it('opens the slider, updates the hint, and closes with Escape', () => {
+  it('opens the popover, switches the mode, and closes with Escape', () => {
     render(<SearchSettings status="off" progress={0} />);
     fireEvent.click(button());
-    const slider = screen.getByRole('slider', { name: /search mode/i });
-    fireEvent.change(slider, { target: { value: '1' } });
-    expect(button()).toHaveTextContent('Semantic');
-    fireEvent.keyDown(slider, { key: 'Escape' });
-    expect(screen.queryByRole('slider')).toBeNull();
+    fireEvent.click(screen.getByRole('radio', { name: 'Meaning' }));
+    expect(useGalaxyStore.getState().semanticWeight).toBe(1);
+    expect(button()).toHaveAccessibleName('Search settings: Meaning');
+    fireEvent.keyDown(screen.getByRole('radio', { name: 'Meaning' }), { key: 'Escape' });
+    expect(dialog()).toBeNull();
     expect(button()).toHaveAttribute('aria-expanded', 'false');
   });
 
@@ -42,7 +39,7 @@ describe('SearchSettings', () => {
     let reachedWindow = false;
     const onKey = () => (reachedWindow = true);
     window.addEventListener('keydown', onKey);
-    fireEvent.keyDown(screen.getByRole('slider'), { key: 'Escape' });
+    fireEvent.keyDown(screen.getByRole('radio', { name: 'Exact' }), { key: 'Escape' });
     window.removeEventListener('keydown', onKey);
     expect(reachedWindow).toBe(false);
   });
@@ -51,17 +48,7 @@ describe('SearchSettings', () => {
     render(<SearchSettings status="off" progress={0} />);
     fireEvent.click(button());
     fireEvent.pointerDown(document.body);
-    expect(screen.queryByRole('slider')).toBeNull();
-  });
-
-  it('shows model download progress on the button while the panel is closed', () => {
-    useGalaxyStore.getState().setSemanticWeight(1);
-    render(<SearchSettings status="loading" progress={0.42} />);
-    const ring = screen.getByRole('progressbar', { name: /loading semantic model/i });
-    expect(button()).toContainElement(ring);
-    expect(ring).toHaveAttribute('aria-valuenow', '42');
-    // No bare number on the chip: it would read like the semantic share.
-    expect(button()).not.toHaveTextContent('%');
+    expect(dialog()).toBeNull();
   });
 
   it('closes when focus moves outside, e.g. back to the search field', () => {
@@ -73,22 +60,28 @@ describe('SearchSettings', () => {
     );
     fireEvent.click(button());
     fireEvent.focusIn(screen.getByLabelText('field'));
-    expect(screen.queryByRole('slider')).toBeNull();
+    expect(dialog()).toBeNull();
+  });
+
+  it('shows model download progress on the button while the popover is closed', () => {
+    useGalaxyStore.getState().setSemanticWeight(1);
+    render(<SearchSettings status="loading" progress={0.42} />);
+    const ring = screen.getByRole('progressbar', { name: /loading meaning model/i });
+    expect(button()).toContainElement(ring);
+    expect(ring).toHaveAttribute('aria-valuenow', '42');
   });
 
   it('shows a given mix instead of the root search mix', () => {
     let seen = -1;
     render(<SearchSettings status="off" progress={0} weight={0.5} onWeight={(w) => (seen = w)} />);
-    expect(button()).toHaveTextContent('Hybrid');
+    expect(button()).toHaveAccessibleName('Search settings: Hybrid');
     fireEvent.click(button());
-    fireEvent.change(screen.getByRole('slider'), { target: { value: '0' } });
+    fireEvent.click(screen.getByRole('radio', { name: 'Exact' }));
     expect(seen).toBe(0);
-    expect(useGalaxyStore.getState().semanticWeight).toBe(0);
   });
 
   it('turns search history saving off and on', () => {
-    localStorage.clear();
-    useSearchHistory.setState({ saving: true, entries: [{ query: 'light', mode: 'roots' }] });
+    useSearchHistory.setState({ entries: [{ query: 'light', mode: 'roots' }] });
     render(<SearchSettings status="off" progress={0} />);
     fireEvent.click(button());
     const toggle = screen.getByRole('switch', { name: 'Save search history' });
@@ -98,5 +91,20 @@ describe('SearchSettings', () => {
     expect(localStorage.getItem(HISTORY_KEY)).toBeNull();
     fireEvent.click(toggle);
     expect(useSearchHistory.getState().saving).toBe(true);
+  });
+
+  it('clears the history with a link, only when there is history', () => {
+    useSearchHistory.setState({
+      entries: [
+        { query: 'light', mode: 'roots' },
+        { query: 'mercy', mode: 'verses' },
+      ],
+    });
+    render(<SearchSettings status="off" progress={0} />);
+    fireEvent.click(button());
+    expect(screen.getByText('2 recent searches')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Clear history' }));
+    expect(useSearchHistory.getState()).toMatchObject({ saving: true, entries: [] });
+    expect(screen.queryByRole('button', { name: 'Clear history' })).toBeNull();
   });
 });

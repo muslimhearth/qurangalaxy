@@ -94,3 +94,28 @@ test('a connected root opens in a new tab (Ctrl-click / long-press)', async ({ p
   await page.waitForTimeout(2500); // let the camera settle for the screenshot
   await page.screenshot({ path: `test-results/${info.project.name}-tabs.png` });
 });
+
+test('tab pills sit next to the search bar and clear of the root panel', async ({ page, isMobile }, info) => {
+  await page.goto('/');
+  const box = page.getByRole('combobox');
+  await expect(box).toBeVisible({ timeout: 15_000 });
+  await search(page, 'رحم');
+  await press(page.getByRole('button', { name: 'New tab' }), isMobile);
+  await search(page, 'نور');
+  await expect(page.getByRole('tab')).toHaveCount(2);
+
+  const bar = (await page.locator('.search').boundingBox())!;
+  const tabs = (await page.getByRole('tablist').boundingBox())!;
+  const panel = (await page.getByLabel('Root details', { exact: true }).boundingBox())!;
+  if (isMobile) {
+    // One row under the search bar.
+    expect(tabs.y).toBeGreaterThanOrEqual(bar.y + bar.height);
+  } else {
+    // Same row, to the right of the bar; the panel starts below the row.
+    expect(tabs.x).toBeGreaterThanOrEqual(bar.x + bar.width);
+    expect(Math.abs(tabs.y + tabs.height / 2 - (bar.y + bar.height / 2))).toBeLessThan(4);
+    expect(panel.y).toBeGreaterThanOrEqual(bar.y + bar.height);
+    expect(panel.y).toBeGreaterThanOrEqual(tabs.y + tabs.height);
+  }
+  await page.screenshot({ path: `test-results/${info.project.name}-tab-pills.png` });
+});

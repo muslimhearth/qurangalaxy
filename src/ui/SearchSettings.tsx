@@ -2,13 +2,9 @@ import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { useSearchHistory } from '../history/history';
 import { useGalaxyStore } from '../state/store';
 import type { SemanticStatus } from '../semantic/useSemanticSearch';
-import { SemanticSlider } from './SemanticSlider';
+import { MatchSwitch, matchMode } from './MatchSwitch';
 
-/** One-word name of the search mode for a slider weight: Exact, Hybrid or Semantic. */
-export function modeLabel(weight: number): string {
-  if (weight <= 0) return 'Exact';
-  return weight >= 1 ? 'Semantic' : 'Hybrid';
-}
+const MODE_NAMES = { exact: 'Exact', hybrid: 'Hybrid', meaning: 'Meaning' } as const;
 
 interface Props {
   status: SemanticStatus;
@@ -20,8 +16,8 @@ interface Props {
 }
 
 /**
- * Small settings button in the search field that shows the current search mode and opens a
- * popover with the Exact ↔ Semantic slider and the "Save search history" switch.
+ * Gear button at the right end of the search bar. It opens a popover with the
+ * "Exact | Hybrid | Meaning" switch, the "Save search history" switch and "Clear history".
  * Escape or a click outside closes it.
  */
 export function SearchSettings({ status, progress, error, weight: ownWeight, onWeight }: Props) {
@@ -29,6 +25,8 @@ export function SearchSettings({ status, progress, error, weight: ownWeight, onW
   const weight = ownWeight ?? storeWeight;
   const saving = useSearchHistory((s) => s.saving);
   const setSaving = useSearchHistory((s) => s.setSaving);
+  const entries = useSearchHistory((s) => s.entries.length);
+  const clear = useSearchHistory((s) => s.clear);
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const button = useRef<HTMLButtonElement>(null);
@@ -55,28 +53,26 @@ export function SearchSettings({ status, progress, error, weight: ownWeight, onW
     button.current?.focus();
   };
 
-  const mode = modeLabel(weight);
+  const mode = MODE_NAMES[matchMode(weight)];
   return (
     <div className="search-settings" ref={root} onKeyDown={onKeyDown}>
       <button
         ref={button}
         type="button"
-        className={`mode-chip${weight > 0 ? ' on' : ''}`}
+        className={`search-tool gear${weight > 0 ? ' on' : ''}`}
         aria-haspopup="dialog"
         aria-expanded={open}
-        aria-label={`Search mode: ${mode}`}
+        aria-label={`Search settings: ${mode}`}
+        title="Search settings"
         onClick={() => setOpen((o) => !o)}
       >
-        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-          <path d="M2 4h12M2 12h12M5 2v4M11 10v4" stroke="currentColor" strokeWidth="1.6" fill="none" strokeLinecap="round" />
-        </svg>
-        <span className="mode-name">{mode}</span>
-        {/* A small ring while the model downloads; a number here would read like the semantic share. */}
+        <GearIcon />
+        {/* A small ring while the meaning model downloads. */}
         {status === 'loading' && (
           <span
             className="mode-loading"
             role="progressbar"
-            aria-label="Loading semantic model"
+            aria-label="Loading meaning model"
             aria-valuenow={Math.round(progress * 100)}
             aria-valuemin={0}
             aria-valuemax={100}
@@ -85,19 +81,43 @@ export function SearchSettings({ status, progress, error, weight: ownWeight, onW
       </button>
       {open && (
         <div className="mode-pop panel" role="dialog" aria-label="Search settings">
-          <SemanticSlider status={status} progress={progress} error={error} weight={ownWeight} onWeight={onWeight} />
+          <p className="setting-head">Search</p>
+          <MatchSwitch status={status} progress={progress} error={error} weight={ownWeight} onWeight={onWeight} />
+          <p className="setting-head">History</p>
           <label className="setting-row">
+            <span className="setting-label">Save search history</span>
             <input
               type="checkbox"
               role="switch"
+              className="switch"
               checked={saving}
               aria-checked={saving}
               onChange={(e) => setSaving(e.target.checked)}
             />
-            Save search history
           </label>
+          {entries > 0 && (
+            <div className="setting-row">
+              <span className="setting-label muted">
+                {entries} recent {entries === 1 ? 'search' : 'searches'}
+              </span>
+              <button type="button" className="link-button" onClick={clear}>
+                Clear history
+              </button>
+            </div>
+          )}
+          {/* Slot: a "Display" group with the "Show meanings" switch joins here (another goal). */}
         </div>
       )}
     </div>
+  );
+}
+
+/** Gear icon of the settings button. */
+function GearIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    </svg>
   );
 }

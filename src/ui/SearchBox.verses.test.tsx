@@ -41,6 +41,7 @@ describe('SearchBox verse search', () => {
     expect(screen.getByRole('combobox', { name: 'Search verses' })).toBeInTheDocument();
     fireEvent.change(input(), { target: { value: 'translation' } });
     expect(await screen.findAllByRole('option')).toHaveLength(4);
+    expect(screen.getByTestId('search-count')).toHaveTextContent('4 verses');
     expect(options()[0]).toHaveTextContent('1:1');
     expect(options()[0]!.querySelector('mark')).toHaveTextContent('translation');
   });

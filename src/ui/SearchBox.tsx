@@ -16,8 +16,9 @@ import { BookmarksButton } from '../bookmarks/BookmarksButton';
 import { HistoryList } from './HistoryList';
 import { ModeSwitch } from './ModeSwitch';
 import { SearchSettings } from './SearchSettings';
+import { resultCount } from './resultCount';
 import { snippet } from './snippet';
-import { useVerseResults } from './useVerseResults';
+import { useVerseResults, VERSE_LIMIT } from './useVerseResults';
 import { useVerseTexts } from './useVerseTexts';
 import { useNewTabGesture } from '../tabs/useNewTabGesture';
 import type { TargetLike } from '../tabs/target';
@@ -33,6 +34,8 @@ interface Option {
   choose: () => void;
   /** The root id or verse a long-press or middle-click opens in a new tab. */
   target?: TargetLike;
+  /** The "Show all" row: choosing it expands the list, it is not a search to record. */
+  more?: boolean;
   body: ReactNode;
 }
 
@@ -63,6 +66,8 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
   // False after a verse is picked: the list hides until the user types or focuses again.
   const [listOpen, setListOpen] = useState(true);
   const [historyOpen, setHistoryOpen] = useState(false);
+  // The query whose root list is expanded with "Show all"; a new query starts short again.
+  const [showAllFor, setShowAllFor] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
   const autoFocused = useRef(false);
 
@@ -88,10 +93,12 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
     () => (galaxy && rootsOn ? exactMatches(galaxy.roots, text) : []),
     [galaxy, rootsOn, text, wordForms],
   );
-  const rootResults = useMemo(
-    () => (galaxy && rootsOn ? blendMatches(galaxy.roots, exact, semantic.matches ?? [], rootMix, LIMIT) : []),
+  const allRoots = useMemo(
+    () => (galaxy && rootsOn ? blendMatches(galaxy.roots, exact, semantic.matches ?? [], rootMix, Infinity) : []),
     [galaxy, rootsOn, exact, semantic.matches, rootMix],
   );
+  const showAll = showAllFor !== null && showAllFor === text;
+  const rootResults = useMemo(() => (showAll ? allRoots : allRoots.slice(0, LIMIT)), [showAll, allRoots]);
   const rootVerses = useVerseTexts(rootResults.some((m) => m.verses));
   const rootsPending = rootMix > 0 && semantic.matches === null && semantic.status !== 'error';
 
@@ -106,8 +113,9 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
     setOpenVerse(null);
     select(id);
     setQuery('');
-    // The field is empty now, but the user just picked something: no history over the galaxy.
+    // The user just picked something: no list or history over the galaxy.
     setHistoryOpen(false);
+    input.current?.blur();
   };
 
   const chooseVerse = (key: VerseKey) => {
@@ -117,8 +125,8 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
     if (verseQuery.kind === 'verse') setQuery('');
     else setListOpen(false);
     setHistoryOpen(false);
-    // Phones: close the keyboard so the verse sheet is visible.
-    if (!hasFinePointer()) input.current?.blur();
+    // Leave the field: the list stays hidden, and phones close the keyboard so the verse sheet shows.
+    input.current?.blur();
   };
 
   const options: Option[] = [];
@@ -154,6 +162,18 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
         ),
       });
     }
+    if (!showAll && allRoots.length > rootResults.length) {
+      options.push({
+        id: 'root-option-more',
+        className: 'search-option search-more',
+        more: true,
+        choose: () => {
+          setShowAllFor(text);
+          input.current?.focus();
+        },
+        body: <>Show all {allRoots.length.toLocaleString('en')} roots</>,
+      });
+    }
   } else {
     for (const m of verseResults.matches) {
       options.push({
@@ -181,6 +201,17 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
   else empty = verseResults.pending ? 'Searching by meaning…' : 'No verses match.';
 
   const open = query.trim() !== '' && listOpen;
+  const count =
+    text.trim() === ''
+      ? null
+      : rootsOn
+        ? resultCount({ mode, shown: rootResults.length, total: allRoots.length })
+        : resultCount({
+            mode,
+            shown: verseResults.matches.length,
+            total: verseResults.matches.length,
+            capped: verseResults.matches.length >= VERSE_LIMIT,
+          });
   const showHistory = historyOpen && query === '';
 
   const reopen = () => {
@@ -204,18 +235,41 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
       setActive((a) => (a + step + options.length) % options.length);
     } else if (e.key === 'Enter') {
       if (query.trim() === '') return;
-      record({ query, mode });
-      (options[active] ?? options[0])?.choose();
-    } else if (e.key === 'Escape' && query !== '') {
-      setQuery('');
-      // First Escape only clears the query; an empty box lets the next Escape close the panel.
+      const option = options[active] ?? options[0];
+      if (!option?.more) record({ query, mode });
+      option?.choose();
+    } else if (e.key === 'Escape') {
+      // First Escape leaves the field and keeps the text (the list closes with the focus).
+      // It never reaches the root panel while the field has focus. The browser's own Escape
+      // in a search field would clear the text, so stop that too.
+      e.preventDefault();
       e.stopPropagation();
+      setHistoryOpen(false);
+      setListOpen(false);
+      input.current?.blur();
     }
   };
 
-  // Hide the history once focus leaves the search panel (not when it moves to a history button).
+  // Next Escape, with the field not focused: clear the kept text before any panel closes.
+  useEffect(() => {
+    if (query === '') return;
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (e.key !== 'Escape' || e.defaultPrevented) return;
+      const target = e.target as HTMLElement | null;
+      // Other fields, dialogs and the search panel itself handle their own Escape.
+      if (target?.closest?.('input, textarea, select, [contenteditable], [role="dialog"], .search')) return;
+      // Capture phase on window: runs before the panels' listeners, so stop it here.
+      e.stopPropagation();
+      setQuery('');
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [query, setQuery]);
+
+  // Hide the history once focus leaves the field, unless it moves to a history button.
   const onBlur = (e: FocusEvent<HTMLDivElement>) => {
-    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setHistoryOpen(false);
+    const next = e.relatedTarget as HTMLElement | null;
+    if (next !== input.current && !next?.closest?.('.search-history')) setHistoryOpen(false);
   };
 
   const settings = rootsOn
@@ -234,6 +288,10 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
         {rootsOn ? 'Search roots' : 'Search verses'}
       </label>
       <div className="search-row">
+        <svg className="search-icon" viewBox="0 0 20 20" width="18" height="18" aria-hidden="true">
+          <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" strokeWidth="1.8" fill="none" />
+          <path d="M13 13l4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
         <input
           ref={input}
           id="root-search"
@@ -268,14 +326,22 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
           onPointerDown={() => setHistoryOpen(true)}
           onKeyDown={onKeyDown}
         />
+        {count && (
+          <span className="search-count" data-testid="search-count" aria-live="polite">
+            {count.value}
+            <span className="search-count-unit"> {count.unit}</span>
+          </span>
+        )}
         <ModeSwitch
           onSwitch={() => {
             reopen();
             input.current?.focus();
           }}
         />
-        <SearchSettings {...settings} />
-        <BookmarksButton />
+        <div className="search-tools">
+          <BookmarksButton />
+          <SearchSettings {...settings} />
+        </div>
       </div>
       {open && (
         <ul

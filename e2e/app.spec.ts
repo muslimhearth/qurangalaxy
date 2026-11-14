@@ -66,6 +66,33 @@ test('search selects a root and shows highlighted verses', async ({ page }, info
   await expect(panel).toHaveCount(0);
 });
 
+test('Escape leaves the search field first, then clears it, then closes the panel', async ({ page }) => {
+  await page.goto('/#/root/' + encodeURIComponent('رحم'));
+  const panel = page.getByLabel('Root details', { exact: true });
+  await expect(panel).toBeVisible({ timeout: 15_000 });
+  const search = page.getByRole('combobox');
+  await search.click();
+  await search.fill('light');
+  await expect(page.getByRole('option').first()).toBeVisible();
+  // 8 of N roots, and "Show all" opens the rest.
+  await expect(page.getByTestId('search-count')).toHaveText(/^8 of \d+ roots$/);
+  await page.getByRole('option', { name: /^Show all \d+ roots$/ }).click();
+  await expect.poll(() => page.getByRole('option').count()).toBeGreaterThan(8);
+
+  await page.keyboard.press('Escape');
+  await expect(search).not.toBeFocused();
+  await expect(search).toHaveValue('light');
+  await expect(page.getByRole('option')).toHaveCount(0);
+  await expect(panel).toBeVisible();
+
+  await page.keyboard.press('Escape');
+  await expect(search).toHaveValue('');
+  await expect(panel).toBeVisible();
+
+  await page.keyboard.press('Escape');
+  await expect(panel).toHaveCount(0);
+});
+
 test('deep link highlights the right word in a joined-word verse', async ({ page }) => {
   // In 2:181 the corpus joins بَعْدَ مَا into one word; later words must still line up.
   await page.goto('/#/root/' + encodeURIComponent('سمع'));
