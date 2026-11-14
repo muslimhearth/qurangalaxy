@@ -23,10 +23,10 @@ export interface EdgeSets {
 
 /**
  * Links roots that share verses. `totalVerses` is the number of verses in the Quran (for the score).
- * Both sets are the union of each root's top `topK` edges, sorted by source then target, with
- * `source < target`. Scores keep 3 significant digits.
+ * Both sets are the union of each root's top edges (`topK` for the layout, `linkK` for the links),
+ * sorted by source then target, with `source < target`. Scores keep 3 significant digits.
  */
-export function buildEdges(occurrences: Occurrences, topK: number, totalVerses: number): EdgeSets {
+export function buildEdges(occurrences: Occurrences, topK: number, totalVerses: number, linkK = topK): EdgeSets {
   const n = occurrences.length;
   const weights = pairWeights(occurrences);
   const verses = occurrences.map((list) => list.length);
@@ -43,7 +43,7 @@ export function buildEdges(occurrences: Occurrences, topK: number, totalVerses: 
     links: topPerRoot(
       n,
       all.filter((e) => e.weight >= MIN_SHARED),
-      topK,
+      linkK,
       (a, b) => b.score - a.score || b.weight - a.weight,
     ),
   };

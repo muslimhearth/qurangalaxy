@@ -13,6 +13,8 @@ import { checkJoinedWords, toTextPosition } from './wordmap';
 
 /** How many strongest edges each root keeps before the union is taken. */
 export const EDGES_PER_ROOT = 8;
+/** How many best-scored links each root keeps for the app (more than the layout, so big roots get faint links). */
+export const LINKS_PER_ROOT = 30;
 
 /** Everything the build writes, plus diagnostics. */
 export interface Dataset {
@@ -66,7 +68,7 @@ export function buildDataset(
   );
   // The layout keeps the raw-weight edges, so star positions do not move; galaxy.json gets the
   // links ranked by score (see buildEdges).
-  const edges = buildEdges(occurrences, EDGES_PER_ROOT, Object.keys(verses).length);
+  const edges = buildEdges(occurrences, EDGES_PER_ROOT, Object.keys(verses).length, LINKS_PER_ROOT);
   const glosses = buildGlosses({
     roots,
     wiki,

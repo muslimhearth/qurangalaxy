@@ -49,6 +49,14 @@ describe('buildEdges', () => {
     ]);
   });
 
+  it('links can keep more per root than the layout', () => {
+    // Roots 0,1,2 all share verse 1:1 and 1:2, so each pair has 2 shared verses.
+    const tri: Occurrences = [inVerses('1:1', '1:2'), inVerses('1:1', '1:2'), inVerses('1:1', '1:2')];
+    const sets = buildEdges(tri, 1, 4, 2);
+    expect(sets.layout).toHaveLength(2);
+    expect(sets.links).toHaveLength(3);
+  });
+
   it(`links need ${MIN_SHARED} shared verses`, () => {
     expect(buildEdges(occ, 8, 4).links).toEqual([{ source: 0, target: 1, weight: 2, score: score(2, 3, 2) }]);
   });
