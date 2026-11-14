@@ -1,4 +1,5 @@
 import type { Galaxy, Occurrences, Verses } from './types';
+import type { LemmaIndex } from './lemmaIndex';
 
 /**
  * Small hand-made dataset for tests and for UI/scene work before the real data exists.
@@ -34,6 +35,9 @@ export const fixtureOccurrences: Occurrences = [
   [{ v: '1:2', w: [3] }],
   [{ v: '1:2', w: [4] }],
 ];
+
+/** Lemma index of `fixtureOccurrences`: for رحم, words 3 and 4 of 1:1 are رَحْمٰن (1) and رَحِيم (0). */
+export const fixtureLemmaIndex: LemmaIndex = [[0], [0, 0], [1, 0, 1, 0], [0], [0], [1]];
 
 export const fixtureVerses: Verses = {
   '1:1': { ar: 'بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ', en: 'Fixture translation of 1:1' },

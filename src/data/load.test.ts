@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { isFixtureMode, loadGalaxy, loadOccurrences, loadVerses, resetLoadCache } from './load';
-import { fixtureGalaxy, fixtureOccurrences, fixtureVerses } from './fixture';
+import { isFixtureMode, loadGalaxy, loadLemmaIndex, loadOccurrences, loadVerses, resetLoadCache } from './load';
+import { fixtureGalaxy, fixtureLemmaIndex, fixtureOccurrences, fixtureVerses } from './fixture';
 
 function okResponse(body: unknown) {
   return { ok: true, status: 200, statusText: 'OK', json: async () => body } as Response;
@@ -18,6 +18,13 @@ describe('data loaders', () => {
     vi.stubGlobal('fetch', fetchMock);
     await expect(loadGalaxy()).resolves.toEqual(fixtureGalaxy);
     expect(fetchMock).toHaveBeenCalledWith(`${import.meta.env.BASE_URL}data/galaxy.json`);
+  });
+
+  it('fetches lemmas.json for the lemma filter', async () => {
+    const fetchMock = vi.fn(async () => okResponse([[0]]));
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(loadLemmaIndex()).resolves.toEqual([[0]]);
+    expect(fetchMock).toHaveBeenCalledWith(`${import.meta.env.BASE_URL}data/lemmas.json`);
   });
 
   it('fetches each file only once', async () => {
@@ -54,6 +61,7 @@ describe('data loaders', () => {
     await expect(loadGalaxy()).resolves.toBe(fixtureGalaxy);
     await expect(loadOccurrences()).resolves.toBe(fixtureOccurrences);
     await expect(loadVerses()).resolves.toBe(fixtureVerses);
+    await expect(loadLemmaIndex()).resolves.toBe(fixtureLemmaIndex);
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });

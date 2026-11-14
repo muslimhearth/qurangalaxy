@@ -1,5 +1,6 @@
 import type { Galaxy, Occurrences, Verses } from './types';
-import { fixtureGalaxy, fixtureOccurrences, fixtureVerses } from './fixture';
+import type { LemmaIndex } from './lemmaIndex';
+import { fixtureGalaxy, fixtureLemmaIndex, fixtureOccurrences, fixtureVerses } from './fixture';
 
 /** True when the page URL has `?fixture`: a dev aid that swaps real data for the fixture. */
 export function isFixtureMode(): boolean {
@@ -46,4 +47,9 @@ export function loadOccurrences(): Promise<Occurrences> {
 /** Loads verses.json (Arabic text and English translation per verse). */
 export function loadVerses(): Promise<Verses> {
   return loadOnce('verses.json', fixtureVerses);
+}
+
+/** Loads lemmas.json (lemma of each root word, see `LemmaIndex`). Used by the lemma filter. */
+export function loadLemmaIndex(): Promise<LemmaIndex> {
+  return loadOnce('lemmas.json', fixtureLemmaIndex);
 }
