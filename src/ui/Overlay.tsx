@@ -5,6 +5,8 @@ import { About } from './About';
 import { SearchBox } from './SearchBox';
 import { RootPanel } from './RootPanel';
 import { HoverHint } from './HoverHint';
+import { TabBar } from '../tabs/TabBar';
+import { useTabSync } from '../tabs/useTabSync';
 
 /**
  * 2D UI over the full-screen 3D scene. The container lets clicks pass through
@@ -13,6 +15,7 @@ import { HoverHint } from './HoverHint';
 export function Overlay() {
   const galaxy = useGalaxyStore((s) => s.galaxy);
   const error = useLoadError((s) => s.error);
+  useTabSync();
   useHashSync();
 
   if (error) {
@@ -45,6 +48,7 @@ export function Overlay() {
     <div className="overlay">
       <About />
       <SearchBox />
+      <TabBar />
       <RootPanel />
       <HoverHint />
     </div>

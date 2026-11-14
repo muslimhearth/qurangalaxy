@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useGalaxyStore } from '../state/store';
 import type { Neighbor } from './helpers';
+import { useNewTabGesture } from '../tabs/useNewTabGesture';
 
 /** Number of connected roots shown before "Show all". */
 export const CONNECTED_PREVIEW = 12;
@@ -15,6 +16,7 @@ const fmt = (n: number) => n.toLocaleString('en');
 export function ConnectedRoots({ links }: { links: Neighbor[] }) {
   const select = useGalaxyStore((s) => s.select);
   const [all, setAll] = useState(false);
+  const newTab = useNewTabGesture();
   const shown = all ? links : links.slice(0, CONNECTED_PREVIEW);
 
   return (
@@ -27,7 +29,7 @@ export function ConnectedRoots({ links }: { links: Neighbor[] }) {
               type="button"
               className="chip chip-link"
               title={`${root.tr}: shares ${weight} verses`}
-              onClick={() => select(root.id)}
+              {...newTab(root.id, () => select(root.id))}
             >
               <span lang="ar" dir="rtl">
                 {root.ar}

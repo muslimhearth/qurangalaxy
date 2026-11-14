@@ -10,6 +10,7 @@ import { getWorkerService } from '../semantic/workerService';
 import { SearchSettings } from './SearchSettings';
 import { snippet } from './snippet';
 import { useVerseTexts } from './useVerseTexts';
+import { useNewTabGesture } from '../tabs/useNewTabGesture';
 
 /** Number of results in the list. */
 const LIMIT = 8;
@@ -25,6 +26,7 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
   const select = useGalaxyStore((s) => s.select);
   const weight = useGalaxyStore((s) => s.semanticWeight);
   const [active, setActive] = useState(0);
+  const newTab = useNewTabGesture();
 
   const semantic = useSemanticSearch(query, weight, semanticService);
   const exact = useMemo(() => (galaxy ? exactMatches(galaxy.roots, query) : []), [galaxy, query]);
@@ -100,10 +102,10 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
                 role="option"
                 aria-selected={i === active}
                 className="search-option"
+                {...newTab(root.id, () => choose(root.id))}
                 // Keep focus in the input while clicking.
                 onMouseDown={(e) => e.preventDefault()}
                 onMouseEnter={() => setActive(i)}
-                onClick={() => choose(root.id)}
               >
                 <span className="ar" lang="ar" dir="rtl">
                   {root.ar}

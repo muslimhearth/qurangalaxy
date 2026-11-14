@@ -5,6 +5,7 @@ import { useGalaxyStore } from '../state/store';
 import { useLoadError } from './loadError';
 import { resetLoadCache } from '../data/load';
 import { fixtureGalaxy } from '../data/fixture';
+import { resetTabs } from '../tabs/store';
 
 describe('Overlay', () => {
   beforeEach(() => {
@@ -12,6 +13,9 @@ describe('Overlay', () => {
     window.history.replaceState(null, '', '/?fixture');
     useGalaxyStore.setState(useGalaxyStore.getInitialState());
     useLoadError.setState({ error: null });
+    // Tabs are saved and restored; start every test with one empty tab.
+    localStorage.clear();
+    resetTabs();
   });
   afterEach(cleanup);
 
