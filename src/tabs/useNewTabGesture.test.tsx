@@ -74,6 +74,22 @@ describe('useNewTabGesture', () => {
     expect(tabs().tabs).toHaveLength(1);
   });
 
+  it('a verse target opens the verse in a new tab', () => {
+    cleanup();
+    function VerseLink() {
+      const newTab = useNewTabGesture();
+      return (
+        <button type="button" {...newTab({ verse: '2:255' }, onSelect)}>
+          verse
+        </button>
+      );
+    }
+    render(<VerseLink />);
+    fireEvent.click(screen.getByRole('button'), { ctrlKey: true });
+    expect(tabs().tabs.map((t) => t.openVerse)).toEqual([null, '2:255']);
+    expect(activeTab(tabs()).openVerse).toBeNull();
+  });
+
   it('a mouse press never starts a long-press', () => {
     vi.useFakeTimers();
     fireEvent.pointerDown(screen.getByRole('button'), { pointerType: 'mouse' });
