@@ -6,6 +6,13 @@ export function firstHitRank(ranked: readonly string[], expected: readonly strin
   return i < 0 ? null : i + 1;
 }
 
+/** Share of the `expected` items found in the first `k` of `ranked` (0 when nothing is expected). */
+export function recallAt(ranked: readonly string[], expected: readonly string[], k: number): number {
+  if (expected.length === 0) return 0;
+  const top = new Set(ranked.slice(0, k));
+  return expected.filter((e) => top.has(e)).length / expected.length;
+}
+
 /** Share of queries with a hit at rank 1, in the top 5, and the mean reciprocal rank. */
 export function summarize(ranks: readonly (number | null)[]): { hit1: number; hit5: number; mrr: number } {
   const n = ranks.length;
