@@ -21,8 +21,9 @@ async function longPress(page: Page, target: Locator) {
   const box = (await target.boundingBox())!;
   const at = { clientX: box.x + box.width / 2, clientY: box.y + box.height / 2, pointerType: 'touch', isPrimary: true, bubbles: true };
   await target.dispatchEvent('pointerdown', at);
-  // Hold well past LONG_PRESS_MS: software rendering can delay the timer.
-  await page.waitForTimeout(1500);
+  // Hold well past LONG_PRESS_MS: software rendering can delay the timer by over a second
+  // (the first paint of the verse list is one long task).
+  await page.waitForTimeout(2500);
   await target.dispatchEvent('pointerup', at);
 }
 
