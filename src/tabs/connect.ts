@@ -1,5 +1,5 @@
 import { useGalaxyStore, type GalaxyState } from '../state/store';
-import { activeTab, type TabView } from './model';
+import { activeTab, sameView, type TabView } from './model';
 import { useTabsStore } from './store';
 
 /** The tab view held in the shared store. */
@@ -8,6 +8,7 @@ const viewOf = (s: GalaxyState): TabView => ({
   query: s.query,
   searchMode: s.searchMode,
   openVerse: s.openVerse,
+  reader: s.reader,
 });
 
 /**
@@ -29,6 +30,7 @@ export function connectTabs(): () => void {
       g.setQuery(v.query);
       g.setSearchMode(v.searchMode);
       g.setOpenVerse(v.openVerse);
+      g.setReader(v.reader);
     } finally {
       applying = false;
     }
@@ -44,10 +46,7 @@ export function connectTabs(): () => void {
     }
     if (applying) return;
     const v = viewOf(s);
-    const p = viewOf(prev);
-    if (v.selectedId !== p.selectedId || v.query !== p.query || v.searchMode !== p.searchMode || v.openVerse !== p.openVerse) {
-      useTabsStore.getState().update(v);
-    }
+    if (!sameView(v, viewOf(prev))) useTabsStore.getState().update(v);
   });
 
   const offTabs = useTabsStore.subscribe((s, prev) => {

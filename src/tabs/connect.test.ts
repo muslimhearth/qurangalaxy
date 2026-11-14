@@ -25,6 +25,18 @@ describe('connectTabs', () => {
     expect(g()).toMatchObject({ selectedId: 2, query: 'nur', searchMode: 'verses', openVerse: '1:2' });
   });
 
+  it('records, restores and switches the reader place per tab', () => {
+    disconnect = connectTabs();
+    g().select(2);
+    g().setReader({ surah: 2, verse: 17 });
+    expect(activeTab(t()).reader).toEqual({ surah: 2, verse: 17 });
+    const first = t().activeId;
+    t().open({ selectedId: 4 });
+    expect(g().reader).toBeNull();
+    t().activate(first);
+    expect(g()).toMatchObject({ selectedId: 2, reader: { surah: 2, verse: 17 } });
+  });
+
   it('records store changes in the active tab', () => {
     disconnect = connectTabs();
     g().select(3);

@@ -64,7 +64,8 @@ export function TabBar() {
         {tabs.map((tab) => {
           const label = tabLabel(tab, galaxy);
           const active = tab.id === activeId;
-          const arabic = tab.selectedId !== null;
+          // A reader tab is labelled in Latin script ("Al-Baqara 2:17"), even with a root selected.
+          const arabic = tab.reader === null && tab.selectedId !== null;
           return (
             <div key={tab.id} className={`tab${active ? ' active' : ''}`}>
               <button

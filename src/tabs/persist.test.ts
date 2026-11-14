@@ -9,7 +9,7 @@ describe('tab persistence', () => {
   });
 
   it('round-trips tabs through localStorage', () => {
-    const t = addTab(initialTabs(), { selectedId: 2, query: 'nur', openVerse: '2:255', searchMode: 'verses' });
+    const t = addTab(initialTabs(), { selectedId: 2, query: 'nur', openVerse: '2:255', searchMode: 'verses', reader: { surah: 2, verse: 17 } });
     saveTabs(t);
     expect(loadTabs()).toEqual(t);
   });
@@ -29,14 +29,16 @@ describe('tab persistence', () => {
         tabs: [
           { id: 'a', selectedId: 1, query: '', searchMode: 'roots', openVerse: null },
           { id: 'b', selectedId: 'x', query: 3 },
-          { id: 'c', selectedId: null, query: 'q', searchMode: 'bogus', openVerse: 'bad' },
+          { id: 'c', selectedId: null, query: 'q', searchMode: 'bogus', openVerse: 'bad', reader: { surah: 115, verse: 1 } },
         ],
         activeId: 'gone',
       }),
     );
     const t = loadTabs()!;
     expect(t.tabs.map((x) => x.id)).toEqual(['a', 'c']);
-    expect(t.tabs[1]).toMatchObject({ searchMode: 'roots', openVerse: null });
+    expect(t.tabs[1]).toMatchObject({ searchMode: 'roots', openVerse: null, reader: null });
+    // Tabs saved before the reader existed load with no reader.
+    expect(t.tabs[0]!.reader).toBeNull();
     expect(t.activeId).toBe('a');
   });
 

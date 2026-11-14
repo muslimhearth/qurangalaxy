@@ -1,5 +1,6 @@
 import type { Galaxy, VerseKey } from '../data/types';
-import type { SearchMode } from '../state/store';
+import type { ReaderPlace, SearchMode } from '../state/store';
+import { readerLabel, samePlace } from '../reader/surahs';
 
 /** What one tab remembers: the selection and the search state of the shared store. */
 export interface TabView {
@@ -7,6 +8,8 @@ export interface TabView {
   query: string;
   searchMode: SearchMode;
   openVerse: VerseKey | null;
+  /** Surah open in the reader, or null. */
+  reader: ReaderPlace | null;
 }
 
 /** One in-app tab: a view plus a stable id. */
@@ -23,9 +26,10 @@ export interface Tabs {
 }
 
 /** A view with nothing selected and no search. */
-export const EMPTY_VIEW: TabView = { selectedId: null, query: '', searchMode: 'roots', openVerse: null };
+export const EMPTY_VIEW: TabView = { selectedId: null, query: '', searchMode: 'roots', openVerse: null, reader: null };
 
-const KEYS: (keyof TabView)[] = ['selectedId', 'query', 'searchMode', 'openVerse'];
+/** Fields compared with `===`; the reader place is compared by value. */
+const KEYS = ['selectedId', 'query', 'searchMode', 'openVerse'] as const;
 
 let counter = 0;
 /** New tab id, unique within the page and across reloads (time + counter). */
@@ -33,12 +37,12 @@ const newId = () => `t${Date.now().toString(36)}${(counter++).toString(36)}`;
 
 /** True when two views hold the same values. */
 export function sameView(a: TabView, b: TabView): boolean {
-  return KEYS.every((k) => a[k] === b[k]);
+  return KEYS.every((k) => a[k] === b[k]) && samePlace(a.reader, b.reader);
 }
 
-/** True when a view shows nothing: no root, no verse, no search text. */
+/** True when a view shows nothing: no root, no verse, no reader, no search text. */
 export function isEmptyView(v: TabView): boolean {
-  return v.selectedId === null && v.openVerse === null && v.query.trim() === '';
+  return v.selectedId === null && v.openVerse === null && v.reader === null && v.query.trim() === '';
 }
 
 /** One empty, active tab. */
@@ -92,8 +96,12 @@ export function updateActive(t: Tabs, view: Partial<TabView>): Tabs {
   return { ...t, tabs: t.tabs.map((x) => (x.id === cur.id ? next : x)) };
 }
 
-/** Text on a tab: the root's Arabic, else the open verse, else the search text, else "New tab". */
+/**
+ * Text on a tab: the reader place ("Al-Baqara 2:17"), else the root's Arabic, else the open verse,
+ * else the search text, else "New tab". The reader comes first because it covers the panel.
+ */
 export function tabLabel(v: TabView, galaxy: Galaxy | null): string {
+  if (v.reader) return readerLabel(v.reader);
   if (v.selectedId !== null) return galaxy?.roots[v.selectedId]?.ar ?? '…';
   if (v.openVerse) return v.openVerse;
   const q = v.query.trim();

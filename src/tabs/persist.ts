@@ -1,10 +1,20 @@
 import type { VerseKey } from '../data/types';
+import type { ReaderPlace } from '../state/store';
+import { isPlace } from '../reader/surahs';
 import type { Tab, Tabs } from './model';
 
 /** localStorage key for the open tabs. */
 export const TABS_KEY = 'qrg.tabs.v1';
 
 const isVerseKey = (v: unknown): v is VerseKey => typeof v === 'string' && /^\d+:\d+$/.test(v);
+
+/** A stored reader place, or null when it is missing or names no verse. */
+function readPlace(raw: unknown): ReaderPlace | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const { surah, verse } = raw as Record<string, unknown>;
+  const place = { surah: Number(surah), verse: Number(verse) };
+  return isPlace(place) ? place : null;
+}
 
 /** Checks one stored tab; repairs soft fields, rejects tabs with a broken id, root or query. */
 function readTab(raw: unknown): Tab | null {
@@ -18,6 +28,7 @@ function readTab(raw: unknown): Tab | null {
     query: r.query,
     searchMode: r.searchMode === 'verses' ? 'verses' : 'roots',
     openVerse: isVerseKey(r.openVerse) ? r.openVerse : null,
+    reader: readPlace(r.reader),
   };
   if (typeof r.opener === 'string') tab.opener = r.opener;
   return tab;

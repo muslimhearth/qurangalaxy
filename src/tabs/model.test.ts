@@ -86,6 +86,11 @@ describe('tab model', () => {
   it('compares views field by field', () => {
     expect(sameView(EMPTY_VIEW, { ...EMPTY_VIEW })).toBe(true);
     expect(sameView(EMPTY_VIEW, { ...EMPTY_VIEW, openVerse: '1:1' })).toBe(false);
+    // Reader places compare by value.
+    const a = { ...EMPTY_VIEW, reader: { surah: 2, verse: 17 } };
+    expect(sameView(a, { ...EMPTY_VIEW, reader: { surah: 2, verse: 17 } })).toBe(true);
+    expect(sameView(a, { ...EMPTY_VIEW, reader: { surah: 2, verse: 18 } })).toBe(false);
+    expect(sameView(a, EMPTY_VIEW)).toBe(false);
   });
 
   it('labels a tab by root, then verse, then query, else "New tab"', () => {
@@ -94,6 +99,9 @@ describe('tab model', () => {
     expect(tabLabel({ ...EMPTY_VIEW, openVerse: '2:255' }, fixtureGalaxy)).toBe('2:255');
     expect(tabLabel({ ...EMPTY_VIEW, query: ' light ' }, fixtureGalaxy)).toBe('“light”');
     expect(tabLabel(EMPTY_VIEW, fixtureGalaxy)).toBe('New tab');
+    // The reader covers the panel, so it names the tab.
+    expect(tabLabel({ ...EMPTY_VIEW, selectedId: 0, reader: { surah: 2, verse: 17 } }, fixtureGalaxy)).toBe('Al-Baqara 2:17');
+    expect(isEmptyView({ ...EMPTY_VIEW, reader: { surah: 1, verse: 1 } })).toBe(false);
     // Before the galaxy loads, or for a stale id, a root tab still gets a label.
     expect(tabLabel({ ...EMPTY_VIEW, selectedId: 0 }, null)).toBe('…');
   });

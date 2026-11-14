@@ -38,6 +38,13 @@ describe('TabBar', () => {
     expect(screen.getAllByRole('tab').map((t) => t.textContent)).toEqual(['سمو', '2:255', '“light”', 'New tab']);
   });
 
+  it('labels a reader tab with the surah name and verse, in Latin script', () => {
+    tabs().update({ selectedId: 2, reader: { surah: 2, verse: 17 } });
+    render(<TabBar />);
+    const tab = screen.getByRole('tab', { name: 'Al-Baqara 2:17' });
+    expect(tab.querySelector('span')).not.toHaveAttribute('lang');
+  });
+
   it('switches tabs on click', () => {
     tabs().update({ selectedId: 0 });
     tabs().open({ selectedId: 1 });
