@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { loadOccurrences } from '../data/load';
+import { BookmarkButton } from '../bookmarks/BookmarkButton';
 import type { Occurrences, VerseKey } from '../data/types';
 import { useGalaxyStore } from '../state/store';
 import { verseWords } from '../ui/helpers';
@@ -110,6 +111,15 @@ export function SurahReader() {
 
   const ready = verses !== null;
   const verse = place?.verse ?? 0;
+  const currentKey: VerseKey = `${surah}:${verse}`;
+  // Previous/next surah opens verse 1 without marking it: only a verse the user opened is marked.
+  // Any other place (a verse key, the URL, closing) clears this again.
+  const [unmarked, setUnmarked] = useState<string | null>(null);
+  if (unmarked !== null && (!place || unmarked !== currentKey)) setUnmarked(null);
+  const goToSurah = (n: number) => {
+    setUnmarked(`${n}:1`);
+    setReader({ surah: n, verse: 1 });
+  };
   const win = useVerseWindow(keys.length, verse, `${surah}:${verse}`, ready);
 
   // Verses added above keep the reading position: move the scroll by how far the first verse
@@ -141,7 +151,6 @@ export function SurahReader() {
   const prev = surahAt(surah - 1);
   const next = surahAt(surah + 1);
   const collapsed = collapsedSurah === surah;
-  const currentKey: VerseKey = `${surah}:${verse}`;
 
   return (
     // Same frame as the root panel (side panel / bottom sheet), so it shares its styles.
@@ -183,7 +192,7 @@ export function SurahReader() {
           <button
             type="button"
             aria-label={`Previous surah: ${surah - 1} ${prev.tr}`}
-            onClick={() => setReader({ surah: surah - 1, verse: 1 })}
+            onClick={() => goToSurah(surah - 1)}
           >
             <Chevron dir="left" /> {surah - 1} {prev.tr}
           </button>
@@ -193,7 +202,7 @@ export function SurahReader() {
             type="button"
             className="next"
             aria-label={`Next surah: ${surah + 1} ${next.tr}`}
-            onClick={() => setReader({ surah: surah + 1, verse: 1 })}
+            onClick={() => goToSurah(surah + 1)}
           >
             {surah + 1} {next.tr} <Chevron dir="right" />
           </button>
@@ -206,7 +215,7 @@ export function SurahReader() {
             {keys.slice(win.start, win.end).map((key) => {
               const v = verses[key];
               if (!v) return null;
-              const current = key === currentKey;
+              const current = key === currentKey && unmarked !== key;
               return (
                 <li
                   key={key}
@@ -216,6 +225,7 @@ export function SurahReader() {
                 >
                   <div className="verse-head">
                     <span className="verse-key">{key}</span>
+                    <BookmarkButton target={{ verse: key }} className="verse-bookmark" />
                   </div>
                   <p className="verse-ar" dir="rtl" lang="ar">
                     {verseWords(v.ar, gold.get(key) ?? []).map((word, i) => (

@@ -2,7 +2,9 @@ import { useEffect, useRef, useState, type KeyboardEvent } from 'react';
 import { useSearchHistory } from '../history/history';
 import { useGalaxyStore } from '../state/store';
 import type { SemanticStatus } from '../semantic/useSemanticSearch';
+import { ThemeSwitch } from '../theme/ThemeSwitch';
 import { MatchSwitch, matchMode } from './MatchSwitch';
+import { useMeanings } from './meanings';
 
 const MODE_NAMES = { exact: 'Exact', hybrid: 'Hybrid', meaning: 'Meaning' } as const;
 
@@ -17,7 +19,8 @@ interface Props {
 
 /**
  * Gear button at the right end of the search bar. It opens a popover with the
- * "Exact | Hybrid | Meaning" switch, the "Save search history" switch and "Clear history".
+ * "Exact | Hybrid | Meaning" switch, the "Save search history" switch, "Clear history",
+ * the "Show meanings" switch and the "System | Light | Dark" theme switch.
  * Escape or a click outside closes it.
  */
 export function SearchSettings({ status, progress, error, weight: ownWeight, onWeight }: Props) {
@@ -27,6 +30,8 @@ export function SearchSettings({ status, progress, error, weight: ownWeight, onW
   const setSaving = useSearchHistory((s) => s.setSaving);
   const entries = useSearchHistory((s) => s.entries.length);
   const clear = useSearchHistory((s) => s.clear);
+  const showMeanings = useMeanings((s) => s.show);
+  const setShowMeanings = useMeanings((s) => s.setShow);
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const button = useRef<HTMLButtonElement>(null);
@@ -105,7 +110,23 @@ export function SearchSettings({ status, progress, error, weight: ownWeight, onW
               </button>
             </div>
           )}
-          {/* Slot: a "Display" group with the "Show meanings" switch joins here (another goal). */}
+          <p className="setting-head">Display</p>
+          <label className="setting-row">
+            <span className="setting-label">
+              Show meanings
+              <small>English text under every verse</small>
+            </span>
+            <input
+              type="checkbox"
+              role="switch"
+              className="switch"
+              aria-label="Show meanings"
+              checked={showMeanings}
+              aria-checked={showMeanings}
+              onChange={(e) => setShowMeanings(e.target.checked)}
+            />
+          </label>
+          <ThemeSwitch />
         </div>
       )}
     </div>

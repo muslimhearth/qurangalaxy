@@ -3,12 +3,16 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { SearchSettings } from './SearchSettings';
 import { useGalaxyStore } from '../state/store';
 import { HISTORY_KEY, useSearchHistory } from '../history/history';
+import { MEANINGS_KEY, useMeanings } from './meanings';
+import { THEME_KEY, useTheme } from '../theme/theme';
 
 describe('SearchSettings', () => {
   beforeEach(() => {
     localStorage.clear();
     useGalaxyStore.setState(useGalaxyStore.getInitialState());
     useSearchHistory.setState({ saving: true, entries: [] });
+    useMeanings.setState({ show: true });
+    useTheme.setState({ pref: 'system' });
   });
   afterEach(cleanup);
 
@@ -106,5 +110,30 @@ describe('SearchSettings', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Clear history' }));
     expect(useSearchHistory.getState()).toMatchObject({ saving: true, entries: [] });
     expect(screen.queryByRole('button', { name: 'Clear history' })).toBeNull();
+  });
+
+  it('turns "Show meanings" off and on', () => {
+    render(<SearchSettings status="off" progress={0} />);
+    fireEvent.click(button());
+    const toggle = screen.getByRole('switch', { name: 'Show meanings' });
+    expect(toggle).toBeChecked();
+    fireEvent.click(toggle);
+    expect(useMeanings.getState().show).toBe(false);
+    expect(localStorage.getItem(MEANINGS_KEY)).toBe('false');
+    fireEvent.click(toggle);
+    expect(useMeanings.getState().show).toBe(true);
+  });
+
+  it('has a "System | Light | Dark" theme switch, System by default', () => {
+    render(<SearchSettings status="off" progress={0} />);
+    fireEvent.click(button());
+    const group = screen.getByRole('radiogroup', { name: 'Theme' });
+    expect(group).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'System' })).toHaveAttribute('aria-checked', 'true');
+    fireEvent.click(screen.getByRole('radio', { name: 'Light' }));
+    expect(useTheme.getState().pref).toBe('light');
+    expect(localStorage.getItem(THEME_KEY)).toBe('light');
+    expect(screen.getByRole('radio', { name: 'Light' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('radio', { name: 'System' })).toHaveAttribute('aria-checked', 'false');
   });
 });
