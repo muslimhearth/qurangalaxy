@@ -721,9 +721,17 @@ input.switch:checked::before { left: 19px; background: var(--switch-knob-on); }
   width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--border); background: transparent; cursor: pointer;
 }
 .reader-back:hover { border-color: var(--accent); color: var(--accent); }
-.reader-title h2 { margin: 0; display: flex; align-items: baseline; gap: 10px; font-weight: 400; }
-.reader-number { font-size: 1.1rem; color: var(--muted); font-variant-numeric: tabular-nums; }
-.reader-ar { font-size: 1.9rem; line-height: 1.5; color: var(--accent); }
+/* Header: number badge and Arabic name centered on one line; the Arabic gets a fixed line box
+   (the Quran font's own is very tall) with room for the Naskh tails, so it never crowds the line below. */
+.reader-title { min-width: 0; }
+.reader-title h2 { margin: 0; display: flex; align-items: center; gap: 10px; font-weight: 400; line-height: 1.2; }
+.reader-number {
+  flex: none; display: inline-flex; align-items: center; justify-content: center;
+  min-width: 2rem; height: 2rem; padding: 0 6px; border-radius: 999px; border: 1px solid var(--border);
+  font-size: 0.85rem; color: var(--muted); font-variant-numeric: tabular-nums;
+}
+.reader-ar { display: block; font-size: 1.9rem; line-height: 1.35; padding-top: 0.2em; color: var(--accent); }
+.reader-title .root-stats { margin-top: 2px; line-height: 1.35; }
 .reader-nav { display: flex; justify-content: space-between; gap: 8px; padding: 6px 18px; border-bottom: 1px solid var(--border); }
 .reader-nav[hidden] { display: none; }
 .reader-nav button {
