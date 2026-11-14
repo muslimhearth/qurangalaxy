@@ -166,12 +166,14 @@ a { color: var(--accent); }
 
 /* Search */
 /*
- * Desktop top row: title | search bar (up to 680 px, centered on wide screens) | tab pills.
- * The bar keeps 312 px on its right for the tabs; the root panel starts below the row.
+ * Desktop top row: title | search bar (up to 680 px, centered on wide screens) | tab rail.
+ * The bar keeps 450 px on its right for the rail (4-5 pills at 1280 px). In use, and where the
+ * tab counter replaces the rail, it takes its full width. The root panel starts below the row.
  */
 .overlay {
   --search-left: max(282px, calc(50vw - 340px));
-  --search-w: clamp(360px, calc(100vw - var(--search-left) - 312px), 680px);
+  --search-w-full: min(680px, calc(100vw - var(--search-left) - var(--gap)));
+  --search-w: clamp(360px, calc(100vw - var(--search-left) - 450px), 680px);
 }
 .search {
   position: absolute;
@@ -458,70 +460,181 @@ input.switch:checked::before { left: 19px; background: var(--switch-knob-on); }
 .recenter [lang='ar'] { font-size: 1.2rem; line-height: 1; }
 .recenter:hover { border-color: var(--accent); }
 
-/* In-app tabs: small pills right of the search bar (phones: one row under it). Scrolls sideways when full. */
-.tab-bar {
+/*
+ * In-app tabs (G23). Desktop (900 px and wider, with a mouse): slim pills in one glass rail right
+ * of the search bar. Phones and narrow windows: a tab counter in the search bar (see .tab-counter).
+ */
+.tab-rail {
   position: absolute;
-  /* Below the search popover (z-index 3), which may cover it while typing. */
+  /* Below the search bar (z-index 3), which covers the rail while it is expanded. */
   z-index: 2;
   top: calc(var(--gap) + 7px);
-  left: calc(var(--search-left) + var(--search-w) + 16px);
-  right: var(--gap);
-  display: flex;
-  align-items: stretch;
-  gap: 6px;
+  left: calc(var(--search-left) + var(--search-w) + 14px);
+  max-width: calc(100vw - var(--search-left) - var(--search-w) - 14px - var(--gap));
   height: 40px;
-  /* Only the pills catch the pointer; the gaps between them belong to the galaxy. */
-  pointer-events: none;
-  background: none;
-  border: none;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 4px;
+  border-radius: 12px;
   box-shadow: none;
-  backdrop-filter: none;
-  -webkit-backdrop-filter: none;
+  transition: opacity 0.15s;
 }
-.tab-list {
-  flex: 0 1 auto;
-  min-width: 0;
-  display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  scrollbar-width: none;
+.tab-strip {
+  flex: 1 1 auto; min-width: 0; height: 100%;
+  /* Positioned, so the pills' offsetLeft is measured from the strip. */
+  position: relative;
+  display: flex; align-items: center; gap: 2px;
+  overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none;
 }
-.tab-list::-webkit-scrollbar { display: none; }
-.tab, .tab-new {
-  pointer-events: auto;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--panel);
-  backdrop-filter: blur(14px) saturate(140%);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
+.tab-strip::-webkit-scrollbar { display: none; }
+/* Faded edges show that pills are hidden on that side. */
+.tab-strip.fade-start { -webkit-mask-image: linear-gradient(to right, transparent 0, #000 26px); mask-image: linear-gradient(to right, transparent 0, #000 26px); }
+.tab-strip.fade-end { -webkit-mask-image: linear-gradient(to left, transparent 0, #000 26px); mask-image: linear-gradient(to left, transparent 0, #000 26px); }
+.tab-strip.fade-start.fade-end {
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 26px, #000 calc(100% - 26px), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 26px, #000 calc(100% - 26px), transparent 100%);
 }
-.tab {
-  flex: none;
-  display: flex;
-  align-items: stretch;
-  /* Room for a reader label such as "Al-Baqara 2:255". */
-  max-width: 11rem;
-  color: var(--muted);
+.tab-pill {
+  flex: none; display: flex; align-items: center; height: 30px; max-width: 9rem; box-sizing: border-box;
+  border-radius: 8px; border: 1px solid transparent; color: var(--muted); font-size: 0.84rem;
   animation: tab-in 0.25s ease-out;
 }
-.tab.active { color: var(--fg); background: var(--tab-active-bg); border-color: var(--tab-active-border); }
-.tab-main, .tab-close, .tab-new { background: none; border: none; min-height: 0; height: 100%; }
+.tab-pill.on { color: var(--accent); background: var(--accent-soft); border-color: var(--tab-active-border); }
+.tab-main, .tab-close { background: none; border: none; padding: 0; color: inherit; }
 .tab-main {
-  display: flex; align-items: center;
-  min-width: 40px; padding: 0 2px 0 12px;
-  overflow: hidden; white-space: nowrap; color: inherit;
+  display: flex; align-items: center; height: 100%; min-width: 0; padding: 0 10px;
+  white-space: nowrap; overflow: hidden; border-radius: 8px;
 }
 .tab-main > span { overflow: hidden; text-overflow: ellipsis; }
 /* Naskh, not Amiri Quran: Amiri's tall line box pushes short labels below the middle. */
-.tab-main [lang='ar'] { font-family: 'Noto Naskh Arabic', var(--font-ar); font-size: 1.1rem; line-height: 1.2; }
-.tab.active [lang='ar'] { color: var(--accent); }
-.tab-close { width: 30px; color: var(--muted); font-size: 1.05rem; }
-.tab-close:hover, .tab-new:hover, .tab-main:hover { color: var(--fg); }
-.tab-new { flex: none; width: 40px; font-size: 1.3rem; color: var(--muted); background: var(--panel); border: 1px solid var(--border); }
-.tab-main:focus-visible, .tab-new:focus-visible { outline-offset: -2px; }
+.tab-main [lang='ar'] { font-family: 'Noto Naskh Arabic', var(--font-ar); font-size: 1.05rem; line-height: 1.2; }
+/* × only on the active pill, and on others under the mouse or with the focus. */
+.tab-close {
+  flex: none; display: none; place-items: center; width: 22px; height: 22px; margin: 0 4px 0 -6px;
+  border-radius: 6px; font-size: 0.95rem; color: var(--muted);
+}
+.tab-pill.on .tab-close, .tab-pill:hover .tab-close, .tab-pill:focus-within .tab-close { display: grid; }
+.tab-pill:not(.on):hover, .tab-pill:not(.on):focus-within { color: var(--fg); background: var(--hover); }
+.tab-close:hover { color: var(--fg); background: var(--hover); }
+.tab-main:focus-visible { outline-offset: -2px; }
+.tab-sep { flex: none; width: 1px; height: 20px; margin: 0 3px; background: var(--border); }
+.tab-more, .tab-new {
+  flex: none; display: flex; align-items: center; justify-content: center; height: 30px;
+  border: none; border-radius: 8px; background: none; color: var(--muted); padding: 0;
+}
+.tab-more { padding: 0 8px; font-size: 0.8rem; font-variant-numeric: tabular-nums; }
+.tab-more i { font-style: normal; font-size: 1rem; letter-spacing: 1px; margin-right: 4px; }
+.tab-more[aria-expanded='true'] { color: var(--accent); background: var(--accent-soft); }
+.tab-new { width: 30px; font-size: 1.2rem; }
+.tab-more:hover, .tab-new:hover { color: var(--fg); background: var(--hover); }
 @keyframes tab-in { from { opacity: 0; transform: translateY(-4px); } }
-@media (prefers-reduced-motion: reduce) { .tab { animation: none; } }
+
+/* Tab counter in the search tools: a rounded square with the number of tabs. */
+.tab-counter span {
+  display: grid; place-items: center; min-width: 19px; height: 19px; padding: 0 3px; box-sizing: border-box;
+  border: 1.7px solid currentColor; border-radius: 6px;
+  font-size: 0.72rem; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums;
+}
+/* A new tab (long-press): the number pulses once. */
+.tab-counter span.pulse { animation: tab-pulse 0.7s ease-out; }
+@keyframes tab-pulse {
+  0% { transform: scale(1); }
+  35% { transform: scale(1.35); color: var(--accent); background: var(--accent-soft); }
+  100% { transform: scale(1); }
+}
+@keyframes tab-flash { 0%, 50% { color: var(--accent); background: var(--accent-soft); } }
+
+/* Tab switcher: phone bottom sheet and desktop popover share the rows. */
+.tab-scrim { position: fixed; inset: 0; z-index: 40; background: rgba(0, 0, 0, 0.42); }
+.tab-switcher {
+  position: fixed; z-index: 41; display: flex; flex-direction: column;
+  background: var(--panel-solid); border: 1px solid var(--border); box-shadow: 0 -10px 40px var(--shadow);
+}
+.tab-switcher.sheet {
+  left: 0; right: 0; bottom: 0; max-height: 64vh;
+  border-width: 1px 0 0; border-radius: var(--radius) var(--radius) 0 0;
+}
+.tab-switcher.popover {
+  top: var(--pop-top); right: var(--pop-right); width: 320px; max-height: min(60vh, 480px);
+  background: var(--pop-bg); border-radius: var(--radius); box-shadow: 0 12px 40px var(--shadow);
+}
+.tab-grab { width: 36px; height: 4px; border-radius: 2px; background: var(--grab); margin: 8px auto 2px; }
+.tab-switcher-head {
+  flex: none; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 4px 8px 8px 20px; border-bottom: 1px solid var(--border);
+}
+.tab-switcher-head h2 {
+  margin: 0; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted);
+}
+.tab-switcher-head h2 b { color: var(--fg); }
+.tab-switcher-actions { display: flex; align-items: center; gap: 4px; }
+.tab-switcher-new {
+  display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 14px;
+  border-radius: 10px; border: 1px solid var(--tab-active-border); color: var(--accent); background: var(--accent-soft);
+  font-size: 0.9rem; font-weight: 500;
+}
+.tab-switcher-new i { font-style: normal; font-size: 1.2rem; line-height: 1; }
+.tab-switcher-close, .tab-row-close {
+  flex: none; display: grid; place-items: center; width: 44px; height: 44px; padding: 0;
+  border: none; border-radius: 10px; background: none; color: var(--muted); font-size: 1.3rem;
+}
+.tab-rows { list-style: none; margin: 0; padding: 4px 8px 8px; overflow-y: auto; overscroll-behavior: contain; }
+.tab-row { position: relative; display: flex; align-items: center; border-radius: 12px; }
+.tab-row + .tab-row { margin-top: 2px; }
+.tab-row.on { background: var(--accent-soft); }
+/* Gold bar on the active row. */
+.tab-row.on::before {
+  content: ''; position: absolute; left: 0; top: 12px; bottom: 12px; width: 3px; border-radius: 2px; background: var(--accent);
+}
+.tab-row-main {
+  flex: 1; min-width: 0; min-height: 58px; display: flex; align-items: center; gap: 12px;
+  padding: 0 4px 0 12px; border: none; border-radius: 12px; background: none; color: inherit; text-align: left;
+}
+.tab-kind {
+  flex: none; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 10px;
+  color: var(--muted); background: var(--hover);
+}
+.tab-row.on .tab-kind, .tab-row.on .tab-row-label { color: var(--accent); }
+.tab-row-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.tab-row-label { color: var(--fg); font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tab-row-label[lang='ar'] { font-family: 'Noto Naskh Arabic', var(--font-ar); font-size: 1.25rem; line-height: 1.35; text-align: left; }
+.tab-row-caption { font-size: 0.78rem; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tab-row-caption b { font-weight: 600; letter-spacing: 0.02em; }
+.tab-row-main:focus-visible, .tab-row-close:focus-visible { outline-offset: -2px; }
+@media (hover: hover) {
+  .tab-row:not(.on):hover { background: var(--hover); }
+  .tab-row-close:hover, .tab-switcher-close:hover { color: var(--fg); background: var(--hover); }
+}
+/* Desktop popover: same rows, compact. */
+.tab-switcher.popover .tab-switcher-head { padding: 6px 6px 6px 16px; }
+.tab-switcher.popover .tab-switcher-new { height: 32px; padding: 0 10px; font-size: 0.82rem; }
+.tab-switcher.popover .tab-rows { padding: 4px 6px 6px; }
+.tab-switcher.popover .tab-row-main { min-height: 46px; gap: 10px; padding-left: 10px; }
+.tab-switcher.popover .tab-kind { width: 28px; height: 28px; border-radius: 8px; }
+.tab-switcher.popover .tab-row-label { font-size: 0.9rem; }
+.tab-switcher.popover .tab-row-label[lang='ar'] { font-size: 1.1rem; }
+.tab-switcher.popover .tab-row-close { width: 32px; height: 32px; font-size: 1.05rem; }
+
+/* Desktop: the search bar takes its full width while in use; the tab rail steps aside. */
+@media (min-width: 900px) and (pointer: fine) {
+  .search { transition: width 0.18s ease-out; }
+  /* "in-use": focused by the user (the automatic focus on load keeps the rail in view). */
+  .search.in-use, .search:has(.search-results, .search-history) { width: var(--search-w-full); }
+  .overlay:has(.search.in-use, .search-results, .search-history) .tab-rail { visibility: hidden; opacity: 0; }
+}
+/* Phones and narrow windows: no rail, so the bar takes the width; while typing, the input gets the room. */
+@media (max-width: 899px), (pointer: coarse) {
+  .overlay { --search-w: var(--search-w-full); }
+  .search:is(.in-use, :has(.search-results, .search-history)) :is(.tab-counter, .bookmarks) { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tab-pill { animation: none; }
+  .search { transition: none; }
+  /* No movement: the new number only lights up. */
+  .tab-counter span.pulse { animation: tab-flash 0.9s ease-out; }
+}
 /* Root links open in a new tab on long-press: no text selection or system callout then. */
 .chip-link, .search-option { -webkit-touch-callout: none; user-select: none; }
 
@@ -558,12 +671,6 @@ input.switch:checked::before { left: 19px; background: var(--switch-knob-on); }
   /* Just above the bottom sheet's top edge; it moves with the sheet (hidden when maximized). */
   .recenter { bottom: calc(100% + 10px); right: var(--gap); }
   .hover-hint { bottom: auto; top: 72px; }
-  /* One row of pills under the search bar; 44 px tap targets. */
-  .tab-bar { top: 66px; left: var(--gap); right: var(--gap); height: 44px; }
-  .tab-new { width: 44px; }
-  /* With the tab bar shown, the maximized sheet and the hint start below it. */
-  .overlay:has(.tab-bar) .root-panel.max { top: 118px; }
-  .overlay:has(.tab-bar) .hover-hint { top: 122px; }
 }
 
 /* A verse opened from elsewhere (e.g. a verse search result) flashes once in the verse list. */
@@ -761,7 +868,6 @@ input.switch:checked::before { left: 19px; background: var(--switch-knob-on); }
 @media (max-width: 720px) {
   /* Phones: reading needs room, so the reader sheet opens tall (below the search field). */
   .reader-panel { max-height: none; top: 74px; }
-  .overlay:has(.tab-bar) .reader-panel { top: 116px; }
-  .reader-panel.collapsed, .overlay:has(.tab-bar) .reader-panel.collapsed { top: auto; }
+  .reader-panel.collapsed { top: auto; }
   .reader-ar { font-size: 1.5rem; }
 }

@@ -13,6 +13,7 @@ import { getWorkerService } from '../semantic/workerService';
 import { parseVerseQuery } from '../verses/verseKey';
 import { useVerseWeight } from '../verses/verseWeight';
 import { BookmarksButton } from '../bookmarks/BookmarksButton';
+import { TabCounter } from '../tabs/TabCounter';
 import { HistoryList } from './HistoryList';
 import { ModeSwitch } from './ModeSwitch';
 import { SearchSettings } from './SearchSettings';
@@ -75,6 +76,9 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
   const [showAllFor, setShowAllFor] = useState<string | null>(null);
   const input = useRef<HTMLInputElement>(null);
   const autoFocused = useRef(false);
+  // True while the user works in the field (not after the automatic focus on load). Desktop CSS
+  // widens the bar then and hides the tab rail; phones hide the tab counter and bookmarks star.
+  const [inUse, setInUse] = useState(false);
 
   // Desktop: focus the field on load, so the user can type at once.
   useEffect(() => {
@@ -321,6 +325,7 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
   // Hide the history once focus leaves the field, unless it moves to a history button.
   const onBlur = (e: FocusEvent<HTMLDivElement>) => {
     const next = e.relatedTarget as HTMLElement | null;
+    if (e.target === input.current) setInUse(false);
     if (next !== input.current && !next?.closest?.('.search-history')) setHistoryOpen(false);
   };
 
@@ -335,7 +340,7 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
       };
 
   return (
-    <div className="search panel" onBlur={onBlur}>
+    <div className={`search panel${inUse ? ' in-use' : ''}`} onBlur={onBlur}>
       <label htmlFor="root-search" className="sr-only">
         {rootsOn ? 'Search roots' : 'Search verses'}
       </label>
@@ -368,6 +373,7 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
             ownQuery.current = e.target.value;
             setQuery(e.target.value);
             setHistoryOpen(true);
+            setInUse(true);
             reopen();
           }}
           onFocus={() => {
@@ -376,10 +382,14 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
               autoFocused.current = false;
               return;
             }
+            setInUse(true);
             setHistoryOpen(true);
             setListOpen(true);
           }}
-          onPointerDown={() => setHistoryOpen(true)}
+          onPointerDown={() => {
+            setInUse(true);
+            setHistoryOpen(true);
+          }}
           onKeyDown={onKeyDown}
         />
         {count && (
@@ -395,6 +405,7 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
           }}
         />
         <div className="search-tools">
+          <TabCounter />
           <BookmarksButton />
           <SearchSettings {...settings} />
         </div>

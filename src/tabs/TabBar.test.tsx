@@ -1,5 +1,5 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { TabBar } from './TabBar';
 import { resetTabs, useTabsStore } from './store';
 import { useGalaxyStore } from '../state/store';
@@ -15,6 +15,7 @@ describe('TabBar', () => {
   afterEach(() => {
     cleanup();
     localStorage.clear();
+    vi.unstubAllGlobals();
   });
 
   it('stays hidden while the only tab is empty (nothing to keep)', () => {
@@ -114,5 +115,50 @@ describe('TabBar', () => {
     render(<TabBar />);
     act(() => void tabs().open({ selectedId: 3 }, false));
     expect(screen.getAllByRole('tab')).toHaveLength(2);
+  });
+
+  it('is not shown on phones and narrow windows (the counter takes over)', () => {
+    vi.stubGlobal('matchMedia', () => ({ matches: false, addEventListener() {}, removeEventListener() {} }));
+    tabs().update({ selectedId: 0 });
+    render(<TabBar />);
+    expect(screen.queryByRole('tablist')).toBeNull();
+  });
+
+  it('shows "⋯ N" only when pills are hidden; it opens the switcher popover', () => {
+    tabs().update({ selectedId: 0 });
+    tabs().open({ selectedId: 1 });
+    tabs().open({ selectedId: 2 });
+    render(<TabBar />);
+    expect(screen.queryByRole('button', { name: /All tabs/ })).toBeNull();
+    // jsdom has no layout: give the strip a content wider than its box, then scroll.
+    const strip = screen.getByRole('tablist');
+    Object.defineProperty(strip, 'scrollWidth', { configurable: true, value: 600 });
+    Object.defineProperty(strip, 'clientWidth', { configurable: true, value: 300 });
+    fireEvent.scroll(strip);
+    expect(strip).toHaveClass('fade-end');
+    const more = screen.getByRole('button', { name: 'All tabs (3)' });
+    fireEvent.click(more);
+    const pop = screen.getByRole('dialog', { name: 'All tabs' });
+    fireEvent.click(within(pop).getByRole('button', { name: 'سمو' }));
+    expect(screen.getByRole('tab', { name: 'سمو' })).toHaveAttribute('aria-selected', 'true');
+    expect(screen.queryByRole('dialog')).toBeNull();
+  });
+
+  it('scrolls the active pill fully into view when it changes', () => {
+    tabs().update({ selectedId: 0 });
+    tabs().open({ selectedId: 1 });
+    render(<TabBar />);
+    const strip = screen.getByRole('tablist');
+    Object.defineProperty(strip, 'scrollWidth', { configurable: true, value: 700 });
+    Object.defineProperty(strip, 'clientWidth', { configurable: true, value: 200 });
+    const pills = strip.querySelectorAll<HTMLElement>('.tab-pill');
+    Object.defineProperty(pills[0]!, 'offsetLeft', { configurable: true, value: 0 });
+    Object.defineProperty(pills[0]!, 'offsetWidth', { configurable: true, value: 80 });
+    Object.defineProperty(pills[1]!, 'offsetLeft', { configurable: true, value: 500 });
+    Object.defineProperty(pills[1]!, 'offsetWidth', { configurable: true, value: 80 });
+    act(() => tabs().activate(tabs().tabs[0]!.id));
+    act(() => tabs().activate(tabs().tabs[1]!.id));
+    // 500 + 80 + 26 px fade - 200 px view.
+    expect(strip.scrollLeft).toBe(406);
   });
 });
