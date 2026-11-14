@@ -6,6 +6,7 @@ import { HISTORY_KEY, useSearchHistory } from '../history/history';
 import { MEANINGS_KEY, useMeanings } from './meanings';
 import { THEME_KEY, useTheme } from '../theme/theme';
 import { TEXT_SIZE_KEY, useTextSize } from '../theme/textSize';
+import { TYPOS_KEY, useTypos } from './typos';
 
 describe('SearchSettings', () => {
   beforeEach(() => {
@@ -15,6 +16,7 @@ describe('SearchSettings', () => {
     useMeanings.setState({ show: true });
     useTheme.setState({ pref: 'system' });
     useTextSize.setState({ size: 'M' });
+    useTypos.setState({ on: true });
   });
   afterEach(cleanup);
 
@@ -84,6 +86,18 @@ describe('SearchSettings', () => {
     fireEvent.click(button());
     fireEvent.click(screen.getByRole('radio', { name: 'Exact' }));
     expect(seen).toBe(0);
+  });
+
+  it('turns typo tolerance off and on (on by default)', () => {
+    render(<SearchSettings status="off" progress={0} />);
+    fireEvent.click(button());
+    const toggle = screen.getByRole('switch', { name: 'Typo tolerance' });
+    expect(toggle).toBeChecked();
+    fireEvent.click(toggle);
+    expect(useTypos.getState().on).toBe(false);
+    expect(localStorage.getItem(TYPOS_KEY)).toBe('false');
+    fireEvent.click(toggle);
+    expect(useTypos.getState().on).toBe(true);
   });
 
   it('turns search history saving off and on', () => {
