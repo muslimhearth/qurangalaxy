@@ -26,3 +26,4 @@
 - After browser back to a reader place that prev/next opened, verse 1 is marked again (the hash gives a new place).
 - `#/surah/N` (verse 1) marks verse 1 on load.
 - Light panels over the bright galaxy core look a bit grey through the blur.
+- `bookmarks.spec.ts` "a verse search result opens in a new tab" fails on android, on main too: it taps "Verses" before the field has focus, and G17 hides that switch on phones until then. Not changed here.
