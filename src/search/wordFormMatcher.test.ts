@@ -54,6 +54,11 @@ describe('wordFormMatcher', () => {
     expect(matcher(roots, 'ال')).toEqual([]);
   });
 
+  it('scores the main root of a whole Quran word as exact, rarer roots of the same form lower', () => {
+    const [m] = matcher(roots, 'رب');
+    expect(m).toMatchObject({ id: 4, score: TIER.exact });
+  });
+
   it('keeps the best match per root across the words of a phrase', () => {
     expect(matcher(roots, 'الحمد لله رب').map((m) => m.id).sort()).toEqual([3, 4]);
   });

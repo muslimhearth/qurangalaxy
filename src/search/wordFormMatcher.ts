@@ -4,8 +4,9 @@ import { TIER, type Match, type Matcher } from './types';
 import { currentWordForms } from './wordFormsLoad';
 import { exactForms, prefixForms, type FormHit, type WordFormIndex } from './wordForms';
 
-// A whole Quran word scores just under an exact root or lemma hit, so those keep their reason.
-const WORD_EXACT = TIER.exact - 0.01;
+// A whole Quran word is an exact hit. On a tie with a root or lemma hit, that matcher runs first
+// and keeps its reason; the root's word count then ranks ties ("قل": قول before قلل).
+const WORD_EXACT = TIER.exact;
 // A root that is only a small share of a word form's uses loses up to this much (stays in its tier).
 const SHARE_PENALTY = 0.1;
 /** Fewest key letters for a word-start search; shorter keys start thousands of words. */
