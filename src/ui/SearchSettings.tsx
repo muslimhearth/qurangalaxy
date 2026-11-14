@@ -6,7 +6,7 @@ import { ThemeSwitch } from '../theme/ThemeSwitch';
 import { MatchSwitch, matchMode } from './MatchSwitch';
 import { useMeanings } from './meanings';
 
-const MODE_NAMES = { exact: 'Exact', hybrid: 'Hybrid', meaning: 'Meaning' } as const;
+const MODE_NAMES = { exact: 'Exact', hybrid: 'Hybrid', meaning: 'Semantic' } as const;
 
 interface Props {
   status: SemanticStatus;

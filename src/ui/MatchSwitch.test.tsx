@@ -31,7 +31,7 @@ describe('MatchSwitch', () => {
 
   it('writes the weight of the picked mode to the store', () => {
     render(<MatchSwitch status="off" progress={0} />);
-    fireEvent.click(radio('Meaning'));
+    fireEvent.click(radio('Semantic'));
     expect(useGalaxyStore.getState().semanticWeight).toBe(1);
     fireEvent.click(radio('Hybrid'));
     expect(useGalaxyStore.getState().semanticWeight).toBe(0.5);
@@ -47,7 +47,7 @@ describe('MatchSwitch', () => {
   it('uses a given mix instead of the store', () => {
     let seen = -1;
     render(<MatchSwitch status="off" progress={0} weight={1} onWeight={(w) => (seen = w)} />);
-    expect(radio('Meaning')).toHaveAttribute('aria-checked', 'true');
+    expect(radio('Semantic')).toHaveAttribute('aria-checked', 'true');
     fireEvent.click(radio('Exact'));
     expect(seen).toBe(0);
     expect(useGalaxyStore.getState().semanticWeight).toBe(0);
@@ -61,6 +61,6 @@ describe('MatchSwitch', () => {
 
   it('says when the model could not load', () => {
     render(<MatchSwitch status="error" progress={0} error="HTTP 404" />);
-    expect(screen.getByText(/meaning search is unavailable/i)).toHaveTextContent('HTTP 404');
+    expect(screen.getByText(/semantic search is unavailable/i)).toHaveTextContent('HTTP 404');
   });
 });

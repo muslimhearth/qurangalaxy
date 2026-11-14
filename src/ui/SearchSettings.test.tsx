@@ -29,10 +29,10 @@ describe('SearchSettings', () => {
   it('opens the popover, switches the mode, and closes with Escape', () => {
     render(<SearchSettings status="off" progress={0} />);
     fireEvent.click(button());
-    fireEvent.click(screen.getByRole('radio', { name: 'Meaning' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'Semantic' }));
     expect(useGalaxyStore.getState().semanticWeight).toBe(1);
-    expect(button()).toHaveAccessibleName('Search settings: Meaning');
-    fireEvent.keyDown(screen.getByRole('radio', { name: 'Meaning' }), { key: 'Escape' });
+    expect(button()).toHaveAccessibleName('Search settings: Semantic');
+    fireEvent.keyDown(screen.getByRole('radio', { name: 'Semantic' }), { key: 'Escape' });
     expect(dialog()).toBeNull();
     expect(button()).toHaveAttribute('aria-expanded', 'false');
   });

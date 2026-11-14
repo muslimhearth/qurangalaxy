@@ -77,13 +77,13 @@ test('"Back to" sits above the sheet and never covers the search settings or the
 
   // The settings popover is on top: its "Meaning" button is the element at its own center.
   await page.getByRole('button', { name: /search settings/i }).tap();
-  const meaning = page.getByRole('radio', { name: 'Meaning' });
+  const meaning = page.getByRole('radio', { name: 'Semantic' });
   const box = (await meaning.boundingBox())!;
   const onTop = await page.evaluate(
     ({ x, y }) => document.elementFromPoint(x, y)?.textContent ?? '',
     { x: box.x + box.width / 2, y: box.y + box.height / 2 },
   );
-  expect(onTop).toBe('Meaning');
+  expect(onTop).toBe('Semantic');
   // Close the popover: it may reach over the sheet's header.
   await page.getByRole('button', { name: /search settings/i }).tap();
 

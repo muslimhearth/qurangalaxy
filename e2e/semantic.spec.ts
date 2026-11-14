@@ -25,7 +25,7 @@ test('meaning search finds صبر for "patience" without third-party requests', 
   await expect(gear).toHaveAccessibleName(/Exact/);
   if (isMobile) await gear.tap();
   else await gear.click();
-  const meaning = page.getByRole('radio', { name: 'Meaning' });
+  const meaning = page.getByRole('radio', { name: 'Semantic' });
   if (isMobile) await meaning.tap();
   else await meaning.click();
   await expect(meaning).toHaveAttribute('aria-checked', 'true');

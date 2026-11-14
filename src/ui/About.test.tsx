@@ -12,7 +12,7 @@ describe('About', () => {
     expect(body).toHaveTextContent(/pinch/i);
     expect(body).toHaveTextContent(/swipe/i);
     expect(body).toHaveTextContent(/noor/);
-    expect(body).toHaveTextContent(/gear for meaning search/i);
+    expect(body).toHaveTextContent(/gear for semantic search/i);
     expect(screen.getByRole('link', { name: 'Wiktionary' })).toHaveAttribute('href', 'https://en.wiktionary.org/');
     expect(screen.getByRole('link', { name: 'Quranic Arabic Corpus' })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Tanzil.net' })).toBeInTheDocument();

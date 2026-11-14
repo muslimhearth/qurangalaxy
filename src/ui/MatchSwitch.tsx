@@ -10,7 +10,7 @@ export const MATCH_WEIGHTS: Record<MatchMode, number> = { exact: 0, hybrid: 0.5,
 const MODES: { mode: MatchMode; label: string }[] = [
   { mode: 'exact', label: 'Exact' },
   { mode: 'hybrid', label: 'Hybrid' },
-  { mode: 'meaning', label: 'Meaning' },
+  { mode: 'meaning', label: 'Semantic' },
 ];
 
 /** Mode of a search mix. Any mix between the ends (e.g. an old slider value) counts as hybrid. */
@@ -47,7 +47,6 @@ export function MatchSwitch({
       <div className="setting-row">
         <span className="setting-label">
           Match
-          <small>Exact words, or by meaning</small>
         </span>
         <div className="segmented" role="radiogroup" aria-label="Search mode">
           {MODES.map((m) => (
@@ -71,7 +70,7 @@ export function MatchSwitch({
       )}
       {status === 'error' && (
         <p className="setting-status error" role="alert">
-          Meaning search is unavailable: {error}
+          Semantic search is unavailable: {error}
         </p>
       )}
     </>

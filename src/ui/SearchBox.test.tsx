@@ -201,7 +201,7 @@ describe('SearchBox', () => {
     });
 
     /** Picks a match mode in the settings popover (opens it first). */
-    const pickMode = (name: 'Exact' | 'Hybrid' | 'Meaning') => {
+    const pickMode = (name: 'Exact' | 'Hybrid' | 'Semantic') => {
       if (!screen.queryByRole('dialog')) fireEvent.click(screen.getByRole('button', { name: /search settings/i }));
       fireEvent.click(screen.getByRole('radio', { name }));
     };
@@ -218,7 +218,7 @@ describe('SearchBox', () => {
     it('finds roots by meaning and shows the matching verses', async () => {
       const service = fakeService();
       render(<SearchBox semanticService={() => service} />);
-      pickMode('Meaning');
+      pickMode('Semantic');
       fireEvent.change(input(), { target: { value: 'praise' } });
       await act(async () => vi.advanceTimersByTime(DEBOUNCE_MS));
       const option = screen.getByRole('option');
