@@ -83,4 +83,26 @@ describe('SurahReader', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Show meanings' }));
     expect(screen.queryByText('Fixture translation of 1:1')).toBeNull();
   });
+
+  it('marks no verse after previous or next surah, but marks a verse opened later', async () => {
+    g().setReader({ surah: 1, verse: 3 });
+    render(<SurahReader />);
+    fireEvent.click(screen.getByRole('button', { name: 'Next surah: 2 Al-Baqara' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Previous surah: 1 Al-Faatiha' }));
+    expect(g().reader).toEqual({ surah: 1, verse: 1 });
+    await screen.findByText('Fixture translation of 1:1');
+    expect(document.querySelector('[aria-current]')).toBeNull();
+    act(() => g().setReader({ surah: 1, verse: 2 }));
+    expect(document.querySelector('[aria-current]')).toHaveAttribute('data-verse', '1:2');
+    act(() => g().setReader({ surah: 1, verse: 1 }));
+    expect(document.querySelector('[aria-current]')).toHaveAttribute('data-verse', '1:1');
+  });
+
+  it('has a bookmark star on each verse row', async () => {
+    g().setReader({ surah: 1, verse: 1 });
+    render(<SurahReader />);
+    await screen.findByText('Fixture translation of 1:1');
+    const star = screen.getByRole('button', { name: 'Bookmark verse 1:2' });
+    expect(star).toHaveAttribute('aria-pressed', 'false');
+  });
 });
