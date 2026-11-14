@@ -16,3 +16,9 @@ Data files in this folder are derived from:
    License: Creative Commons Attribution-ShareAlike 4.0 (https://creativecommons.org/licenses/by-sa/4.0/).
    The glosses were shortened automatically. Where Wiktionary has no entry, meanings are the most
    distinctive words of the Saheeh International translation (item 2) in the root's verses.
+
+5. English transliteration (translit.json): "Transliteration" (en.transliteration, last update
+   September 6, 2010), distributed by Tanzil.net (https://tanzil.net/trans/). Used verbatim,
+   including Tanzil's markup. Tanzil terms of use for translations: non-commercial use only
+   (other use needs permission from the translator or publisher); a site that uses more than
+   three Tanzil translations must link back to https://tanzil.net/trans/.
