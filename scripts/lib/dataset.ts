@@ -1,4 +1,5 @@
 import type { Galaxy, Occurrences, VerseKey, Verses } from '../../src/data/types';
+import { buildWordForms, type WordFormsFile } from '../../src/search/wordForms';
 import { aggregateRoots, type RootStats } from './aggregate';
 import { findMismatches, type Mismatch } from './align';
 import { emptyCache, type WikiCache } from './glosses/cache';
@@ -21,6 +22,8 @@ export interface Dataset {
   galaxy: Galaxy;
   occurrences: Occurrences;
   verses: Verses;
+  /** Arabic word search: word key → roots (public/data/wordforms.json). */
+  wordForms: WordFormsFile;
   /** Verses where Tanzil and corpus word counts differ. */
   mismatches: Mismatch[];
   /** Consistency problems found by validateData. */
@@ -99,6 +102,7 @@ export function buildDataset(
     galaxy,
     occurrences,
     verses,
+    wordForms: buildWordForms(verses, occurrences),
     mismatches,
     errors: validateData(galaxy, occurrences, verses),
     rootWordCount: new Set(morph.rootWords.map((w) => `${w.verse}:${w.word}`)).size,
