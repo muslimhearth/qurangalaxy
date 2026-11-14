@@ -43,6 +43,8 @@ describe('TabBar', () => {
     render(<TabBar />);
     const tab = screen.getByRole('tab', { name: 'Al-Baqara 2:17' });
     expect(tab.querySelector('span')).not.toHaveAttribute('lang');
+    // A long label can be cut off in the pill: the tooltip has all of it.
+    expect(tab).toHaveAttribute('title', 'Al-Baqara 2:17');
   });
 
   it('switches tabs on click', () => {

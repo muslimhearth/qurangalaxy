@@ -490,7 +490,8 @@ input.switch:checked::before { left: 19px; background: var(--switch-knob-on); }
   flex: none;
   display: flex;
   align-items: stretch;
-  max-width: 9rem;
+  /* Room for a reader label such as "Al-Baqara 2:255". */
+  max-width: 11rem;
   color: var(--muted);
   animation: tab-in 0.25s ease-out;
 }

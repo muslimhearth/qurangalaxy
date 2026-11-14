@@ -75,7 +75,8 @@ export function TabBar() {
                 aria-selected={active}
                 tabIndex={active ? 0 : -1}
                 className="tab-main"
-                title={arabic && galaxy ? galaxy.roots[tab.selectedId!]?.tr : undefined}
+                // Arabic: the transliteration. Latin: the whole label, which the pill may cut off.
+                title={arabic ? (galaxy ? galaxy.roots[tab.selectedId!]?.tr : undefined) : label}
                 onClick={() => activate(tab.id)}
                 // Middle-click closes a tab, as in browsers.
                 onAuxClick={(e) => e.button === 1 && closeAndRefocus(tab.id, false)}
