@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { activeTab, addTab, closeTab, EMPTY_VIEW, freshStart, initialTabs, isEmptyView, sameView, setActive, tabLabel, updateActive } from './model';
+import { activeTab, addTab, closeTab, EMPTY_VIEW, freshStart, initialTabs, isEmptyView, sameView, setActive, showsTabs, tabLabel, updateActive } from './model';
 import { fixtureGalaxy } from '../data/fixture';
 
 describe('tab model', () => {
@@ -122,5 +122,16 @@ describe('freshStart', () => {
     const t = freshStart(saved);
     expect(t.tabs).toHaveLength(2);
     expect(t.activeId).toBe(saved.tabs[0]!.id);
+  });
+});
+
+describe('showsTabs', () => {
+  it('hides the tabs while the only tab is empty', () => {
+    expect(showsTabs(initialTabs())).toBe(false);
+  });
+
+  it('shows them once the only tab has content, or when there are two tabs', () => {
+    expect(showsTabs(updateActive(initialTabs(), { query: 'nur' }))).toBe(true);
+    expect(showsTabs(addTab(initialTabs(), {}))).toBe(true);
   });
 });
