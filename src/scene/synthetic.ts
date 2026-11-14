@@ -60,7 +60,8 @@ export function syntheticGalaxy(o: SyntheticOptions): Galaxy {
     const key = `${source}-${target}`;
     if (seen.has(key)) continue;
     seen.add(key);
-    edges.push({ source, target, weight: 1 + Math.floor(rand() * 10) });
+    const weight = 1 + Math.floor(rand() * 10);
+    edges.push({ source, target, weight, score: weight });
   }
 
   return { version: 1, roots, edges, clusterCount: o.clusters };

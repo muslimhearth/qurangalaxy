@@ -17,12 +17,12 @@ export const fixtureGalaxy: Galaxy = {
     { id: 5, ar: 'علم', tr: 'ʿ-l-m', en: ['knowledge'], count: 854, verseCount: 700, lemmas: [{ ar: 'عَلِيم', count: 162, en: ['all-knowing'] }, { ar: 'عَٰلَمِين', count: 73, en: ['worlds'] }], pos: [3, 15, -12], cluster: 1 },
   ],
   edges: [
-    { source: 0, target: 1, weight: 3 },
-    { source: 0, target: 2, weight: 2 },
-    { source: 1, target: 2, weight: 3 },
-    { source: 1, target: 4, weight: 1 },
-    { source: 3, target: 4, weight: 1 },
-    { source: 4, target: 5, weight: 1 },
+    { source: 0, target: 1, weight: 3, score: 1.2 },
+    { source: 0, target: 2, weight: 2, score: 4.5 },
+    { source: 1, target: 2, weight: 3, score: 0.9 },
+    { source: 1, target: 4, weight: 1, score: 0.3 },
+    { source: 3, target: 4, weight: 1, score: 2.1 },
+    { source: 4, target: 5, weight: 1, score: 0.5 },
   ],
 };
 

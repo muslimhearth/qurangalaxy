@@ -34,7 +34,7 @@ export function GalaxyScene() {
     () => (galaxy ? createFocusState(new Float32Array(galaxy.roots.flatMap((r) => r.pos)), prefersReducedMotion()) : null),
     [galaxy],
   );
-  const anchors = useRef<LabelAnchors>({ ids: [], els: new Map() }).current;
+  const anchors = useRef<LabelAnchors>({ ids: [], els: new Map(), faint: new Set(), from: null }).current;
   const inset = usePanelInset();
   // Filled by <TapPicker> inside the canvas: finds the star nearest to a tap that hit nothing.
   const pick = useRef<PickFn | null>(null);

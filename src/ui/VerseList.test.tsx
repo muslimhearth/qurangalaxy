@@ -20,6 +20,18 @@ describe('VerseList', () => {
     expect(marks).toEqual(['ٱلرَّحْمَٰنِ', 'ٱلرَّحِيمِ']);
   });
 
+  it('marks the words of a second root with class "alt"', () => {
+    const { container } = render(
+      <VerseList occurrences={fixtureOccurrences[2]!} verses={fixtureVerses} others={fixtureOccurrences[1]!} />,
+    );
+    const marks = [...container.querySelectorAll('[data-verse="1:1"] mark')].map((m) => [m.textContent, m.className]);
+    expect(marks).toEqual([
+      ['ٱللَّهِ', 'alt'],
+      ['ٱلرَّحْمَٰنِ', ''],
+      ['ٱلرَّحِيمِ', ''],
+    ]);
+  });
+
   it('shows the first 30 verses, then more on request', () => {
     const verses: Verses = {};
     const occurrences: Occurrence[] = [];

@@ -33,10 +33,12 @@ describe('RootPanel', () => {
     expect(panel).toHaveTextContent('رَحِيم');
     expect(panel).toHaveTextContent('115');
     const connected = within(panel).getByRole('list', { name: /connected roots/i });
-    expect(within(connected).getAllByRole('button').map((b) => b.textContent)).toEqual([
-      expect.stringContaining('أله'),
+    // Highest score first: سمو (score 4.5) before أله (score 0.9), though أله shares more verses.
+    expect(within(connected).getAllByRole('listitem').map((b) => b.textContent)).toEqual([
       expect.stringContaining('سمو'),
+      expect.stringContaining('أله'),
     ]);
+    expect(panel).toHaveTextContent('Roots that appear with رحم more than chance');
     expect(await screen.findByText('1:3')).toBeInTheDocument();
   });
 
@@ -64,8 +66,40 @@ describe('RootPanel', () => {
   it('selects a connected root on click', () => {
     useGalaxyStore.getState().select(2);
     render(<RootPanel />);
-    fireEvent.click(screen.getByRole('button', { name: /أله/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'أله' }));
     expect(useGalaxyStore.getState().selectedId).toBe(1);
+  });
+
+  it('explains a link in the chip title: shared verses and how far above chance', () => {
+    useGalaxyStore.getState().select(2);
+    render(<RootPanel />);
+    // Link 0-2: 2 shared verses, score 4.5 = lift × log2(3), so lift ≈ 2.8.
+    expect(screen.getByRole('button', { name: 'سمو' })).toHaveAttribute(
+      'title',
+      's-m-w: 2 shared verses, 2.8× more often than chance',
+    );
+  });
+
+  it('shows the verses both roots share on a tap on the count, with both roots marked', async () => {
+    useGalaxyStore.getState().select(2);
+    render(<RootPanel />);
+    const count = screen.getByRole('button', { name: 'Show the 2 verses shared with سمو' });
+    fireEvent.click(count);
+    expect(count).toHaveAttribute('aria-pressed', 'true');
+    const shared = await screen.findByRole('region', { name: 'Verses with رحم and سمو' });
+    // Only 1:1 holds both roots in the fixture occurrences.
+    expect(await within(shared).findByText('1:1')).toBeInTheDocument();
+    expect(within(shared).queryByText('1:3')).toBeNull();
+    const marks = [...shared.querySelectorAll('.verse-ar mark')].map((m) => [m.textContent, m.className]);
+    expect(marks).toEqual([
+      ['بِسْمِ', 'alt'],
+      ['ٱلرَّحْمَٰنِ', ''],
+      ['ٱلرَّحِيمِ', ''],
+    ]);
+    expect(useGalaxyStore.getState().selectedId).toBe(2);
+    // A second tap closes it.
+    fireEvent.click(count);
+    expect(screen.queryByRole('region', { name: /verses with/i })).toBeNull();
   });
 
   it('closes with the close button and with Escape', () => {
@@ -88,13 +122,13 @@ describe('RootPanel', () => {
     useGalaxyStore.getState().setGalaxy({
       ...fixtureGalaxy,
       roots: [...fixtureGalaxy.roots, ...extra],
-      edges: [...fixtureGalaxy.edges, ...extra.map((r) => ({ source: 2, target: r.id, weight: 1 }))],
+      edges: [...fixtureGalaxy.edges, ...extra.map((r) => ({ source: 2, target: r.id, weight: 1, score: 0.1 }))],
     });
     useGalaxyStore.getState().select(2);
     render(<RootPanel />);
-    const list = () => within(screen.getByRole('list', { name: /connected roots/i })).getAllByRole('button');
+    const list = () => within(screen.getByRole('list', { name: /connected roots/i })).getAllByRole('listitem');
     expect(list()).toHaveLength(CONNECTED_PREVIEW);
-    expect(list()[0]).toHaveTextContent('أله');
+    expect(list()[0]).toHaveTextContent('سمو');
 
     fireEvent.click(screen.getByRole('button', { name: 'Show all 18 connected roots' }));
     expect(list()).toHaveLength(18);
@@ -104,15 +138,15 @@ describe('RootPanel', () => {
   it('shows the full list again collapsed for the next root', () => {
     const many = Array.from({ length: 20 }, (_, i) => ({ ...fixtureGalaxy.roots[3]!, id: 6 + i, ar: `ج${i}` }));
     const edges = many.flatMap((r) => [
-      { source: 1, target: r.id, weight: 1 },
-      { source: 2, target: r.id, weight: 1 },
+      { source: 1, target: r.id, weight: 1, score: 1 },
+      { source: 2, target: r.id, weight: 1, score: 1 },
     ]);
     useGalaxyStore.getState().setGalaxy({ ...fixtureGalaxy, roots: [...fixtureGalaxy.roots, ...many], edges: [...fixtureGalaxy.edges, ...edges] });
     useGalaxyStore.getState().select(2);
     render(<RootPanel />);
     fireEvent.click(screen.getByRole('button', { name: /show all/i }));
     act(() => useGalaxyStore.getState().select(1));
-    expect(within(screen.getByRole('list', { name: /connected roots/i })).getAllByRole('button')).toHaveLength(CONNECTED_PREVIEW);
+    expect(within(screen.getByRole('list', { name: /connected roots/i })).getAllByRole('listitem')).toHaveLength(CONNECTED_PREVIEW);
   });
 
   it('minimizes to its header and expands again', () => {

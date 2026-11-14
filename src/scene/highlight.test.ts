@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { fixtureGalaxy } from '../data/fixture';
 import { buildAdjacency } from './neighbors';
-import { edgeBaseLevel, edgeColors, focusOf, linkWeightLevel, starColors } from './highlight';
+import { edgeBaseLevel, edgeColors, focusOf, linkScoreLevel, starColors } from './highlight';
 import { TOP_LINKS } from './neighbors';
 
 const adj = buildAdjacency(fixtureGalaxy.roots.length, fixtureGalaxy.edges);
@@ -24,11 +24,13 @@ describe('starColors', () => {
 
   it('dims neighbors past the link cap more than the strongest neighbors', () => {
     const n = TOP_LINKS + 3;
-    const hub = Array.from({ length: n - 1 }, (_, i) => ({ source: 0, target: i + 1, weight: n - i }));
+    const hub = Array.from({ length: n - 1 }, (_, i) => ({ source: 0, target: i + 1, weight: n - i, score: n - i }));
     const hubAdj = buildAdjacency(n, hub);
     const c = starColors(new Float32Array(n * 3).fill(0.5), hubAdj, { id: 0, strong: true });
     expect(c[1 * 3]).toBeCloseTo(0.5); // strongest neighbor keeps its color
-    expect(c[(n - 1) * 3]!).toBeLessThan(0.3); // a neighbor past the cap dims
+    // A neighbor past the cap dims a little, but stays clearly visible.
+    expect(c[(n - 1) * 3]!).toBeLessThan(0.5 * 0.8);
+    expect(c[(n - 1) * 3]!).toBeGreaterThanOrEqual(0.5 * 0.6);
   });
 
   it('brightens the focus, keeps neighbors, dims the rest', () => {
@@ -40,7 +42,7 @@ describe('starColors', () => {
 
   it('keeps every connected root clearly brighter than unrelated roots', () => {
     const n = TOP_LINKS + 3;
-    const hub = Array.from({ length: n - 2 }, (_, i) => ({ source: 0, target: i + 1, weight: n - i }));
+    const hub = Array.from({ length: n - 2 }, (_, i) => ({ source: 0, target: i + 1, weight: n - i, score: n - i }));
     const hubAdj = buildAdjacency(n, hub);
     const c = starColors(new Float32Array(n * 3).fill(0.5), hubAdj, { id: 0, strong: true });
     const weakestNeighbor = c[(n - 2) * 3]!; // past the link cap
@@ -89,28 +91,33 @@ describe('edgeColors', () => {
     expect(hov[5 * 6]!).toBeGreaterThan(sel[5 * 6]!);
   });
 
-  it('lights only the strongest links of a hub, brighter for more shared verses', () => {
-    // Root 0 linked to 1..40 with weight 41 - i: neighbor 1 is the strongest.
+  it('lights only the strongest links of a hub, brighter for a higher score', () => {
+    // Root 0 linked to 1..40 with score 40 - i: neighbor 1 is the strongest. Weights run the other
+    // way, so the test shows that score, not shared verses, sets the order and brightness.
     const n = 41;
-    const hub = Array.from({ length: n - 1 }, (_, i) => ({ source: 0, target: i + 1, weight: n - 1 - i }));
+    const hub = Array.from({ length: n - 1 }, (_, i) => ({ source: 0, target: i + 1, weight: i + 1, score: n - 1 - i }));
     const hubAdj = buildAdjacency(n, hub);
     const hubBase = new Float32Array(n * 3).fill(0.5);
     const c = edgeColors(hub, hubBase, hubAdj, { id: 0, strong: true });
     const level = (edge: number) => c[edge * 6]!;
     const none = edgeColors(hub, hubBase, hubAdj, null);
-    // The strongest link is the brightest; brightness falls with the weight.
+    // The strongest link is the brightest; brightness falls with the score.
     expect(level(0)).toBeGreaterThan(level(TOP_LINKS - 1));
-    // Links past the cap are faint: far below the weakest capped link, near the default level.
-    expect(level(TOP_LINKS)).toBeLessThan(level(TOP_LINKS - 1) / 3);
-    expect(level(TOP_LINKS)).toBeLessThan(none[TOP_LINKS * 6]! * 3);
+    // Links past the cap are weaker than the dimmest possible bright link (level 0.3), but clearly
+    // visible: an absolute level, not a share of the (tiny, for real data) default level.
+    expect(level(TOP_LINKS)).toBeLessThan(0.5 * 0.3 * 0.7);
+    expect(level(TOP_LINKS)).toBeGreaterThan(0.5 * 0.12);
+    expect(level(TOP_LINKS)).toBeGreaterThan(none[TOP_LINKS * 6]!);
     expect(level(n - 2)).toBeCloseTo(level(TOP_LINKS));
   });
 });
 
-describe('linkWeightLevel', () => {
+describe('linkScoreLevel', () => {
   it('is 1 for the strongest link and stays clearly visible for weak ones', () => {
-    expect(linkWeightLevel(10, 10)).toBe(1);
-    expect(linkWeightLevel(1, 100)).toBeGreaterThan(0.25);
-    expect(linkWeightLevel(25, 100)).toBeLessThan(linkWeightLevel(50, 100));
+    expect(linkScoreLevel(10, 10)).toBe(1);
+    expect(linkScoreLevel(1, 100)).toBeGreaterThan(0.25);
+    // Scores are not whole numbers: a small strongest score still maps to 1.
+    expect(linkScoreLevel(0.4, 0.4)).toBe(1);
+    expect(linkScoreLevel(25, 100)).toBeLessThan(linkScoreLevel(50, 100));
   });
 });

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Occurrence, Verses } from '../data/types';
 import { verseWords } from './helpers';
 import { useVerseFocus, type VerseFocusRequest } from './verseFocus';
@@ -13,11 +13,14 @@ export const VERSE_PAGE = 30;
 export interface VerseListProps {
   occurrences: Occurrence[];
   verses: Verses;
+  /** Occurrences of a second root: its words get `<mark class="alt">` (shared-verse view). */
+  others?: Occurrence[];
 }
 
 /** Verses that use a root: key, Arabic with the root's words highlighted, English below. */
-export function VerseList({ occurrences, verses }: VerseListProps) {
+export function VerseList({ occurrences, verses, others }: VerseListProps) {
   const [shown, setShown] = useState(VERSE_PAGE);
+  const otherWords = useMemo(() => new Map(others?.map((o) => [o.v, o.w])), [others]);
   const visible = occurrences.slice(0, shown);
   const listRef = useRef<HTMLOListElement>(null);
   const flash = useFocusedVerse(occurrences, setShown);
@@ -44,11 +47,11 @@ export function VerseList({ occurrences, verses }: VerseListProps) {
             <li key={occ.v} className={flash?.key === occ.v ? 'verse flash' : 'verse'} data-verse={occ.v}>
               <span className="verse-key">{occ.v}</span>
               <p className="verse-ar" dir="rtl" lang="ar">
-                {verseWords(verse.ar, occ.w).map((word, i) => (
+                {verseWords(verse.ar, occ.w, otherWords.get(occ.v)).map((word, i) => (
                   // Spaces between words are kept as text nodes so copy/paste stays natural.
                   <span key={i}>
                     {i > 0 && ' '}
-                    {word.hit ? <mark>{word.text}</mark> : word.text}
+                    {word.hit ? <mark>{word.text}</mark> : word.alt ? <mark className="alt">{word.text}</mark> : word.text}
                   </span>
                 ))}
               </p>

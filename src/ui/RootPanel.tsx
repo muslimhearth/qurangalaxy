@@ -135,7 +135,7 @@ export function RootPanel() {
           </ul>
         </section>
 
-        {links.length > 0 && <ConnectedRoots key={root.id} links={links} />}
+        {links.length > 0 && <ConnectedRoots key={root.id} root={root} links={links} />}
 
         <section>
           <h3>Verses</h3>
