@@ -11,13 +11,11 @@ export const CONNECTED_PREVIEW = 12;
 
 const fmt = (n: number) => n.toLocaleString('en');
 
-/** How many times more often two roots share a verse than chance: score / log2(1 + shared). */
-export function liftOf({ weight, score }: Pick<Neighbor, 'weight' | 'score'>): number {
-  return score / Math.log2(1 + weight);
+/** Chip title: what the root means, e.g. "gh-w-t · to dig" (the transliteration alone if none). */
+export function meaningTitle(root: Pick<Root, 'tr' | 'en'>): string {
+  const en = root.en.slice(0, 2).join(', ');
+  return en ? `${root.tr} · ${en}` : root.tr;
 }
-
-/** Lift for the chip title: one decimal below 10, whole numbers above. */
-const fmtLift = (lift: number) => (lift < 10 ? lift.toFixed(1) : fmt(Math.round(lift)));
 
 /**
  * Chips for roots linked to the selected `root`, highest link score first. The name selects that
@@ -48,7 +46,7 @@ export function ConnectedRoots({ root, links }: { root: Root; links: Neighbor[] 
             <button
               type="button"
               className="chip-name"
-              title={`${link.root.tr}: ${fmt(link.weight)} shared verses, ${fmtLift(liftOf(link))}× more often than chance`}
+              title={meaningTitle(link.root)}
               {...newTab(link.root.id, () => select(link.root.id))}
             >
               <span lang="ar" dir="rtl">
