@@ -2,13 +2,18 @@
 import type { VerseKey, Verses } from '../data/types';
 import { queryTerms, stem, termScoreStemmed, textWords, type QueryTerm, type VerseLang } from './terms';
 import { plainTranslit, type Translit } from './translit';
+import { letterMask } from './typos';
 
 /** The words of one language: each distinct word once, and each verse as word ids. */
 interface LangIndex {
   vocab: string[];
   /** English stem of each vocab word (the word itself for transliteration). */
   stems: string[];
+  /** `letterMask` of each vocab word, for the fast typo pre-check. */
+  masks: Uint32Array;
   verses: Uint32Array[];
+  /** Match row of each query word seen so far (key: typos flag + word), so typing reuses them. */
+  rows: Map<string, Float32Array>;
 }
 
 /** Verses prepared for exact search (built once per data load). */
@@ -43,7 +48,13 @@ function buildLang(texts: string[], lang: VerseLang): LangIndex {
       return id;
     }),
   );
-  return { vocab, stems: lang === 'en' ? vocab.map(stem) : vocab, verses };
+  return {
+    vocab,
+    stems: lang === 'en' ? vocab.map(stem) : vocab,
+    masks: Uint32Array.from(vocab, letterMask),
+    verses,
+    rows: new Map(),
+  };
 }
 
 /** Prepares the verses (and transliteration, when loaded) for `exactVerseMatches`. */
@@ -62,19 +73,36 @@ export function buildVerseIndex(verses: Verses, translit: Partial<Translit>): Ve
   };
 }
 
+/** Most cached match rows per language; the cache starts over when full. */
+const ROW_CACHE = 500;
+
+/** How well query `word` matches each distinct word of `index` (by word id), cached per word. */
+function matchRow(word: string, index: LangIndex, lang: VerseLang, typos: boolean): Float32Array {
+  const key = `${typos ? 1 : 0}${word}`;
+  let row = index.rows.get(key);
+  if (!row) {
+    const qStem = lang === 'en' ? stem(word) : word;
+    const { vocab, stems, masks } = index;
+    row = new Float32Array(vocab.length);
+    // A plain loop: Float32Array.from with a map function is several times slower here.
+    for (let id = 0; id < vocab.length; id++)
+      row[id] = termScoreStemmed(word, qStem, vocab[id]!, stems[id]!, lang, typos, masks[id]);
+    if (index.rows.size >= ROW_CACHE) index.rows.clear();
+    index.rows.set(key, row);
+  }
+  return row;
+}
+
 /**
  * Scores every verse of one language: weighted share of query words found, plus a bonus when
  * all words appear in order. Each query word is compared once per distinct word, not per verse.
  */
-function scoreLang(terms: QueryTerm[], index: LangIndex, lang: VerseLang): Float32Array {
+function scoreLang(terms: QueryTerm[], index: LangIndex, lang: VerseLang, typos: boolean): Float32Array {
   const scores = new Float32Array(index.verses.length);
   const total = terms.reduce((s, t) => s + t.weight, 0);
   if (total === 0) return scores;
   // perTerm[j][wordId] = how well query word j matches that word.
-  const perTerm = terms.map(({ word }) => {
-    const qStem = lang === 'en' ? stem(word) : word;
-    return Float32Array.from(index.vocab, (w, id) => termScoreStemmed(word, qStem, w, index.stems[id]!, lang));
-  });
+  const perTerm = terms.map(({ word }) => matchRow(word, index, lang, typos));
   index.verses.forEach((words, v) => {
     let found = 0;
     for (let j = 0; j < terms.length; j++) {
@@ -103,12 +131,15 @@ function hasPhrase(perTerm: Float32Array[], words: Uint32Array): boolean {
   return false;
 }
 
-/** Verses whose English or transliteration contains the query words, best first (ties: Quran order). */
-export function exactVerseMatches(index: VerseIndex, query: string, limit: number): VerseMatch[] {
+/**
+ * Verses whose English or transliteration contains the query words, best first (ties: Quran order).
+ * With `typos`, near spellings also match, below every exact match of the same word.
+ */
+export function exactVerseMatches(index: VerseIndex, query: string, limit: number, typos = false): VerseMatch[] {
   const en = queryTerms(query, 'en');
   if (en.length === 0) return [];
-  const sEn = scoreLang(en, index.en, 'en');
-  const sTr = scoreLang(queryTerms(query, 'tr'), index.tr, 'tr');
+  const sEn = scoreLang(en, index.en, 'en', typos);
+  const sTr = scoreLang(queryTerms(query, 'tr'), index.tr, 'tr', typos);
   const out: VerseMatch[] = [];
   index.keys.forEach((key, v) => {
     const e = sEn[v]!;
