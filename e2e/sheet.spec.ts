@@ -50,7 +50,7 @@ test('desktop has no sheet size buttons', async ({ page, isMobile }) => {
   await expect(page.getByRole('button', { name: 'Maximize root details' })).toBeHidden();
 });
 
-test('"Back to" sits above the sheet and never covers the slider or the sheet buttons', async ({ page, isMobile }, info) => {
+test('"Back to" sits above the sheet and never covers the search settings or the sheet buttons', async ({ page, isMobile }, info) => {
   test.skip(!isMobile, 'phone layout');
   await page.goto('/#/root/' + encodeURIComponent('رحم'));
   const panel = page.getByLabel('Root details', { exact: true });
@@ -75,15 +75,17 @@ test('"Back to" sits above the sheet and never covers the slider or the sheet bu
   expect(b.y + b.height).toBeLessThanOrEqual(p.y + 1);
   await page.screenshot({ path: `test-results/${info.project.name}-back-to.png` });
 
-  // The slider's right end is the slider itself.
-  await page.getByRole('button', { name: /search mode/i }).tap();
-  const slider = page.getByRole('slider', { name: /search mode/i });
-  const box = (await slider.boundingBox())!;
+  // The settings popover is on top: its "Meaning" button is the element at its own center.
+  await page.getByRole('button', { name: /search settings/i }).tap();
+  const meaning = page.getByRole('radio', { name: 'Meaning' });
+  const box = (await meaning.boundingBox())!;
   const onTop = await page.evaluate(
-    ({ x, y }) => document.elementFromPoint(x, y)?.id ?? '',
-    { x: box.x + box.width - 4, y: box.y + box.height / 2 },
+    ({ x, y }) => document.elementFromPoint(x, y)?.textContent ?? '',
+    { x: box.x + box.width / 2, y: box.y + box.height / 2 },
   );
-  expect(onTop).toBe('semantic-weight');
+  expect(onTop).toBe('Meaning');
+  // Close the popover: it may reach over the sheet's header.
+  await page.getByRole('button', { name: /search settings/i }).tap();
 
   // Maximized sheet: no "Back to" over its header buttons.
   await page.getByRole('button', { name: 'Maximize root details' }).tap();

@@ -20,24 +20,16 @@ test('meaning search finds صبر for "patience" without third-party requests', 
   });
 
   await page.goto('/');
-  // The search mode lives behind a small chip in the search field.
-  const chip = page.getByRole('button', { name: /search mode/i });
-  await expect(chip).toHaveText(/Exact/);
-  if (isMobile) await chip.tap();
-  else await chip.click();
-  const slider = page.getByRole('slider', { name: /search mode/i });
-  await expect(slider).toHaveAttribute('aria-valuetext', 'Exact only');
-
-  if (isMobile) {
-    // Touch: tap the right end of the track.
-    const box = (await slider.boundingBox())!;
-    await page.touchscreen.tap(box.x + box.width - 2, box.y + box.height / 2);
-  } else {
-    await slider.focus();
-    await page.keyboard.press('End');
-  }
-  await expect(slider).toHaveAttribute('aria-valuetext', 'Semantic only');
-  await expect(chip).toHaveText(/Semantic/);
+  // The search mode lives behind the gear at the end of the search bar.
+  const gear = page.getByRole('button', { name: /search settings/i });
+  await expect(gear).toHaveAccessibleName(/Exact/);
+  if (isMobile) await gear.tap();
+  else await gear.click();
+  const meaning = page.getByRole('radio', { name: 'Meaning' });
+  if (isMobile) await meaning.tap();
+  else await meaning.click();
+  await expect(meaning).toHaveAttribute('aria-checked', 'true');
+  await expect(gear).toHaveAccessibleName(/Meaning/);
   await page.screenshot({ path: `test-results/${test.info().project.name}-search-mode.png` });
 
   const search = page.getByRole('combobox');
