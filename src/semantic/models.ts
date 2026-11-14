@@ -53,7 +53,31 @@ export const MODELS: Record<string, ModelSpec> = {
     passagePrefix: '',
     licence: 'MIT',
   },
+  'Xenova/e5-small-v2': {
+    id: 'Xenova/e5-small-v2',
+    revision: '02af79985278377e65c724a76275707cb0333c70',
+    pooling: 'mean',
+    queryPrefix: 'query: ',
+    passagePrefix: 'passage: ',
+    licence: 'MIT',
+  },
+  'Snowflake/snowflake-arctic-embed-xs': {
+    id: 'Snowflake/snowflake-arctic-embed-xs',
+    revision: 'd8c86521100d3556476a063fc2342036d45c106f',
+    pooling: 'cls',
+    queryPrefix: 'Represent this sentence for searching relevant passages: ',
+    passagePrefix: '',
+    licence: 'Apache-2.0',
+  },
+  'Snowflake/snowflake-arctic-embed-s': {
+    id: 'Snowflake/snowflake-arctic-embed-s',
+    revision: 'e596f507467533e48a2e17c007f0e1dacc837b33',
+    pooling: 'cls',
+    queryPrefix: 'Represent this sentence for searching relevant passages: ',
+    passagePrefix: '',
+    licence: 'Apache-2.0',
+  },
 };
 
 /** The model the app ships with. */
-export const MODEL: ModelSpec = MODELS['Xenova/all-MiniLM-L6-v2']!;
+export const MODEL: ModelSpec = MODELS['Snowflake/snowflake-arctic-embed-s']!;
