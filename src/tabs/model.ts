@@ -45,6 +45,14 @@ export function isEmptyView(v: TabView): boolean {
   return v.selectedId === null && v.openVerse === null && v.reader === null && v.query.trim() === '';
 }
 
+/**
+ * True when the tabs UI shows (strip or counter). Hidden while the only tab is empty: there is
+ * nothing to keep, and "new tab" would only open another empty tab.
+ */
+export function showsTabs(t: Tabs): boolean {
+  return t.tabs.length > 1 || !isEmptyView(activeTab(t));
+}
+
 /** One empty, active tab. */
 export function initialTabs(): Tabs {
   const tab = { id: newId(), ...EMPTY_VIEW };

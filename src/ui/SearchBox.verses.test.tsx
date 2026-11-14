@@ -177,6 +177,20 @@ describe('SearchBox verse search', () => {
       expect(screen.queryByText('Recent searches')).toBeNull();
     });
 
+    it('marks the bar "in use" on a user focus or typing, not on the automatic focus', () => {
+      stubPointer(true);
+      render(<SearchBox semanticService={fakeService} />);
+      const bar = input().closest('.search')!;
+      // The tab rail stays in view after load.
+      expect(bar).not.toHaveClass('in-use');
+      fireEvent.pointerDown(input());
+      expect(bar).toHaveClass('in-use');
+      fireEvent.blur(input());
+      expect(bar).not.toHaveClass('in-use');
+      fireEvent.focus(input());
+      expect(bar).toHaveClass('in-use');
+    });
+
     it('leaves the field alone on touch screens', () => {
       stubPointer(false);
       render(<SearchBox semanticService={fakeService} />);
