@@ -19,6 +19,10 @@
 | G14 Meaningful links | merged | Done: links ranked by lift × log2(1+shared), shared verses, faint-link labels |
 | G15 Verse search | merged | Done: Roots/Verses switch, English + transliteration + meaning, `3:109`, history, settings |
 | G16 Tabs | merged | Done: in-app tabs, kept after reload |
+| G17 Search UI | merged | Done: one wide bar, result count, Exact/Hybrid/Meaning switch, tab pills in the top row, two-step Escape |
+| G18 Arabic word search | merged | Done: word-form index (99.99% of Quran words find their root), Arabic verse text search, no meaning search for Arabic |
+| G19 Panel and reader | merged | Done: surah reader (`#/surah/2/17`), lemma filter, Show meanings, chip title = meaning |
+| G20 Bookmarks | merged | Done: roots and verses, list near search, new tabs for verses |
 | Deploy | main | Live at https://quranic.space (Caddy, `pnpm ship`) |
 
 Per-goal detail: `docs/progress/`.
@@ -54,9 +58,11 @@ Per-goal detail: `docs/progress/`.
 
 - G13 Mushaf of Light was removed again at the user's request (2026-11-14). Its history stays in git and `docs/progress/G13-mushaf.md`.
 
-- G14 links: a link's `score` = lift × log2(1 + shared), lift = shared·N/(versesA·versesB); 2+ shared verses. Each root stores its top 8 links by score; the layout still uses the old raw-weight top 8, so star positions did not change. The chip count opens the shared verses. Faint links (beyond the bright 20) are brighter and labelled, pinned at the screen edge when off screen. See `docs/progress/G14-links.md`.
+- G14 links: a link's `score` = lift × log2(1 + shared), lift = shared·N/(versesA·versesB); 2+ shared verses. Each root stores its top 30 links by score (`LINKS_PER_ROOT`); the layout still uses the old raw-weight top 8, so star positions did not change. The chip count opens the shared verses. Faint links (beyond the bright 20) are brighter and labelled, pinned at the screen edge when off screen. See `docs/progress/G14-links.md`.
 - G15 verse search: Roots | Verses switch; verses by English words, Tanzil transliteration (`translit.json`, lazy) and meaning; "s:v" opens a verse in any mode; `#/verse/s:v`; last 10 searches (setting to turn off); desktop auto focus. Tanzil translations are non-commercial use only. See `docs/progress/G15-verse-search.md`.
 - G16 tabs: own store in `src/tabs/`, synced with the main store; mouse middle/Ctrl-click opens a background tab, touch long-press opens and switches. See `docs/progress/G16-tabs.md`.
+
+- G17–G20 (2026-11-14): see `docs/progress/G17-search-ui.md`, `G18-arabic-search.md`, `G19-panel-reader.md`, `G20-bookmarks.md`. New data files: `wordforms.json` (lazy, Arabic queries), `lemmas.json` (lazy, lemma filter), `src/reader/surahs.json` (Tanzil metadata).
 
 ## Known issues
 - R3F still bundles three's `WebGLRenderer` (unused) and logs two library deprecation warnings (`THREE.Clock`, `PCFSoftShadowMap`). These come from the library and go away when R3F updates.
@@ -65,6 +71,7 @@ Per-goal detail: `docs/progress/`.
 - Headless software rendering is slow: under parallel load some browser tests need generous timeouts.
 - Desktop focus view: a few dim stars near the camera show as large soft discs at the screen edge (needs a near-fade in the star shader).
 - iPhone: ring labels are tight (about 4 px apart); `tap.spec` "a tap near a star selects it" fails on WebKit, also before G12.
-- Links: most roots now store about 5 links, so few roots (55) have faint links. Raising the stored links per root (layout stays at 8) would add more.
 - Verse search: the meaning model (36 MB) starts to download when Verses mode opens. "ar-rahman" style spellings do not match Tanzil's transliteration.
+- Arabic search: plain spellings like مومن (for مؤمن) do not match; words that differ only by alif share a key (قل = قال).
+- Verse search total is unknown past 30 (shown as "30+"). Many tabs scroll sideways on desktop.
 - Hub roots still show a bright core where hundreds of links meet. This is expected for additive lines.

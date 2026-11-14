@@ -44,6 +44,9 @@ Raw downloads are cached in `data/raw/` (gitignored). Generated JSON in `public/
 | `src/scene/intro/*` | G11 + main | Opening: stars start in a small core and spread to their places with an ease-in (inner first). Skips: deep link, reduced motion, `?nointro`, automated browsers (`?intro` forces it) |
 | `scripts/lib/edges.ts`, `src/ui/ConnectedRoots.tsx`, `src/ui/sharedVerses.ts`, `src/scene/edgeLabels.ts` | G14 | Link score vs chance, shared verses of two roots, faint-link labels at the far end or screen edge |
 | `src/verses/*`, `src/history/*`, `src/ui/VersePanel.tsx`, `scripts/build-translit.ts` | G15 | Verse search (exact English/transliteration + meaning), verse keys and `#/verse/` hash, search history |
+| `src/search/arabicKey.ts`, `src/search/wordForms.ts`, `scripts/*wordforms*` | G18 | One search key for Uthmani and typed Arabic; lazy word-form → root index |
+| `src/reader/*`, `src/data/lemmaIndex.ts`, `src/ui/meanings.tsx`, `scripts/build-reader-data.ts` | G19 | Surah reader (`reader` in the store, `#/surah/s/v`), lazy lemma index for the word filter, Show meanings setting |
+| `src/bookmarks/*`, `src/tabs/target.ts` | G20 | Bookmarks (localStorage) and tab targets (root or verse) |
 | `src/tabs/*` | G16 | In-app tabs: pure model, own store with localStorage, sync with the main store, tab bar, new-tab gesture |
 | `scripts/corpus-wbw.ts`, `scripts/corpus-glosses.ts`, `scripts/lib/corpus-wbw/*` | G10 | Polite, resumable scraper of the corpus word-by-word glosses; per-lemma/root aggregation; `loadCorpusGlosses` hook (not wired into the data build) |
 | `deploy/Caddyfile.site`, `scripts/ship.sh` | main | Deploy |
@@ -67,6 +70,7 @@ Headless browsers have no GPU: Chromium and WebKit run the WebGL 2 fallback in s
 - **WebGPU first.** three.js `WebGPURenderer` falls back to WebGL 2 automatically.
 - **One store.** Scene and UI talk only through the Zustand store.
 - **Links ranked against chance.** `Edge.score` = lift × log2(1 + shared). It ranks the ring, the bright 20 and the chips; the raw count is still shown. The layout keeps its own raw-weight edges, so positions are stable.
+- **Lazy data.** `wordforms.json` loads on the first Arabic query, `lemmas.json` on the first lemma tap, `translit.json` in Verses mode.
 - **Search modes.** `searchMode` in the store: roots or verses. `openVerse` shows the verse panel in place of the root panel.
 - **Tabs outside the main store.** `src/tabs` saves and restores `selectedId`, `query`, `searchMode` and `openVerse` per tab.
 - **Lazy 3D chunk.** `App` loads `GalaxyScene` with `React.lazy`: the UI (74 kB gzip) paints first, three.js (461 kB gzip) follows.
