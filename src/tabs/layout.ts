@@ -4,7 +4,7 @@ import { useSyncExternalStore } from 'react';
 export type TabLayout = 'strip' | 'counter';
 
 /** Screens that get the pill strip: a mouse and room for pills. Phones and narrow windows get the counter. */
-export const TAB_STRIP_QUERY = '(min-width: 900px) and (pointer: fine)';
+export const TAB_STRIP_QUERY = '(min-width: 1024px) and (pointer: fine)';
 
 /** The media query list, or null where `matchMedia` is missing (tests, old browsers). */
 const media = (): MediaQueryList | null => (typeof window.matchMedia === 'function' ? window.matchMedia(TAB_STRIP_QUERY) : null);

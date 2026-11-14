@@ -5,7 +5,7 @@ import { useTabsStore } from './store';
 import { TabSwitcher } from './TabSwitcher';
 
 /**
- * Tab counter in the search bar (phones and windows under 900 px): a rounded square with the
+ * Tab counter in the search bar (phones and windows under 1024 px): a rounded square with the
  * number of tabs. A tap opens the tab switcher sheet. When a tab is added (a long-press on a
  * root link), the number pulses once. Hidden while the only tab is empty, like the pill strip.
  */

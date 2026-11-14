@@ -461,7 +461,7 @@ input.switch:checked::before { left: 19px; background: var(--switch-knob-on); }
 .recenter:hover { border-color: var(--accent); }
 
 /*
- * In-app tabs (G23). Desktop (900 px and wider, with a mouse): slim pills in one glass rail right
+ * In-app tabs (G23). Desktop (1024 px and wider, with a mouse): slim pills in one glass rail right
  * of the search bar. Phones and narrow windows: a tab counter in the search bar (see .tab-counter).
  */
 .tab-rail {
@@ -618,7 +618,7 @@ input.switch:checked::before { left: 19px; background: var(--switch-knob-on); }
 .tab-switcher.popover .tab-row-close { width: 32px; height: 32px; font-size: 1.05rem; }
 
 /* Desktop: the search bar takes its full width while in use; the tab rail steps aside. */
-@media (min-width: 900px) and (pointer: fine) {
+@media (min-width: 1024px) and (pointer: fine) {
   .search { transition: width 0.18s ease-out; }
   /* "in-use": focused by the user (the automatic focus on load keeps the rail in view). */
   .search.in-use, .search:has(.search-results, .search-history) { width: var(--search-w-full); }
