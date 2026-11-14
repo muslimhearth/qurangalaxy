@@ -248,6 +248,32 @@ a { color: var(--accent); }
   max-width: 12em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .chip-link:hover { border-color: var(--accent); background: var(--accent-soft); }
+/* Connected root: the name selects it, the count opens the shared verses. */
+.section-note { margin: -4px 0 8px; font-size: 0.8rem; color: var(--muted); }
+.section-note [lang='ar'] { font-size: 1rem; color: var(--fg); }
+.link-chip { padding: 0; gap: 0; overflow: hidden; }
+.link-chip button { min-height: 34px; display: inline-flex; align-items: center; border: 0; background: transparent; }
+.link-chip .chip-name { padding: 0 6px 0 12px; }
+.link-chip .chip-count { min-width: 34px; justify-content: center; padding: 0 10px 0 6px; font-size: 0.8rem; }
+.link-chip .chip-name:hover { background: var(--accent-soft); color: var(--accent); }
+.link-chip .chip-count:hover, .link-chip .chip-count[aria-pressed='true'] {
+  background: var(--accent-soft); color: var(--accent);
+}
+.link-chip:has([aria-pressed='true']) { border-color: var(--accent); }
+/* Touch screens: 44 px tap targets. */
+@media (pointer: coarse) {
+  .link-chip button { min-height: 44px; }
+  .link-chip .chip-count { min-width: 44px; }
+}
+.shared-verses { margin-top: 14px; padding: 4px 12px 8px; border: 1px solid var(--border); border-radius: 10px; }
+.shared-head { display: flex; align-items: center; gap: 8px; }
+.shared-head p { margin: 0; flex: 1; font-size: 0.85rem; color: var(--muted); }
+.shared-head mark { background: none; color: var(--accent); font-size: 1.1rem; }
+.shared-head .close { margin: 6px 0; }
+.verse-ar mark.alt, .shared-head mark.alt {
+  color: #8fd3ff;
+  text-shadow: 0 0 12px rgba(143, 211, 255, 0.45);
+}
 
 /* Verses */
 .verse-list { list-style: none; margin: 0; padding: 0; }

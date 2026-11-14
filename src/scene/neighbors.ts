@@ -1,29 +1,30 @@
 import type { Edge, Root } from '../data/types';
 
-/** One neighbor of a root: the other root's id, the edge index and its weight. */
+/** One neighbor of a root: the other root's id, the edge index, its shared verses and its score. */
 export interface Neighbor {
   id: number;
   edge: number;
   weight: number;
+  score: number;
 }
 
-/** Neighbor lists per root id, each sorted by edge weight, strongest first. */
+/** Neighbor lists per root id, each sorted by link score (`Edge.score`), strongest first. */
 export type Adjacency = Neighbor[][];
 
 /**
- * Builds neighbor lists for `rootCount` roots from undirected edges. Equal weights go by
+ * Builds neighbor lists for `rootCount` roots from undirected edges. Equal scores go by
  * word count (`counts`, highest first) when given, as in the panel's "Connected roots" list,
  * so the ring and the list agree; else by edge order.
  */
 export function buildAdjacency(rootCount: number, edges: readonly Edge[], counts?: readonly number[]): Adjacency {
   const adj: Adjacency = Array.from({ length: rootCount }, () => []);
   edges.forEach((e, i) => {
-    adj[e.source]?.push({ id: e.target, edge: i, weight: e.weight });
-    adj[e.target]?.push({ id: e.source, edge: i, weight: e.weight });
+    adj[e.source]?.push({ id: e.target, edge: i, weight: e.weight, score: e.score });
+    adj[e.target]?.push({ id: e.source, edge: i, weight: e.weight, score: e.score });
   });
   const count = (id: number) => counts?.[id] ?? 0;
   // Stable sort keeps edge order for full ties.
-  for (const list of adj) list.sort((a, b) => b.weight - a.weight || count(b.id) - count(a.id));
+  for (const list of adj) list.sort((a, b) => b.score - a.score || count(b.id) - count(a.id));
   return adj;
 }
 

@@ -165,7 +165,7 @@ test('selected root stays in view beside the panel, not under it', async ({ page
 
 test('connected roots show the strongest first, the rest on demand', async ({ page }) => {
   await page.goto('/#/root/' + encodeURIComponent('رحم'));
-  const list = page.getByRole('list', { name: 'Connected roots' }).getByRole('button');
+  const list = page.getByRole('list', { name: 'Connected roots' }).getByRole('listitem');
   await expect(list).toHaveCount(12);
   await page.getByRole('button', { name: /^Show all [\d,]+ connected roots$/ }).click();
   expect(await list.count()).toBeGreaterThan(12);

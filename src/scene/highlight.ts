@@ -18,14 +18,23 @@ export function focusOf(selectedId: number | null, hoveredId: number | null): Fo
 // `top`: the strongest neighbors; `rest`: the other neighbors; `other`: unrelated stars.
 // On selection, unrelated stars fade far down so every connected root stands out (8x brighter).
 const STAR = {
-  strong: { focus: 1.8, top: 1, rest: 0.4, other: 0.05 },
+  // `rest` 0.7: links past the top 20 must stay clearly visible, their end stars too.
+  strong: { focus: 1.8, top: 1, rest: 0.7, other: 0.05 },
   soft: { focus: 1.5, top: 1, rest: 0.6, other: 0.4 },
 };
-// Edge factors: `top` is absolute (scaled by weight); `rest` and `other` are relative to the base level.
+// Edge factors: `top` is absolute (scaled by score); `rest` and `other` are relative to the base level.
+// On selection, the links past the top 20 use FAINT_LINK instead of `rest`.
 const EDGE = {
-  strong: { top: 1.0, rest: 1.5, other: 0.15 },
+  strong: { top: 1.0, rest: 0, other: 0.15 },
   soft: { top: 0.6, rest: 1.5, other: 0.5 },
 };
+
+/**
+ * Level of a selected root's links past the top 20. Absolute: 1.5 × the base level was about 0.03
+ * with real data, too faint to see. 0.18 is below the dimmest bright link (0.3), so the top 20
+ * still stand out.
+ */
+export const FAINT_LINK = 0.18;
 
 /**
  * Default edge brightness. Lines blend additively, so thousands of them would
@@ -36,11 +45,11 @@ export function edgeBaseLevel(edgeCount: number): number {
 }
 
 /**
- * Brightness factor of one of the focus root's strongest links, from its weight relative to
- * the strongest link (`maxWeight`). Square root, floored at 0.3: weak links stay visible.
+ * Brightness factor of one of the focus root's strongest links, from its score relative to
+ * the strongest link (`maxScore`). Square root, floored at 0.3: weak links stay visible.
  */
-export function linkWeightLevel(weight: number, maxWeight: number): number {
-  return 0.3 + 0.7 * Math.sqrt(weight / Math.max(1, maxWeight));
+export function linkScoreLevel(score: number, maxScore: number): number {
+  return maxScore > 0 ? 0.3 + 0.7 * Math.sqrt(score / maxScore) : 1;
 }
 
 /**
@@ -65,7 +74,7 @@ export function starColors(base: Float32Array, adj: Adjacency, focus: Focus | nu
 /**
  * Line colors for all edges (2 vertices x 3 floats per edge). Each end takes its
  * star's base color, scaled: faint by default; on the focus root's `TOP_LINKS` strongest
- * edges bright by weight; faint on its other edges; near-black on all other edges.
+ * edges bright by score; faint on its other edges; near-black on all other edges.
  */
 export function edgeColors(
   edges: readonly Edge[],
@@ -80,9 +89,10 @@ export function edgeColors(
   const level = new Map<number, number>();
   if (focus && f) {
     const top = topNeighbors(adj, focus.id);
-    const maxWeight = top[0]?.weight ?? 1;
-    for (const n of adj[focus.id] ?? []) level.set(n.edge, f.rest * base);
-    for (const n of top) level.set(n.edge, f.top * linkWeightLevel(n.weight, maxWeight));
+    const maxScore = top[0]?.score ?? 1;
+    const rest = focus.strong ? FAINT_LINK : f.rest * base;
+    for (const n of adj[focus.id] ?? []) level.set(n.edge, rest);
+    for (const n of top) level.set(n.edge, f.top * linkScoreLevel(n.score, maxScore));
   }
   const otherK = f ? f.other * base : base;
   edges.forEach((e, i) => {
