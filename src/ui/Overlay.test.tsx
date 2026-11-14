@@ -23,6 +23,16 @@ describe('Overlay', () => {
     expect(screen.getByRole('combobox', { name: /search roots/i })).toBeInTheDocument();
   });
 
+  it('shows the verse panel in place of the root panel while a verse is open', () => {
+    useGalaxyStore.getState().setGalaxy(fixtureGalaxy);
+    useGalaxyStore.getState().select(2);
+    render(<Overlay />);
+    expect(screen.getByRole('complementary', { name: 'Root details' })).toBeInTheDocument();
+    act(() => useGalaxyStore.getState().setOpenVerse('1:1'));
+    expect(screen.getByRole('complementary', { name: 'Verse details' })).toBeInTheDocument();
+    expect(screen.queryByRole('complementary', { name: 'Root details' })).toBeNull();
+  });
+
   it('shows an error screen when loading fails', () => {
     useLoadError.setState({ error: 'Could not load galaxy.json: HTTP 404' });
     render(<Overlay />);
