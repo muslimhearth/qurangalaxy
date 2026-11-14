@@ -61,7 +61,11 @@ test('search selects a root and shows highlighted verses', async ({ page }, info
   expect(decodeURIComponent(new URL(page.url()).hash)).toBe('#/root/رحم');
   await page.screenshot({ path: shot(info, 'root-panel') });
 
-  // Escape closes the panel and clears the hash.
+  // The picked root's search text stays; the first Escape clears it, the next closes the panel.
+  await expect(search).toHaveValue('rhm');
+  await page.keyboard.press('Escape');
+  await expect(search).toHaveValue('');
+  await expect(panel).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(panel).toHaveCount(0);
 });

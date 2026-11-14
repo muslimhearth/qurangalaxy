@@ -106,6 +106,16 @@ describe('SearchBox', () => {
     expect(screen.getAllByRole('option')).toHaveLength(1);
   });
 
+  it('keeps the list closed for a query set from outside (tab switch, reload) until focus', () => {
+    useGalaxyStore.getState().setQuery('rhm');
+    render(<SearchBox />);
+    expect(screen.queryByRole('option')).toBeNull();
+    act(() => useGalaxyStore.getState().setQuery('r'));
+    expect(screen.queryByRole('option')).toBeNull();
+    fireEvent.focus(input());
+    expect(screen.getAllByRole('option').length).toBeGreaterThan(0);
+  });
+
   it('records a picked root search once in the history', () => {
     useSearchHistory.setState({ saving: true, entries: [] });
     render(<SearchBox />);

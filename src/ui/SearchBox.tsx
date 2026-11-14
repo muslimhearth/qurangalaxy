@@ -68,7 +68,8 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
   const [picked, setActive] = useState<number | null>(null);
   const newTab = useNewTabGesture();
   // False after a verse is picked: the list hides until the user types or focuses again.
-  const [listOpen, setListOpen] = useState(true);
+  // A kept query (restored tab, reload) starts with its list closed; focus or typing opens it.
+  const [listOpen, setListOpen] = useState(() => useGalaxyStore.getState().query.trim() === '');
   const [historyOpen, setHistoryOpen] = useState(false);
   // The query whose root list is expanded with "Show all"; a new query starts short again.
   const [showAllFor, setShowAllFor] = useState<string | null>(null);
@@ -81,6 +82,14 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
     autoFocused.current = true;
     input.current?.focus();
   }, []);
+
+  // The query the field set itself (typing, history). Any other change (a tab switch, a link)
+  // closes the list, so kept search text does not open results over the galaxy.
+  const ownQuery = useRef(query);
+  useEffect(() => {
+    if (query !== ownQuery.current) setListOpen(false);
+    ownQuery.current = query;
+  }, [query]);
 
   const verseQuery = useMemo(() => parseVerseQuery(query), [query]);
   // A verse key is not a word search.
@@ -263,6 +272,7 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
 
   const runHistory = (entry: HistoryEntry) => {
     setMode(entry.mode);
+    ownQuery.current = entry.query;
     setQuery(entry.query);
     reopen();
     input.current?.focus();
@@ -355,14 +365,18 @@ export function SearchBox({ semanticService = getWorkerService }: { semanticServ
           enterKeyHint="search"
           value={query}
           onChange={(e) => {
+            ownQuery.current = e.target.value;
             setQuery(e.target.value);
             setHistoryOpen(true);
             reopen();
           }}
           onFocus={() => {
-            // The automatic focus on load does not open the history over the galaxy.
-            if (autoFocused.current) autoFocused.current = false;
-            else setHistoryOpen(true);
+            // The automatic focus on load opens neither the history nor a kept result list over the galaxy.
+            if (autoFocused.current) {
+              autoFocused.current = false;
+              return;
+            }
+            setHistoryOpen(true);
             setListOpen(true);
           }}
           onPointerDown={() => setHistoryOpen(true)}
