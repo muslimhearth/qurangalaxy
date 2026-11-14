@@ -12,13 +12,19 @@ const LEAD = 0.25;
 
 /**
  * Up to `max` characters of `text` (plus "…" at cut ends), cut at spaces, around the first
- * word that matches `query`; matching words have `hit: true`.
+ * word that matches `query`; matching words have `hit: true`. With `typos`, near spellings match too.
  */
-export function markedSnippet(text: string, query: string, lang: VerseLang, max: number): SnippetPart[] {
+export function markedSnippet(
+  text: string,
+  query: string,
+  lang: VerseLang,
+  max: number,
+  typos = false,
+): SnippetPart[] {
   const terms = queryTerms(query, lang).filter((t) => t.weight > 0);
   const spans = wordSpans(text).filter(({ start, end }) => {
     const word = normalizeWord(text.slice(start, end), lang);
-    return terms.some((t) => termScore(t.word, word, lang) > 0);
+    return terms.some((t) => termScore(t.word, word, lang, typos) > 0);
   });
 
   // Window [from, to) of the text to show.

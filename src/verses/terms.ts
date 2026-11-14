@@ -1,4 +1,5 @@
 /** Word-level rules for verse search in English and in transliteration. */
+import { typoScore } from './typos';
 
 /** Which verse text a word belongs to: the English translation or the transliteration. */
 export type VerseLang = 'en' | 'tr';
@@ -70,17 +71,43 @@ export function stem(word: string): string {
 /**
  * How well query word `q` matches verse word `t` (both normalized): 1 = same word,
  * 0.9 = same English stem, 0.8 = partial (English: word start; transliteration: inside the word), 0 = no match.
+ * With `typos`, near spellings score below 0.8 (see `typoScore`).
  */
-export function termScore(q: string, t: string, lang: VerseLang): number {
-  return lang === 'en' ? termScoreStemmed(q, stem(q), t, stem(t), lang) : termScoreStemmed(q, q, t, t, lang);
+export function termScore(q: string, t: string, lang: VerseLang, typos = false): number {
+  return lang === 'en'
+    ? termScoreStemmed(q, stem(q), t, stem(t), lang, typos)
+    : termScoreStemmed(q, q, t, t, lang, typos);
 }
 
-/** `termScore` with the English stems already known (search compares each word many times). */
-export function termScoreStemmed(q: string, qStem: string, t: string, tStem: string, lang: VerseLang): number {
+/**
+ * `termScore` with the English stems already known (search compares each word many times).
+ * With `typos`, a word that does not match exactly may still match with a small typo (lower score);
+ * `tMask` is the `letterMask` of `t`, when known, for speed.
+ */
+export function termScoreStemmed(
+  q: string,
+  qStem: string,
+  t: string,
+  tStem: string,
+  lang: VerseLang,
+  typos = false,
+  tMask?: number,
+): number {
+  const exact = exactScore(q, qStem, t, tStem, lang);
+  return exact > 0 || !typos ? exact : typoScore(q, qStem, t, tStem, lang, tMask);
+}
+
+/** True when `plural` is `word` + "s" (no new string: search runs this for every word). */
+function isPlural(word: string, plural: string): boolean {
+  return plural.length === word.length + 1 && plural.endsWith('s') && plural.startsWith(word);
+}
+
+/** Exact part of `termScoreStemmed`: same word, stem, word start or (transliteration) part of a word. */
+function exactScore(q: string, qStem: string, t: string, tStem: string, lang: VerseLang): number {
   if (t === q) return 1;
   if (lang === 'en') {
     // Simple plural: "believer" ~ "believers".
-    if (q.length >= 3 && (t === `${q}s` || q === `${t}s`)) return 1;
+    if (q.length >= 3 && (isPlural(q, t) || isPlural(t, q))) return 1;
     if (q.length >= 4 && qStem === tStem) return 0.9;
     return q.length >= 4 && t.startsWith(q) ? 0.8 : 0;
   }

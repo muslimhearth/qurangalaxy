@@ -64,6 +64,28 @@ test('transliteration finds a verse and is marked in the result', async ({ page,
   await expect(first.locator('.verse-hit-tr mark').first()).toBeVisible();
 });
 
+test('typo tolerance: "rahmah" finds 3:8 through "rahmatan"; the switch turns it off', async ({ page, isMobile }) => {
+  const search = await verseMode(page, isMobile);
+  await search.fill('rahmah');
+  const hit = page.getByRole('option').filter({ hasText: /^3:8\b/ });
+  await expect(hit).toHaveCount(1, { timeout: 15_000 });
+  await expect(hit.locator('.verse-hit-tr mark')).toHaveText('rahmatan');
+
+  const gear = page.getByRole('button', { name: /search settings/i });
+  await press(gear, isMobile);
+  const typos = page.getByRole('switch', { name: 'Typo tolerance' });
+  await expect(typos).toBeChecked();
+  if (isMobile) await typos.tap();
+  else {
+    // Keyboard on desktop: a click waits for a still frame, which the busy 3D scene can delay past the timeout.
+    await typos.focus();
+    await page.keyboard.press('Space');
+  }
+  await expect(typos).not.toBeChecked();
+  // The list updates behind the open popover.
+  await expect(hit).toHaveCount(0);
+});
+
 test('"3:109" opens the verse in any mode; back and forward follow it', async ({ page }) => {
   await page.goto('/');
   const search = page.getByRole('combobox', { name: 'Search roots' });

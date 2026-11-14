@@ -4,6 +4,7 @@ import { markedArabic } from '../verses/arabic';
 import { markedSnippet, type SnippetPart } from '../verses/highlight';
 import type { VerseLang } from '../verses/terms';
 import { plainTranslit } from '../verses/translit';
+import { useTypos } from './typos';
 
 /** Characters of English shown in a result. */
 const EN_CHARS = 150;
@@ -31,18 +32,20 @@ export interface VerseOptionProps {
 /** Body of one verse search result: key, English (matches marked), matched transliteration, Arabic (matches marked). */
 export function VerseOption({ verseKey, verse, translit, query, source }: VerseOptionProps) {
   const highlightQuery = source === 'semantic' ? '' : query;
+  // Mark typo matches too, as search found them.
+  const typos = useTypos((s) => s.on);
   return (
     <>
       <span className="verse-key">{verseKey}</span>
       <span className="verse-hit">
         {verse && (
           <span className="verse-hit-en">
-            <Marked parts={markedSnippet(verse.en, highlightQuery, 'en', EN_CHARS)} />
+            <Marked parts={markedSnippet(verse.en, highlightQuery, 'en', EN_CHARS, typos)} />
           </span>
         )}
         {source === 'tr' && translit && (
           <span className="verse-hit-tr">
-            <Marked parts={markedSnippet(plainTranslit(translit), query, 'tr', TR_CHARS)} />
+            <Marked parts={markedSnippet(plainTranslit(translit), query, 'tr', TR_CHARS, typos)} />
           </span>
         )}
         {verse && (

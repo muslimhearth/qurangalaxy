@@ -10,6 +10,7 @@ import { arabicIndexFor, arabicVerseMatches } from '../verses/arabic';
 import { blendVerseMatches } from '../verses/blend';
 import { buildVerseIndex, exactVerseMatches, type VerseMatch } from '../verses/exact';
 import type { Translit } from '../verses/translit';
+import { useTypos } from './typos';
 import { useTranslit } from './useTranslit';
 import { useVerseTexts } from './useVerseTexts';
 
@@ -31,7 +32,8 @@ export interface VerseResults {
 }
 
 /**
- * Verse search for `query` while `enabled`: exact words in English and transliteration,
+ * Verse search for `query` while `enabled`: exact words in English and transliteration
+ * (also small typos while the "Typo tolerance" setting is on),
  * blended with meaning (semantic) search by `weight`. Arabic queries search the Arabic text
  * (words and other forms of their roots) without meaning search.
  */
@@ -56,11 +58,13 @@ export function useVerseResults(
   const ready = arabic ? verses !== null : textsReady;
   // Root forms of an Arabic word come from the word-form index (loaded on the first Arabic query).
   const forms = useWordForms(enabled && isArabicQuery(query));
+  // "Typo tolerance" in the search settings: near spellings in English and transliteration.
+  const typos = useTypos((s) => s.on);
   const exact = useMemo(() => {
     if (!q) return [];
     if (arabic) return verses ? arabicVerseMatches(arabicIndexFor(verses), q, forms, EXACT_POOL) : [];
-    return index ? exactVerseMatches(index, q, EXACT_POOL) : [];
-  }, [index, verses, q, arabic, forms]);
+    return index ? exactVerseMatches(index, q, EXACT_POOL, typos) : [];
+  }, [index, verses, q, arabic, forms, typos]);
   const semantic = useSemanticVerses(enabled ? query : '', enabled ? weight : 0, getService);
   // The slider keeps its value; Arabic queries just use exact search alone.
   const mix = meaningWeight(q, weight);

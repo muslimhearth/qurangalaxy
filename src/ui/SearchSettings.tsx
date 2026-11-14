@@ -6,6 +6,7 @@ import { TextSizeSwitch } from '../theme/TextSizeSwitch';
 import { ThemeSwitch } from '../theme/ThemeSwitch';
 import { MatchSwitch, matchMode } from './MatchSwitch';
 import { useMeanings } from './meanings';
+import { useTypos } from './typos';
 
 const MODE_NAMES = { exact: 'Exact', hybrid: 'Hybrid', meaning: 'Semantic' } as const;
 
@@ -20,7 +21,7 @@ interface Props {
 
 /**
  * Gear button at the right end of the search bar. It opens a popover with the
- * "Exact | Hybrid | Meaning" switch, the "Save search history" switch, "Clear history",
+ * "Exact | Hybrid | Meaning" switch, the "Typo tolerance" switch, the "Save search history" switch, "Clear history",
  * the "Show meanings" switch, the "S | M | L | XL" text size and the "System | Light | Dark" theme switch.
  * Escape or a click outside closes it.
  */
@@ -33,6 +34,8 @@ export function SearchSettings({ status, progress, error, weight: ownWeight, onW
   const clear = useSearchHistory((s) => s.clear);
   const showMeanings = useMeanings((s) => s.show);
   const setShowMeanings = useMeanings((s) => s.setShow);
+  const typos = useTypos((s) => s.on);
+  const setTypos = useTypos((s) => s.setOn);
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const button = useRef<HTMLButtonElement>(null);
@@ -89,6 +92,21 @@ export function SearchSettings({ status, progress, error, weight: ownWeight, onW
         <div className="mode-pop panel" role="dialog" aria-label="Search settings">
           <p className="setting-head">Search</p>
           <MatchSwitch status={status} progress={progress} error={error} weight={ownWeight} onWeight={onWeight} />
+          <label className="setting-row">
+            <span className="setting-label">
+              Typo tolerance
+              <small>Verses: also find words with small spelling mistakes</small>
+            </span>
+            <input
+              type="checkbox"
+              role="switch"
+              className="switch"
+              aria-label="Typo tolerance"
+              checked={typos}
+              aria-checked={typos}
+              onChange={(e) => setTypos(e.target.checked)}
+            />
+          </label>
           <p className="setting-head">History</p>
           <label className="setting-row">
             <span className="setting-label">Save search history</span>
