@@ -28,7 +28,7 @@ export interface NewTabHandlers {
  * `{ root }` or `{ verse }` target, or a bare root id.
  */
 export function useNewTabGesture(): (target: TargetLike, onSelect: () => void) => NewTabHandlers {
-  const press = useRef<{ timer: number; x: number; y: number } | null>(null);
+  const press = useRef<{ timer: number; x: number; y: number; start: number; fire: () => void } | null>(null);
   // Set when a long-press fired, so the click that follows the finger lift is ignored.
   const fired = useRef(false);
 
@@ -60,19 +60,25 @@ export function useNewTabGesture(): (target: TargetLike, onSelect: () => void) =
       fired.current = false;
       if (e.pointerType !== 'touch') return;
       cancel();
-      const timer = window.setTimeout(() => {
+      const fire = () => {
         press.current = null;
         fired.current = true;
         navigator.vibrate?.(10);
         openInNewTab(target, true);
-      }, LONG_PRESS_MS);
-      press.current = { timer, x: e.clientX, y: e.clientY };
+      };
+      const timer = window.setTimeout(fire, LONG_PRESS_MS);
+      press.current = { timer, x: e.clientX, y: e.clientY, start: Date.now(), fire };
     },
     onPointerMove: (e) => {
       const p = press.current;
       if (p && Math.hypot(e.clientX - p.x, e.clientY - p.y) > MOVE_PX) cancel();
     },
-    onPointerUp: cancel,
+    // A busy main thread can run the lift before a due timer: a held press still counts.
+    onPointerUp: () => {
+      const p = press.current;
+      cancel();
+      if (p && Date.now() - p.start >= LONG_PRESS_MS) p.fire();
+    },
     onPointerCancel: cancel,
     // A held finger opens the system menu on some phones; the long-press replaces it.
     onContextMenu: (e) => {

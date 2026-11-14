@@ -62,6 +62,20 @@ describe('useNewTabGesture', () => {
     expect(onSelect).not.toHaveBeenCalled();
   });
 
+  it('a lift after the hold time counts even when the timer has not run yet', () => {
+    vi.useFakeTimers();
+    const chip = screen.getByRole('button');
+    fireEvent.pointerDown(chip, { pointerType: 'touch', clientX: 10, clientY: 10 });
+    // Clock moves on, but the timer task is still queued (busy main thread).
+    vi.setSystemTime(Date.now() + LONG_PRESS_MS);
+    fireEvent.pointerUp(chip, { pointerType: 'touch' });
+    expect(activeTab(tabs()).selectedId).toBe(5);
+    fireEvent.click(chip);
+    expect(onSelect).not.toHaveBeenCalled();
+    act(() => vi.advanceTimersByTime(LONG_PRESS_MS));
+    expect(tabs().tabs).toHaveLength(2);
+  });
+
   it('a short tap or a drag is not a long-press', () => {
     vi.useFakeTimers();
     const chip = screen.getByRole('button');
