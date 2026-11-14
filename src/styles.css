@@ -736,7 +736,7 @@ input.switch:checked::before { left: 19px; background: var(--switch-knob-on); }
   min-width: 2rem; height: 2rem; padding: 0 6px; border-radius: 999px; border: 1px solid var(--border);
   font-size: 0.85rem; color: var(--muted); font-variant-numeric: tabular-nums;
 }
-.reader-ar { display: block; font-size: 1.9rem; line-height: 1.35; padding-top: 0.2em; color: var(--accent); }
+.reader-ar { display: block; font-family: 'Noto Naskh Arabic', var(--font-ar); font-size: 1.75rem; line-height: 1.3; color: var(--accent); }
 .reader-title .root-stats { margin-top: 2px; line-height: 1.35; }
 .reader-nav { display: flex; justify-content: space-between; gap: 8px; padding: 6px 18px; border-bottom: 1px solid var(--border); }
 .reader-nav[hidden] { display: none; }
@@ -763,5 +763,5 @@ input.switch:checked::before { left: 19px; background: var(--switch-knob-on); }
   .reader-panel { max-height: none; top: 74px; }
   .overlay:has(.tab-bar) .reader-panel { top: 116px; }
   .reader-panel.collapsed, .overlay:has(.tab-bar) .reader-panel.collapsed { top: auto; }
-  .reader-ar { font-size: 1.6rem; }
+  .reader-ar { font-size: 1.5rem; }
 }
